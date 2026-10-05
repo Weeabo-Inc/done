@@ -2982,29 +2982,32 @@ mod test {
   }
 
   #[test]
-  fn blog_post_links() {
-    let version = Version::parse_standard("1.46.0").unwrap();
+  fn download_urls_point_at_done_releases() {
+    let url = get_download_url("2.9.8", ReleaseChannel::Stable).unwrap();
     assert_eq!(
-      get_minor_version_blog_post_url(&version),
-      "https://deno.com/blog/v1.46"
+      url.as_str(),
+      format!(
+        "https://github.com/weeabo-inc/done/releases/download/v2.9.8/{}",
+        *ARCHIVE_NAME
+      )
     );
 
-    let version = Version::parse_standard("2.1.1").unwrap();
+    let url = get_download_url("2.10.0-rc.1", ReleaseChannel::Rc).unwrap();
     assert_eq!(
-      get_minor_version_blog_post_url(&version),
-      "https://deno.com/blog/v2.1"
+      url.as_str(),
+      format!(
+        "https://github.com/weeabo-inc/done/releases/download/v2.10.0-rc.1/{}",
+        *ARCHIVE_NAME
+      )
     );
 
-    let version = Version::parse_standard("2.0.0-rc.0").unwrap();
-    assert_eq!(
-      get_rc_version_blog_post_url(&version),
-      "https://deno.com/blog/v2.0-rc-0"
-    );
-
-    let version = Version::parse_standard("2.0.0-rc.2").unwrap();
-    assert_eq!(
-      get_rc_version_blog_post_url(&version),
-      "https://deno.com/blog/v2.0-rc-2"
+    // Done does not publish canary builds yet.
+    assert!(
+      get_download_url(
+        "bda3850f84f24b71e02512c1ba2d6bf2e3daa2fd",
+        ReleaseChannel::Canary
+      )
+      .is_err()
     );
   }
 
