@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Done">
+  <title>Done</title>
+  <defs><linearGradient id="g" x1="116.00" y1="162.00" x2="210.00" y2="52.00" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#3DDC97"/><stop offset="1" stop-color="#B6F36A"/></linearGradient></defs>
+  <rect width="256" height="256" rx="56" fill="#0B0F14"/>
+  <g transform="translate(128 128) scale(0.74) translate(-128 -128)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M217.27 105.74A92 92 0 1 1 162.46 42.70" stroke="#F2F5F8" stroke-width="22"/>
+    <path d="M78.00 126.00L116.00 162.00L210.00 52.00" stroke="url(#g)" stroke-width="22"/>
+  </g>
+</svg>

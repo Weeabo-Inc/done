@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="doc/assets/done-logo-dark.svg">
+    <img src="doc/assets/done-logo.svg" alt="Done" width="320">
+  </picture>
+</p>
+
 # Done
 
 **Done** is a hard fork of [Deno](https://github.com/denoland/deno) that aims
@@ -53,8 +60,10 @@ cargo build --bin deno
 ./target/debug/deno eval 'console.log("Hello from Done")'
 ```
 
-Do not run `deno upgrade` on a Done build. It still downloads **upstream Deno**
-and overwrites your binary (see the audit).
+`deno upgrade` installs releases from
+[weeabo-inc/done](https://github.com/weeabo-inc/done/releases), never from
+upstream Deno. Until Done publishes its first release, it reports that no
+release is available. Canary builds are not published yet.
 
 ## Your first program
 

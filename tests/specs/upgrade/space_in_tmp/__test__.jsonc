@@ -1,4 +1,7 @@
 {
+  // Extracts the upgrade archive into a temp dir whose path contains a space,
+  // using the local test server. The served archive holds a placeholder
+  // binary, so the upgrade fails at executable validation, after extraction.
   "if": "notWindowsArm",
   "tempDir": true,
   "steps": [
@@ -14,17 +17,10 @@
     },
     {
       "commandName": "./deno_copy",
-      "args": "upgrade --force --version 1.43.2",
-      "envs": { "TMP": "./space in cwd" },
+      "args": "upgrade --force --version 99.99.99",
+      "envs": { "TMP": "./space in cwd", "DENO_TESTING_UPGRADE": "1" },
       "output": "upgrade.out",
-      "exitCode": 0,
-      "flaky": true
-    },
-    {
-      "commandName": "./deno_copy",
-      "args": "--version",
-      "exitCode": 0,
-      "output": "version.out"
+      "exitCode": 1
     }
   ]
 }

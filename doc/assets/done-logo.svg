@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="220 20 590 200" width="590" height="200" role="img" aria-label="Done">
+  <title>Done</title>
+  <defs><linearGradient id="g" x1="434.00" y1="167.00" x2="481.00" y2="112.00" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#0EA960"/><stop offset="1" stop-color="#5BD45B"/></linearGradient></defs>
+  <g fill="none" stroke="#0B0F14" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M340 40V200M340 150A50 50 0 1 1 240 150A50 50 0 1 1 340 150"/>
+    <path d="M488.51 137.90A50 50 0 1 1 458.73 103.64"/>
+    <path d="M415.00 149.00L434.00 167.00L481.00 112.00" stroke="url(#g)"/>
+    <path d="M540 200V150A50 50 0 0 1 640 150V200"/>
+    <path d="M690 150H790A50 50 0 1 0 775.36 185.36"/>
+  </g>
+</svg>

@@ -13,6 +13,15 @@ pub fn otel_runtime_config() -> OtelRuntimeConfig {
   }
 }
 
+/// The GitHub repository Done is developed and released from.
+pub const DONE_REPO: &str = "weeabo-inc/done";
+/// Base URL of Done's GitHub releases, which host every published build.
+pub const DONE_RELEASES_URL: &str =
+  "https://github.com/weeabo-inc/done/releases";
+/// Where users report bugs, including panics.
+pub const DONE_NEW_ISSUE_URL: &str =
+  "https://github.com/weeabo-inc/done/issues/new";
+
 const GIT_COMMIT_HASH: &str = env!("GIT_COMMIT_HASH");
 const TYPESCRIPT: &str = "6.0.3";
 pub const DENO_VERSION: &str = env!("DENO_VERSION");
