@@ -12,7 +12,7 @@ use deno_core::op2;
 #[class(generic)]
 pub enum CliParserError {
   #[error(
-    "Failed to parse Node.js CLI arguments: {message}. If you believe this is a valid Node.js flag, please report it at https://github.com/denoland/deno/issues"
+    "Failed to parse Node.js CLI arguments: {message}. If you believe this is a valid Node.js flag, please report it at https://github.com/weeabo-inc/done/issues"
   )]
   ParseError { message: String },
 }

@@ -1,24 +1,14 @@
 {
+  // Looks up the latest stable version and downloads it from the local test
+  // server. The served archive holds a placeholder binary, so the upgrade
+  // fails at executable validation, after the download and extraction.
   "if": "notWindowsArm",
   "tempDir": true,
-  "steps": [
-    {
-      "args": "eval Deno.copyFileSync(Deno.execPath(),'./deno_copy');",
-      "exitCode": 0,
-      "output": ""
-    },
-    {
-      "commandName": "./deno_copy",
-      "args": "upgrade --force",
-      "output": "upgrade.out",
-      "exitCode": 0,
-      "flaky": true
-    },
-    {
-      "commandName": "./deno_copy",
-      "args": "--version",
-      "exitCode": 0,
-      "output": "version.out"
-    }
-  ]
+  "envs": {
+    "DENO_DONT_USE_INTERNAL_BASE_UPGRADE_URL": "http://localhost:4545",
+    "DENO_TESTING_UPGRADE": "1"
+  },
+  "args": "upgrade --force --dry-run",
+  "output": "upgrade.out",
+  "exitCode": 1
 }

@@ -1,4 +1,7 @@
 {
+  // Upgrades to a separate output path using the local test server. The
+  // served archive holds a placeholder binary, so the upgrade fails at
+  // executable validation, after the download and extraction.
   "if": "notWindowsArm",
   "tempDir": true,
   "steps": [
@@ -9,22 +12,10 @@
     },
     {
       "commandName": "./deno_copy",
-      "args": "upgrade --force --version 1.43.2 --output ./deno_copy2",
+      "args": "upgrade --force --version 99.99.99 --output ./deno_copy2",
+      "envs": { "DENO_TESTING_UPGRADE": "1" },
       "output": "upgrade.out",
-      "exitCode": 0,
-      "flaky": true
-    },
-    {
-      "commandName": "./deno_copy",
-      "args": ["eval", "if (Deno.version.deno === '1.43.2') { Deno.exit(1); }"],
-      "exitCode": 0,
-      "output": ""
-    },
-    {
-      "commandName": "./deno_copy2",
-      "args": "--version",
-      "exitCode": 0,
-      "output": "version.out"
+      "exitCode": 1
     }
   ]
 }

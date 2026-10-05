@@ -39,9 +39,7 @@ use crate::util::archive;
 use crate::util::progress_bar::ProgressBar;
 use crate::util::progress_bar::ProgressBarStyle;
 
-static RELEASE_URL: &str = "https://github.com/denoland/deno/releases";
-static CANARY_URL: &str = "https://dl.deno.land/canary";
-static DL_RELEASE_URL: &str = "https://dl.deno.land/release";
+static RELEASE_URL: &str = version::DONE_RELEASES_URL;
 
 pub static ARCHIVE_NAME: Lazy<String> =
   Lazy::new(|| format!("deno-{}.zip", env!("TARGET")));
@@ -232,65 +230,13 @@ impl<TEnvironment: UpdateCheckerEnvironment, TVersionProvider: VersionProvider>
   }
 }
 
-fn get_minor_version_blog_post_url(semver: &Version) -> String {
-  format!("https://deno.com/blog/v{}.{}", semver.major, semver.minor)
-}
-
-fn get_rc_version_blog_post_url(semver: &Version) -> String {
-  format!(
-    "https://deno.com/blog/v{}.{}-rc-{}",
-    semver.major, semver.minor, semver.pre[1]
-  )
-}
-
-async fn print_release_notes(
-  current_version: &str,
-  new_version: &str,
-  client: &HttpClient,
-) {
+fn print_release_notes(current_version: &str, new_version: &str) {
   let Ok(current_semver) = Version::parse_standard(current_version) else {
     return;
   };
   let Ok(new_semver) = Version::parse_standard(new_version) else {
     return;
   };
-
-  let is_switching_from_deno1_to_deno2 =
-    new_semver.major == 2 && current_semver.major == 1;
-  let is_deno_2_rc = new_semver.major == 2
-    && new_semver.minor == 0
-    && new_semver.patch == 0
-    && new_semver.pre.first().map(|s| s.as_str()) == Some("rc");
-
-  if is_deno_2_rc || is_switching_from_deno1_to_deno2 {
-    log::info!(
-      "{}\n\n  {}\n",
-      colors::gray("Migration guide:"),
-      colors::bold(
-        "https://docs.deno.com/runtime/manual/advanced/migrate_deprecations"
-      )
-    );
-  }
-
-  if is_deno_2_rc {
-    log::info!(
-      "{}\n\n  {}\n",
-      colors::gray("If you find a bug, please report to:"),
-      colors::bold("https://github.com/denoland/deno/issues/new")
-    );
-
-    // Check if there's blog post entry for this release
-    let blog_url_str = get_rc_version_blog_post_url(&new_semver);
-    let blog_url = Url::parse(&blog_url_str).unwrap();
-    if client.download(blog_url).await.is_ok() {
-      log::info!(
-        "{}\n\n  {}\n",
-        colors::gray("Blog post:"),
-        colors::bold(blog_url_str)
-      );
-    }
-    return;
-  }
 
   let should_print = current_semver.major != new_semver.major
     || current_semver.minor != new_semver.minor;
@@ -302,15 +248,7 @@ async fn print_release_notes(
   log::info!(
     "{}\n\n  {}\n",
     colors::gray("Release notes:"),
-    colors::bold(format!(
-      "https://github.com/denoland/deno/releases/tag/v{}",
-      &new_version,
-    ))
-  );
-  log::info!(
-    "{}\n\n  {}\n",
-    colors::gray("Blog post:"),
-    colors::bold(get_minor_version_blog_post_url(&new_semver))
+    colors::bold(format!("{}/tag/v{}", RELEASE_URL, &new_version))
   );
 }
 
@@ -628,7 +566,7 @@ fn upgrade_from_pr(
       "view",
       &pr_number.to_string(),
       "--repo",
-      "denoland/deno",
+      version::DONE_REPO,
       "--json",
       "title,state,headRefName,headRefOid",
       "-q",
@@ -679,7 +617,7 @@ fn upgrade_from_pr(
         "run",
         "list",
         "--repo",
-        "denoland/deno",
+        version::DONE_REPO,
         "--branch",
         pr_branch,
         "--workflow",
@@ -732,7 +670,7 @@ fn upgrade_from_pr(
           "download",
           run_id,
           "--repo",
-          "denoland/deno",
+          version::DONE_REPO,
           "--name",
           name,
           "--dir",
@@ -850,7 +788,7 @@ fn upgrade_from_branch(
       "run",
       "list",
       "--repo",
-      "denoland/deno",
+      version::DONE_REPO,
       "--branch",
       branch,
       "--workflow",
@@ -902,7 +840,7 @@ fn upgrade_from_branch(
           "download",
           run_id,
           "--repo",
-          "denoland/deno",
+          version::DONE_REPO,
           "--name",
           name,
           "--dir",
@@ -1013,6 +951,7 @@ pub async fn upgrade(
 
   let requested_version =
     RequestedVersion::from_upgrade_flags(upgrade_flags.clone())?;
+  ensure_release_channel_published(requested_version.release_channel())?;
 
   log::info!("Current Deno version: v{}", version::DENO_VERSION_INFO.deno);
 
@@ -1159,9 +1098,7 @@ pub async fn upgrade(
       print_release_notes(
         version::DENO_VERSION_INFO.deno,
         &selected_version_to_upgrade.version_or_hash,
-        &client,
-      )
-      .await;
+      );
     }
     drop(temp_dir);
     return Ok(());
@@ -1193,9 +1130,7 @@ pub async fn upgrade(
     print_release_notes(
       version::DENO_VERSION_INFO.deno,
       &selected_version_to_upgrade.version_or_hash,
-      &client,
-    )
-    .await;
+    );
   }
 
   if let Ok(Some(text)) = banner_handle.await {
@@ -1295,6 +1230,20 @@ impl RequestedVersion {
       Self::SpecificVersion(channel, _) => *channel,
     }
   }
+}
+
+/// Done publishes stable releases and pre-releases (RC, LTS, alpha, beta) as
+/// GitHub releases. There is no canary build infrastructure yet.
+fn ensure_release_channel_published(
+  release_channel: ReleaseChannel,
+) -> Result<(), AnyError> {
+  if release_channel == ReleaseChannel::Canary {
+    bail!(
+      "Canary builds of Done are not published yet. Releases are available at {}",
+      RELEASE_URL
+    );
+  }
+  Ok(())
 }
 
 fn select_specific_version_for_upgrade(
@@ -1469,7 +1418,10 @@ fn base_upgrade_url() -> Cow<'static, str> {
   if let Ok(url) = env::var("DENO_DONT_USE_INTERNAL_BASE_UPGRADE_URL") {
     Cow::Owned(url)
   } else {
-    Cow::Borrowed("https://dl.deno.land")
+    // GitHub serves the newest stable release's assets here, so every stable
+    // release must upload a `release-latest.txt` asset. Pre-release channels
+    // have no such file yet and report that no release is available.
+    Cow::Owned(format!("{}/latest/download", RELEASE_URL))
   }
 }
 
@@ -1477,25 +1429,14 @@ fn get_download_url(
   version: &str,
   release_channel: ReleaseChannel,
 ) -> Result<Url, AnyError> {
-  let download_url = match release_channel {
-    ReleaseChannel::Stable | ReleaseChannel::Alpha | ReleaseChannel::Beta => {
-      let release_url = if std::env::var_os("DENO_TESTING_UPGRADE").is_some() {
-        "http://localhost:4545/deno-upgrade"
-      } else {
-        RELEASE_URL
-      };
-      format!("{}/download/v{}/{}", release_url, version, *ARCHIVE_NAME)
-    }
-    ReleaseChannel::Rc => {
-      format!("{}/v{}/{}", DL_RELEASE_URL, version, *ARCHIVE_NAME)
-    }
-    ReleaseChannel::Canary => {
-      format!("{}/{}/{}", CANARY_URL, version, *ARCHIVE_NAME)
-    }
-    ReleaseChannel::Lts => {
-      format!("{}/v{}/{}", DL_RELEASE_URL, version, *ARCHIVE_NAME)
-    }
+  ensure_release_channel_published(release_channel)?;
+  let release_url = if std::env::var_os("DENO_TESTING_UPGRADE").is_some() {
+    "http://localhost:4545/deno-upgrade"
+  } else {
+    RELEASE_URL
   };
+  let download_url =
+    format!("{}/download/v{}/{}", release_url, version, *ARCHIVE_NAME);
 
   Url::parse(&download_url).with_context(|| {
     format!(
@@ -1869,7 +1810,7 @@ fn get_banner_url(
 ) -> Option<Url> {
   let download_url = match release_channel {
     ReleaseChannel::Stable => {
-      format!("{}/v{}/banner.txt", DL_RELEASE_URL, version)
+      format!("{}/download/v{}/banner.txt", RELEASE_URL, version)
     }
     ReleaseChannel::Rc
     | ReleaseChannel::Lts
@@ -2679,7 +2620,7 @@ mod test {
         "aarch64-apple-darwin",
         UpgradeCheckKind::Execution
       ),
-      "https://dl.deno.land/canary-aarch64-apple-darwin-latest.txt"
+      "https://github.com/weeabo-inc/done/releases/latest/download/canary-aarch64-apple-darwin-latest.txt"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2687,7 +2628,7 @@ mod test {
         "aarch64-apple-darwin",
         UpgradeCheckKind::Lsp
       ),
-      "https://dl.deno.land/canary-aarch64-apple-darwin-latest.txt?lsp"
+      "https://github.com/weeabo-inc/done/releases/latest/download/canary-aarch64-apple-darwin-latest.txt?lsp"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2695,7 +2636,7 @@ mod test {
         "x86_64-pc-windows-msvc",
         UpgradeCheckKind::Execution
       ),
-      "https://dl.deno.land/canary-x86_64-pc-windows-msvc-latest.txt"
+      "https://github.com/weeabo-inc/done/releases/latest/download/canary-x86_64-pc-windows-msvc-latest.txt"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2703,7 +2644,7 @@ mod test {
         "x86_64-pc-windows-msvc",
         UpgradeCheckKind::Lsp
       ),
-      "https://dl.deno.land/canary-x86_64-pc-windows-msvc-latest.txt?lsp"
+      "https://github.com/weeabo-inc/done/releases/latest/download/canary-x86_64-pc-windows-msvc-latest.txt?lsp"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2711,7 +2652,7 @@ mod test {
         "aarch64-apple-darwin",
         UpgradeCheckKind::Execution
       ),
-      "https://dl.deno.land/release-latest.txt"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-latest.txt"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2719,7 +2660,7 @@ mod test {
         "aarch64-apple-darwin",
         UpgradeCheckKind::Lsp
       ),
-      "https://dl.deno.land/release-latest.txt?lsp"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-latest.txt?lsp"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2727,7 +2668,7 @@ mod test {
         "x86_64-pc-windows-msvc",
         UpgradeCheckKind::Execution
       ),
-      "https://dl.deno.land/release-latest.txt"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-latest.txt"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2735,7 +2676,7 @@ mod test {
         "x86_64-pc-windows-msvc",
         UpgradeCheckKind::Lsp
       ),
-      "https://dl.deno.land/release-rc-latest.txt?lsp"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-rc-latest.txt?lsp"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2743,7 +2684,7 @@ mod test {
         "aarch64-apple-darwin",
         UpgradeCheckKind::Execution
       ),
-      "https://dl.deno.land/release-rc-latest.txt"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-rc-latest.txt"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2751,7 +2692,7 @@ mod test {
         "aarch64-apple-darwin",
         UpgradeCheckKind::Lsp
       ),
-      "https://dl.deno.land/release-rc-latest.txt?lsp"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-rc-latest.txt?lsp"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2759,7 +2700,7 @@ mod test {
         "x86_64-pc-windows-msvc",
         UpgradeCheckKind::Execution
       ),
-      "https://dl.deno.land/release-rc-latest.txt"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-rc-latest.txt"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2767,7 +2708,7 @@ mod test {
         "x86_64-pc-windows-msvc",
         UpgradeCheckKind::Lsp
       ),
-      "https://dl.deno.land/release-rc-latest.txt?lsp"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-rc-latest.txt?lsp"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2775,7 +2716,7 @@ mod test {
         "x86_64-pc-windows-msvc",
         UpgradeCheckKind::Lsp
       ),
-      "https://dl.deno.land/release-lts-latest.txt?lsp"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-lts-latest.txt?lsp"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2783,7 +2724,7 @@ mod test {
         "aarch64-apple-darwin",
         UpgradeCheckKind::Execution
       ),
-      "https://dl.deno.land/release-lts-latest.txt"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-lts-latest.txt"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2791,7 +2732,7 @@ mod test {
         "aarch64-apple-darwin",
         UpgradeCheckKind::Lsp
       ),
-      "https://dl.deno.land/release-lts-latest.txt?lsp"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-lts-latest.txt?lsp"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2799,7 +2740,7 @@ mod test {
         "x86_64-pc-windows-msvc",
         UpgradeCheckKind::Execution
       ),
-      "https://dl.deno.land/release-lts-latest.txt"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-lts-latest.txt"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2807,7 +2748,7 @@ mod test {
         "x86_64-pc-windows-msvc",
         UpgradeCheckKind::Lsp
       ),
-      "https://dl.deno.land/release-lts-latest.txt?lsp"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-lts-latest.txt?lsp"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2815,7 +2756,7 @@ mod test {
         "aarch64-apple-darwin",
         UpgradeCheckKind::Execution
       ),
-      "https://dl.deno.land/release-alpha-latest.txt"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-alpha-latest.txt"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2823,7 +2764,7 @@ mod test {
         "x86_64-pc-windows-msvc",
         UpgradeCheckKind::Lsp
       ),
-      "https://dl.deno.land/release-alpha-latest.txt?lsp"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-alpha-latest.txt?lsp"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2831,7 +2772,7 @@ mod test {
         "aarch64-apple-darwin",
         UpgradeCheckKind::Execution
       ),
-      "https://dl.deno.land/release-beta-latest.txt"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-beta-latest.txt"
     );
     assert_eq!(
       get_latest_version_url(
@@ -2839,7 +2780,7 @@ mod test {
         "x86_64-pc-windows-msvc",
         UpgradeCheckKind::Lsp
       ),
-      "https://dl.deno.land/release-beta-latest.txt?lsp"
+      "https://github.com/weeabo-inc/done/releases/latest/download/release-beta-latest.txt?lsp"
     );
   }
 

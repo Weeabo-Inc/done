@@ -498,10 +498,11 @@ impl PublishPreparer {
               concat!(
                 "Failed ensuring public API type output is valid.\n\n",
                 "{:#}\n\n",
-                "You may have discovered a bug in Deno. Please open an issue at: ",
-                "https://github.com/denoland/deno/issues/"
+                "You may have discovered a bug in Done. Please open an issue at: ",
+                "{}"
               ),
-              check_diagnostics
+              check_diagnostics,
+              deno_lib::version::DONE_NEW_ISSUE_URL
             );
           }
         }

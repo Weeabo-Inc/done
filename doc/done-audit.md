@@ -39,8 +39,8 @@ The native Deno extensions, largest first: `web` 42k, `crypto` 18k, `http` 15k,
 
 | What                     | Where                                                                  | Risk                                                               |
 | ------------------------ | ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `upgrade` download URLs  | `cli/tools/upgrade.rs:42-44` (`github.com/denoland/deno/releases`, `dl.deno.land`) | **High.** `deno upgrade` replaces a Done build with upstream Deno. |
-| Panic report URL         | `cli/lib.rs:634`, `cli/tools/upgrade.rs:279`                            | Users get sent to file Done bugs upstream.                        |
+| `upgrade` download URLs  | `cli/tools/upgrade.rs:42-44` (`github.com/denoland/deno/releases`, `dl.deno.land`) | **High.** `deno upgrade` replaced a Done build with upstream Deno. **Fixed in M0.** |
+| Panic report URL         | `cli/lib.rs:634`, `cli/tools/upgrade.rs:279`                            | Users were sent to file Done bugs upstream. **Fixed in M0.**     |
 | CI gating                | `.github/workflows/ci.ts:33` `isRepository("denoland/deno")`, referenced 21 more times | Release, cache and publish jobs silently skip on this repo.        |
 | CI delta builds          | `.github/workflows/ci.ts:945-974`                                      | Downloads the previous **upstream** release to build deltas from.  |
 | `deploy` subcommand      | `cli/tools/deploy.rs`                                                  | Fetches and runs the Deno Deploy CLI from JSR.                     |

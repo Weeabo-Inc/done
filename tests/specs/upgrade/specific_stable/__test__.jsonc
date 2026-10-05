@@ -1,4 +1,7 @@
 {
+  // Verifies that `upgrade` downloads from Done's GitHub releases rather than
+  // upstream Deno. v1.43.2 is an upstream Deno version that Done will never
+  // publish, so the download must come back as not found.
   "if": "notWindowsArm",
   "tempDir": true,
   "steps": [
@@ -11,14 +14,8 @@
       "commandName": "./deno_copy",
       "args": "upgrade --force --version 1.43.2",
       "output": "upgrade.out",
-      "exitCode": 0,
+      "exitCode": 1,
       "flaky": true
-    },
-    {
-      "commandName": "./deno_copy",
-      "args": "--version",
-      "exitCode": 0,
-      "output": "version.out"
     }
   ]
 }

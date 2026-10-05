@@ -630,8 +630,8 @@ fn setup_panic_hook() {
     }
 
     eprintln!("\n============================================================");
-    eprintln!("Deno has panicked. This is a bug in Deno. Please report this");
-    eprintln!("at https://github.com/denoland/deno/issues/new.");
+    eprintln!("Done has panicked. This is a bug in Done. Please report this");
+    eprintln!("at {}.", deno_lib::version::DONE_NEW_ISSUE_URL);
     eprintln!("If you can reliably reproduce this panic, include the");
     #[cfg(not(all(
       feature = "panic-trace-frame-pointer",
