@@ -1,116 +1,79 @@
-# Deno
+# Done
 
-[![](https://img.shields.io/crates/v/deno.svg)](https://crates.io/crates/deno)
-[![Twitter badge][]][Twitter link] [![Bluesky badge][]][Bluesky link]
-[![Discord badge][]][Discord link] [![YouTube badge][]][YouTube link]
+**Done** is a hard fork of [Deno](https://github.com/denoland/deno) that aims
+to finish what Deno started: a secure, native JavaScript and TypeScript runtime
+that is useful without anything else installed.
 
-<img align="right" src="https://deno.land/logo.svg" height="150px" alt="the deno mascot dinosaur standing in the rain">
+It forks Deno 2.9.7 and keeps everything that made Deno good: V8, Rust, Tokio,
+secure-by-default permissions, first-class TypeScript and web-standard APIs. Our
+direction is different from upstream's. Deno has been moving back toward the
+Node.js ecosystem. Done moves the other way.
 
-[Deno](https://deno.com)
-([/ˈdiːnoʊ/](https://ipa-reader.com/?text=%CB%88di%CB%90no%CA%8A), pronounced
-`dee-no`) is a JavaScript, TypeScript, and WebAssembly runtime with secure
-defaults and a great developer experience. It's built on [V8](https://v8.dev/),
-[Rust](https://www.rust-lang.org/), and [Tokio](https://tokio.rs/).
+> **Status:** early. The binary is still called `deno` and behaves like Deno
+> 2.9.7. Everything below describes where we are going. See
+> [ROADMAP.md](ROADMAP.md) for the plan and
+> [doc/done-audit.md](doc/done-audit.md) for what the fork starts with.
 
-Learn more about the Deno runtime
-[in the documentation](https://docs.deno.com/runtime/manual).
+## Goals
 
-## Installation
+1. **Deno-first experience.** The native `Deno.*` APIs, web standards and
+   TypeScript are the default way to do things. Node compatibility is something
+   you can turn on, not the default answer.
+2. **A standard library built into the runtime.** Common tasks such as SQL,
+   routing, password hashing, assertions, parsing and hashing should need no
+   dependencies at all.
+3. **Performance and capabilities.** Measure everything, publish the numbers,
+   and keep closing the gaps.
+4. **Native APIs that rival the competition.** Anything a competing runtime
+   ships built-in, Done should ship built-in too, and do it better.
+5. **Products on top of the runtime.** Desktop apps (`deno desktop` already
+   exists in this tree) and a first-party, Fresh-style web framework.
 
-Install the Deno runtime on your system using one of the commands below. Note
-that there are a number of ways to install Deno - a comprehensive list of
-installation options can be found
-[here](https://docs.deno.com/runtime/manual/getting_started/installation).
+## Principles
 
-Shell (Mac, Linux):
+- **Native before polyfill.** A new capability lands as a `Deno.*` API first.
+  Code under `node:` is for compatibility, not for new features.
+- **Zero-dependency by default.** If most apps need it, it belongs in the
+  runtime.
+- **Secure by default.** Every new API goes through the permission system.
+- **Measured, not claimed.** Performance work comes with a benchmark in
+  `tests/bench`.
+- **Hard fork.** We do not track upstream. We take upstream fixes by hand when
+  they are worth it, especially security and V8 updates.
+
+## Building from source
+
+Done builds exactly like Deno. Install the prerequisites listed in
+[`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md#building-from-source), then:
 
 ```sh
-curl -fsSL https://deno.land/install.sh | sh
+git clone --recurse-submodules https://github.com/weeabo-inc/done.git
+cd done
+cargo build --bin deno
+./target/debug/deno eval 'console.log("Hello from Done")'
 ```
 
-PowerShell (Windows):
+Do not run `deno upgrade` on a Done build. It still downloads **upstream Deno**
+and overwrites your binary (see the audit).
 
-```powershell
-irm https://deno.land/install.ps1 | iex
-```
-
-[Homebrew](https://formulae.brew.sh/formula/deno) (Mac):
-
-```sh
-brew install deno
-```
-
-[Chocolatey](https://community.chocolatey.org/packages/deno) (Windows):
-
-```powershell
-choco install deno
-```
-
-[WinGet](https://winstall.app/apps/DenoLand.Deno) (Windows):
-
-```powershell
-winget install --id=DenoLand.Deno
-```
-
-[Scoop](https://scoop.sh/#/apps?q=deno&id=678d8fb557b611df996989c675b1099630a5bbee)
-(Windows):
-
-```powershell
-scoop install main/deno
-```
-
-### Build and install from source
-
-Complete instructions for building Deno from source can be found
-[here](https://github.com/denoland/deno/blob/main/.github/CONTRIBUTING.md#building-from-source).
-
-## Your first Deno program
-
-Deno can be used for many different applications, but is most commonly used to
-build web servers. Create a file called `server.ts` and include the following
-TypeScript code:
+## Your first program
 
 ```ts
-Deno.serve((_req: Request) => {
-  return new Response("Hello, world!");
-});
+Deno.serve((_req: Request) => new Response("Hello, world!"));
 ```
-
-Run your server with the following command:
 
 ```sh
-deno run --allow-net server.ts
+./target/debug/deno run --allow-net server.ts
 ```
-
-This should start a local web server on
-[http://localhost:8000](http://localhost:8000).
-
-Learn more about writing and running Deno programs
-[in the docs](https://docs.deno.com/runtime/manual).
-
-## Additional resources
-
-- **[Deno Docs](https://docs.deno.com)**: official guides and reference docs for
-  the Deno runtime, [Deno Deploy](https://deno.com/deploy), and beyond.
-- **[Deno Standard Library](https://jsr.io/@std)**: officially supported common
-  utilities for Deno programs.
-- **[JSR](https://jsr.io/)**: The open-source package registry for modern
-  JavaScript and TypeScript
-- **[Developer Blog](https://deno.com/blog)**: Product updates, tutorials, and
-  more from the Deno team.
 
 ## Contributing
 
-We appreciate your help! To contribute, please read our
-[contributing instructions](.github/CONTRIBUTING.md).
+Read [ROADMAP.md](ROADMAP.md) to find a milestone, and see
+[CLAUDE.md](CLAUDE.md) for build, test and lint commands. All work goes through
+pull requests against `main`. Run `tools/format.js` and `tools/lint.js` before
+you commit.
 
-[Build status - Cirrus]: https://github.com/denoland/deno/workflows/ci/badge.svg?branch=main&event=push
-[Build status]: https://github.com/denoland/deno/actions
-[Twitter badge]: https://img.shields.io/twitter/follow/deno_land.svg?style=social&label=Follow
-[Twitter link]: https://twitter.com/intent/follow?screen_name=deno_land
-[Bluesky badge]: https://img.shields.io/badge/Follow-whitesmoke?logo=bluesky
-[Bluesky link]: https://bsky.app/profile/deno.land
-[YouTube badge]: https://img.shields.io/youtube/channel/subscribers/UCqC2G2M-rg4fzg1esKFLFIw?style=social
-[YouTube link]: https://www.youtube.com/@deno_land
-[Discord badge]: https://img.shields.io/discord/684898665143206084?logo=discord&style=social
-[Discord link]: https://discord.gg/deno
+## License
+
+MIT. Done is a derivative of Deno, Copyright 2018-2026 the Deno authors. See
+[LICENSE.md](LICENSE.md).
