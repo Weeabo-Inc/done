@@ -12,7 +12,8 @@ Deno.test(function navigatorNumCpus() {
 });
 
 Deno.test(function navigatorUserAgent() {
-  const pattern = /Deno\/\d+\.\d+\.\d+/;
+  // Done identifies itself first, and keeps a `Deno/` token for compatibility.
+  const pattern = /^Done\/\d+\.\d+\.\d+\S* Deno\/\d+\.\d+\.\d+/;
   assert(pattern.test(navigator.userAgent));
 });
 
@@ -24,6 +25,7 @@ Deno.test(function navigatorUserAgentData() {
   assertEquals(uaData.mobile, false);
   assert(Array.isArray(uaData.brands));
   assert(uaData.brands.length > 0);
+  assertEquals(uaData.brands[0].brand, "Done");
   const deno = uaData.brands.find((b) => b.brand === "Deno");
   assert(deno !== undefined, "expected a Deno brand");
   assert(/^\d+$/.test(deno!.version), "brand version should be the major");

@@ -253,7 +253,11 @@ pub async fn run(
   if !cli_options.is_quiet() {
     let mut handle = io::stdout().lock();
 
-    writeln!(handle, "Deno {}", DENO_VERSION_INFO.deno)?;
+    writeln!(
+      handle,
+      "Done {} (deno {} base)",
+      DENO_VERSION_INFO.done, DENO_VERSION_INFO.deno
+    )?;
     writeln!(handle, "exit using ctrl+d, ctrl+c, or close()")?;
 
     if repl_flags.is_default_command {

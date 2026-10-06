@@ -24,7 +24,11 @@ pub const DONE_NEW_ISSUE_URL: &str =
 
 const GIT_COMMIT_HASH: &str = env!("GIT_COMMIT_HASH");
 const TYPESCRIPT: &str = "6.0.3";
+/// The version of the upstream Deno release this build is based on. This is
+/// what `Deno.version.deno` reports, so feature detection keeps working.
 pub const DENO_VERSION: &str = env!("DENO_VERSION");
+/// Done's own version, which is what releases and `done upgrade` use.
+pub const DONE_VERSION: &str = env!("DONE_VERSION");
 
 /// The Node.js version that Deno reports through `process.version` /
 /// `process.versions.node`, used to enforce package.json `engines.node`
@@ -57,7 +61,7 @@ pub static DENO_VERSION_INFO: std::sync::LazyLock<DenoVersionInfo> =
         } else if IS_RC {
           ReleaseChannel::Rc
         } else {
-          release_channel_from_version_string(DENO_VERSION)
+          release_channel_from_version_string(DONE_VERSION)
         }
       });
 
@@ -67,7 +71,7 @@ pub static DENO_VERSION_INFO: std::sync::LazyLock<DenoVersionInfo> =
     } else if IS_RC {
       ReleaseChannel::Rc
     } else {
-      release_channel_from_version_string(DENO_VERSION)
+      release_channel_from_version_string(DONE_VERSION)
     };
 
     DenoVersionInfo {
@@ -77,20 +81,35 @@ pub static DENO_VERSION_INFO: std::sync::LazyLock<DenoVersionInfo> =
         env!("DENO_VERSION")
       },
 
+      done: if release_channel == ReleaseChannel::Canary {
+        concat!(env!("DONE_VERSION"), "+", env!("GIT_COMMIT_HASH_SHORT"))
+      } else {
+        env!("DONE_VERSION")
+      },
+
       release_channel,
 
       git_hash: GIT_COMMIT_HASH,
 
-      // Keep in sync with `deno` field.
+      // Keep in sync with the `done` and `deno` fields. The `Deno/` token is
+      // kept after `Done/` so that servers and libraries that detect Deno by
+      // its user agent keep working.
       user_agent: if release_channel == ReleaseChannel::Canary {
         concat!(
-          "Deno/",
-          env!("DENO_VERSION"),
+          "Done/",
+          env!("DONE_VERSION"),
           "+",
-          env!("GIT_COMMIT_HASH_SHORT")
+          env!("GIT_COMMIT_HASH_SHORT"),
+          " Deno/",
+          env!("DENO_VERSION")
         )
       } else {
-        concat!("Deno/", env!("DENO_VERSION"))
+        concat!(
+          "Done/",
+          env!("DONE_VERSION"),
+          " Deno/",
+          env!("DENO_VERSION")
+        )
       },
 
       typescript: TYPESCRIPT,
@@ -98,11 +117,15 @@ pub static DENO_VERSION_INFO: std::sync::LazyLock<DenoVersionInfo> =
   });
 
 pub struct DenoVersionInfo {
-  /// Human-readable version of the current Deno binary.
+  /// Human-readable version of the Deno release this binary is based on.
   ///
   /// For stable release, a semver, eg. `v1.46.2`.
   /// For canary release, a semver + 7-char git hash, eg. `v1.46.3+asdfqwq`.
   pub deno: &'static str,
+
+  /// Human-readable version of the current Done binary, in the same format as
+  /// `deno`.
+  pub done: &'static str,
 
   pub release_channel: ReleaseChannel,
 
@@ -122,7 +145,7 @@ impl DenoVersionInfo {
     if self.release_channel == ReleaseChannel::Canary {
       self.git_hash
     } else {
-      DENO_VERSION
+      DONE_VERSION
     }
   }
 }

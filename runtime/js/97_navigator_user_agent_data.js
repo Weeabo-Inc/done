@@ -17,7 +17,7 @@ const {
   SafeArrayIterator,
   StringPrototypeIndexOf,
   StringPrototypeSlice,
-  StringPrototypeStartsWith,
+  StringPrototypeSplit,
   SymbolFor,
 } = primordials;
 
@@ -73,32 +73,50 @@ function getArchitecture(arch) {
   }
 }
 
-// `op_bootstrap_user_agent()` returns a string of the form `Deno/<version>`.
-// Derive the version once, lazily.
-let fullVersion_ = null;
-function fullVersion() {
-  if (fullVersion_ === null) {
-    const ua = op_bootstrap_user_agent();
-    fullVersion_ = StringPrototypeStartsWith(ua, "Deno/")
-      ? StringPrototypeSlice(ua, "Deno/".length)
-      : ua;
+// `op_bootstrap_user_agent()` returns one or more space separated
+// `<brand>/<version>` products, for example `Done/0.1.0 Deno/2.9.7`. Parse them
+// once, lazily.
+let brands_ = null;
+function brands() {
+  if (brands_ === null) {
+    brands_ = ArrayPrototypeMap(
+      StringPrototypeSplit(op_bootstrap_user_agent(), " "),
+      (product) => {
+        const slash = StringPrototypeIndexOf(product, "/");
+        return slash === -1 ? { brand: product, version: "" } : {
+          brand: StringPrototypeSlice(product, 0, slash),
+          version: StringPrototypeSlice(product, slash + 1),
+        };
+      },
+    );
   }
-  return fullVersion_;
+  return brands_;
 }
 
-// The major version, used for the low-entropy `brands` list.
-function majorVersion() {
-  const version = fullVersion();
+// The version of the first (primary) product.
+function fullVersion() {
+  return brands()[0].version;
+}
+
+// The major version of a version string, used for the low-entropy `brands`
+// list.
+function majorVersion(version) {
   const dot = StringPrototypeIndexOf(version, ".");
   return dot === -1 ? version : StringPrototypeSlice(version, 0, dot);
 }
 
 function lowEntropyBrands() {
-  return [{ brand: "Deno", version: majorVersion() }];
+  return ArrayPrototypeMap(
+    brands(),
+    (b) => ({ brand: b.brand, version: majorVersion(b.version) }),
+  );
 }
 
 function fullVersionList() {
-  return [{ brand: "Deno", version: fullVersion() }];
+  return ArrayPrototypeMap(
+    brands(),
+    (b) => ({ brand: b.brand, version: b.version }),
+  );
 }
 
 const highEntropyValues = {

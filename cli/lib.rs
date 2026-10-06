@@ -623,7 +623,11 @@ fn setup_panic_hook() {
       eprintln!("PID limit. Try increasing the limit (e.g. --pids-limit=40).");
       eprintln!();
       eprintln!("Platform: {} {}", env::consts::OS, env::consts::ARCH);
-      eprintln!("Version: {}", deno_lib::version::DENO_VERSION_INFO.deno);
+      eprintln!(
+        "Version: {} (deno {} base)",
+        deno_lib::version::DENO_VERSION_INFO.done,
+        deno_lib::version::DENO_VERSION_INFO.deno
+      );
       eprintln!("Args: {:?}", env::args().collect::<Vec<_>>());
       eprintln!();
       deno_runtime::exit(1);
@@ -633,60 +637,21 @@ fn setup_panic_hook() {
     eprintln!("Done has panicked. This is a bug in Done. Please report this");
     eprintln!("at {}.", deno_lib::version::DONE_NEW_ISSUE_URL);
     eprintln!("If you can reliably reproduce this panic, include the");
-    #[cfg(not(all(
-      feature = "panic-trace-frame-pointer",
-      target_os = "linux",
-      any(target_arch = "x86_64", target_arch = "aarch64")
-    )))]
-    {
-      eprintln!("reproduction steps and re-run with the RUST_BACKTRACE=1 env");
-      eprintln!("var set and include the backtrace in your report.");
-    }
-    #[cfg(all(
-      feature = "panic-trace-frame-pointer",
-      target_os = "linux",
-      any(target_arch = "x86_64", target_arch = "aarch64")
-    ))]
-    eprintln!(
-      "reproduction steps and the stack trace URL below in your report."
-    );
+    eprintln!("reproduction steps and re-run with the RUST_BACKTRACE=1 env");
+    eprintln!("var set and include the backtrace in your report.");
     eprintln!();
     eprintln!("Platform: {} {}", env::consts::OS, env::consts::ARCH);
-    eprintln!("Version: {}", deno_lib::version::DENO_VERSION_INFO.deno);
+    eprintln!(
+      "Version: {} (deno {} base)",
+      deno_lib::version::DENO_VERSION_INFO.done,
+      deno_lib::version::DENO_VERSION_INFO.deno
+    );
     eprintln!("Args: {:?}", env::args().collect::<Vec<_>>());
     eprintln!();
 
-    // Panic traces are not supported for custom/development builds.
-    #[cfg(feature = "panic-trace")]
-    {
-      let info = &deno_lib::version::DENO_VERSION_INFO;
-      let version =
-        if info.release_channel == deno_lib::shared::ReleaseChannel::Canary {
-          format!("{}+{}", deno_lib::version::DENO_VERSION, info.git_hash)
-        } else {
-          info.deno.to_string()
-        };
-
-      #[cfg(all(
-        feature = "panic-trace-frame-pointer",
-        target_os = "linux",
-        any(target_arch = "x86_64", target_arch = "aarch64")
-      ))]
-      let trace = deno_panic::trace_frame_pointer();
-      #[cfg(not(all(
-        feature = "panic-trace-frame-pointer",
-        target_os = "linux",
-        any(target_arch = "x86_64", target_arch = "aarch64")
-      )))]
-      let trace = deno_panic::trace();
-      eprintln!("View stack trace at:");
-      eprintln!(
-        "https://panic.deno.com/v{}/{}/{}",
-        version,
-        env!("TARGET"),
-        trace
-      );
-    }
+    // Upstream Deno prints a `panic.deno.com` link here that encodes the
+    // stack trace. That service only symbolizes upstream builds, so Done
+    // relies on RUST_BACKTRACE instead.
 
     orig_hook(panic_info);
     deno_runtime::exit(1);

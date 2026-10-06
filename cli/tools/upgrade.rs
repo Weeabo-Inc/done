@@ -306,8 +306,8 @@ pub fn check_for_upgrades(
       ReleaseChannel::Stable => {
         log::info!(
           "{} {} → {} {}",
-          colors::green("A new release of Deno is available:"),
-          colors::cyan(version::DENO_VERSION_INFO.deno),
+          colors::green("A new release of Done is available:"),
+          colors::cyan(version::DENO_VERSION_INFO.done),
           colors::cyan(&upgrade_version),
           colors::italic_gray("Run `deno upgrade` to install it.")
         );
@@ -315,22 +315,22 @@ pub fn check_for_upgrades(
       ReleaseChannel::Canary => {
         log::info!(
           "{} {}",
-          colors::green("A new canary release of Deno is available."),
+          colors::green("A new canary release of Done is available."),
           colors::italic_gray("Run `deno upgrade canary` to install it.")
         );
       }
       ReleaseChannel::Rc => {
         log::info!(
           "{} {}",
-          colors::green("A new release candidate of Deno is available."),
+          colors::green("A new release candidate of Done is available."),
           colors::italic_gray("Run `deno upgrade rc` to install it.")
         );
       }
       ReleaseChannel::Lts => {
         log::info!(
           "{} {} → {} {}",
-          colors::green("A new LTS release of Deno is available:"),
-          colors::cyan(version::DENO_VERSION_INFO.deno),
+          colors::green("A new LTS release of Done is available:"),
+          colors::cyan(version::DENO_VERSION_INFO.done),
           colors::cyan(&upgrade_version),
           colors::italic_gray("Run `deno upgrade lts` to install it.")
         );
@@ -338,8 +338,8 @@ pub fn check_for_upgrades(
       ReleaseChannel::Alpha => {
         log::info!(
           "{} {} → {} {}",
-          colors::green("A new alpha release of Deno is available:"),
-          colors::cyan(version::DENO_VERSION_INFO.deno),
+          colors::green("A new alpha release of Done is available:"),
+          colors::cyan(version::DENO_VERSION_INFO.done),
           colors::cyan(&upgrade_version),
           colors::italic_gray("Run `deno upgrade alpha` to install it.")
         );
@@ -347,8 +347,8 @@ pub fn check_for_upgrades(
       ReleaseChannel::Beta => {
         log::info!(
           "{} {} → {} {}",
-          colors::green("A new beta release of Deno is available:"),
-          colors::cyan(version::DENO_VERSION_INFO.deno),
+          colors::green("A new beta release of Done is available:"),
+          colors::cyan(version::DENO_VERSION_INFO.done),
           colors::cyan(&upgrade_version),
           colors::italic_gray("Run `deno upgrade beta` to install it.")
         );
@@ -953,7 +953,7 @@ pub async fn upgrade(
     RequestedVersion::from_upgrade_flags(upgrade_flags.clone())?;
   ensure_release_channel_published(requested_version.release_channel())?;
 
-  log::info!("Current Deno version: v{}", version::DENO_VERSION_INFO.deno);
+  log::info!("Current Done version: v{}", version::DENO_VERSION_INFO.done);
 
   let maybe_selected_version_to_upgrade = match &requested_version {
     RequestedVersion::Latest(channel) => {
@@ -1001,7 +1001,7 @@ pub async fn upgrade(
     try_delta_upgrade(
       &client,
       &current_exe_path,
-      version::DENO_VERSION_INFO.deno,
+      version::DENO_VERSION_INFO.done,
       &selected_version_to_upgrade.version_or_hash,
     )
     .await
@@ -1096,7 +1096,7 @@ pub async fn upgrade(
     log::info!("Upgraded successfully (dry run)");
     if requested_version.release_channel() == ReleaseChannel::Stable {
       print_release_notes(
-        version::DENO_VERSION_INFO.deno,
+        version::DENO_VERSION_INFO.done,
         &selected_version_to_upgrade.version_or_hash,
       );
     }
@@ -1128,7 +1128,7 @@ pub async fn upgrade(
   );
   if requested_version.release_channel() == ReleaseChannel::Stable {
     print_release_notes(
-      version::DENO_VERSION_INFO.deno,
+      version::DENO_VERSION_INFO.done,
       &selected_version_to_upgrade.version_or_hash,
     );
   }
@@ -1258,7 +1258,7 @@ fn select_specific_version_for_upgrade(
     | ReleaseChannel::Alpha
     | ReleaseChannel::Beta => {
       version::DENO_VERSION_INFO.release_channel == release_channel
-        && version::DENO_VERSION_INFO.deno == version
+        && version::DENO_VERSION_INFO.done == version
     }
     ReleaseChannel::Canary => version::DENO_VERSION_INFO.git_hash == version,
   };
@@ -1266,7 +1266,7 @@ fn select_specific_version_for_upgrade(
   if !force && current_is_passed {
     log::info!(
       "Version {} is already installed",
-      version::DENO_VERSION_INFO.deno
+      version::DENO_VERSION_INFO.done
     );
     return Ok(None);
   }
@@ -1315,7 +1315,7 @@ async fn find_latest_version_to_upgrade(
     | ReleaseChannel::Lts
     | ReleaseChannel::Rc
     | ReleaseChannel::Alpha
-    | ReleaseChannel::Beta => version::DENO_VERSION_INFO.deno,
+    | ReleaseChannel::Beta => version::DENO_VERSION_INFO.done,
   };
   let should_upgrade = force
     || current_version != latest_version_found.version_or_hash

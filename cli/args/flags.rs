@@ -754,13 +754,15 @@ pub fn flags_from_vec_with_initial_cwd(
 }
 
 /// Render the text printed by `deno --version` (`long`) and `deno -V` (short).
-/// Both forms are prefixed with the binary name and terminated by a newline,
-/// matching what clap's `render_long_version` / `render_version` used to emit.
+/// Both forms are prefixed with the product name, `done`, and terminated by a
+/// newline, matching what clap's `render_long_version` / `render_version` used
+/// to emit. The long form also names the Deno release Done is based on.
 pub fn render_version(long: bool) -> String {
   if long {
     debug_assert_eq!(DENO_VERSION_INFO.typescript, deno_snapshots::TS_VERSION);
     format!(
-      "deno {} ({}, {}, {})\nv8 {}\ntypescript {}\n",
+      "done {} (deno {} base, {}, {}, {})\nv8 {}\ntypescript {}\n",
+      DENO_VERSION_INFO.done,
       DENO_VERSION_INFO.deno,
       DENO_VERSION_INFO.release_channel.name(),
       env!("PROFILE"),
@@ -769,7 +771,7 @@ pub fn render_version(long: bool) -> String {
       DENO_VERSION_INFO.typescript,
     )
   } else {
-    format!("deno {}\n", DENO_VERSION_INFO.deno)
+    format!("done {}\n", DENO_VERSION_INFO.done)
   }
 }
 
