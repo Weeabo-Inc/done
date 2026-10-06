@@ -1209,6 +1209,7 @@ impl<'a> ResolverFactory<'a> {
           maybe_vendor_dir: self
             .config_data
             .and_then(|d| d.vendor_dir.as_ref()),
+          no_node: false,
         }));
       Arc::new(CliResolver::new(
         deno_resolver,

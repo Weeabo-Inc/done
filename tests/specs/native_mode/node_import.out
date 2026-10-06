@@ -1,0 +1,2 @@
+error: Importing 'node:fs' is not allowed because Node.js compatibility is disabled (--no-node or "node": false in deno.json)
+    at [WILDCARD]node_import.ts:[WILDLINE]

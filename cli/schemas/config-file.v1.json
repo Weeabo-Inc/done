@@ -1012,6 +1012,10 @@
         }
       ]
     },
+    "node": {
+      "description": "Set to `false` to run without Node.js compatibility (Deno-native mode, the same as `--no-node`): `npm:` and `node:` specifiers are rejected, package.json and node_modules are not discovered, Node globals such as `process` and `Buffer` are not defined, and timers follow the web standard. Done only.",
+      "type": "boolean"
+    },
     "vendor": {
       "description": "Enables or disables the use of a local vendor folder as a local cache for remote modules and node_modules folder for npm packages. Alternatively, use the `--vendor` flag or override the config via `--vendor=false`. Requires Deno 1.36.1 or later.",
       "type": "boolean"

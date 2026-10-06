@@ -122,6 +122,9 @@ pub struct BootstrapOptions {
   pub close_on_idle: bool,
   /// When true, the `OffscreenCanvas` global is removed at bootstrap.
   pub disable_offscreen_canvas: bool,
+  /// Deno-native mode (`--no-node`): Node globals such as `process` and
+  /// `Buffer` are not defined, and timers follow the web standard.
+  pub no_node: bool,
 }
 
 impl Default for BootstrapOptions {
@@ -162,6 +165,7 @@ impl Default for BootstrapOptions {
       otel_config: Default::default(),
       close_on_idle: false,
       disable_offscreen_canvas: false,
+      no_node: false,
     }
   }
 }
@@ -217,6 +221,8 @@ struct BootstrapV8<'a>(
   Option<&'a str>,
   // disable offscreen canvas
   bool,
+  // no node (Deno-native mode)
+  bool,
 );
 
 impl BootstrapOptions {
@@ -253,6 +259,7 @@ impl BootstrapOptions {
       self.node_cluster_unique_id.as_deref(),
       self.node_cluster_sched_policy.as_deref(),
       self.disable_offscreen_canvas,
+      self.no_node,
     );
 
     bootstrap.serialize(ser).unwrap()

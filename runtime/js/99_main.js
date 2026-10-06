@@ -107,6 +107,23 @@ const lazyFetchMod = () =>
   _fetchMod ??
     (_fetchMod = core.loadExtScript("ext:deno_fetch/26_fetch.js"));
 const messagePort = core.loadExtScript("ext:deno_web/13_message_port.js");
+const webTimers = core.loadExtScript("ext:deno_web/02_timers.js");
+
+// Deno-native mode (`--no-node` / `"node": false`): web-standard timers that
+// return numbers, and none of the Node globals.
+function enterNativeMode() {
+  ObjectDefineProperties(globalThis, {
+    setTimeout: core.propWritable(webTimers.setTimeout),
+    setInterval: core.propWritable(webTimers.setInterval),
+    clearTimeout: core.propWritable(webTimers.clearTimeout),
+    clearInterval: core.propWritable(webTimers.clearInterval),
+  });
+  delete globalThis.process;
+  delete globalThis.Buffer;
+  delete globalThis.global;
+  delete globalThis.setImmediate;
+  delete globalThis.clearImmediate;
+}
 import {
   denoNs,
   denoNsUnstableById,
@@ -958,6 +975,7 @@ function bootstrapMainRuntime(runtimeOptions, warmup = false) {
       17: nodeClusterUniqueId,
       18: nodeClusterSchedPolicy,
       19: disableOffscreenCanvas,
+      20: noNode,
     } = runtimeOptions;
 
     denoNs.build.standalone = standalone;
@@ -1170,7 +1188,9 @@ function bootstrapMainRuntime(runtimeOptions, warmup = false) {
       denoArgs: Deno.args,
       denoVersion: Deno.version,
     };
-    if (nodeBootstrap) {
+    if (noNode) {
+      enterNativeMode();
+    } else if (nodeBootstrap) {
       nodeBootstrap(nodeBootstrapArgs);
     } else if (op_node_has_child_ipc_pipe()) {
       // node-defer: this main process is a forked child with an IPC pipe. It
@@ -1225,6 +1245,7 @@ function bootstrapWorkerRuntime(
       17: nodeClusterUniqueId,
       18: nodeClusterSchedPolicy,
       19: disableOffscreenCanvas,
+      20: noNode,
     } = runtimeOptions;
 
     denoNs.build.standalone = standalone;
@@ -1338,7 +1359,9 @@ function bootstrapWorkerRuntime(
       denoArgs: Deno.args,
       denoVersion: Deno.version,
     };
-    if (nodeBootstrap) {
+    if (noNode && workerType !== "node") {
+      enterNativeMode();
+    } else if (nodeBootstrap) {
       nodeBootstrap(nodeBootstrapArgs);
     } else if (workerType === "node") {
       // node-defer: node worker_threads need the FULL node bootstrap eagerly:

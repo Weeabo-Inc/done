@@ -205,6 +205,8 @@ pub static COMPILE_ARGS: &[ArgDef] = &[
 .help("Do not resolve remote modules"),
   ArgDef::new("no-npm").long("no-npm").set_true()
 .help("Do not resolve npm modules"),
+  ArgDef::new("no-node").long("no-node").set_true()
+.help("Run without Node.js compatibility: reject npm: and node: specifiers, skip package.json discovery, and use web-standard globals"),
   ArgDef::new("node-modules-dir")
     .long("node-modules-dir")
     .action(ArgAction::Set)

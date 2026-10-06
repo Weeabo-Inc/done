@@ -651,7 +651,11 @@ async function evalEsmString(code: string): Promise<any> {
   return await import(toFileUrl(file.path).toString());
 }
 
-Deno.test("bundle: replaces require shim when platform is deno", async () => {
+Deno.test({
+  name: "bundle: replaces require shim when platform is deno",
+  // Requires node:path, which isn't available with --no-node.
+  ignore: !("process" in globalThis),
+}, async () => {
   using dir = new TempDir();
   const entry = dir.join("index.cjs");
   const input = unindent`

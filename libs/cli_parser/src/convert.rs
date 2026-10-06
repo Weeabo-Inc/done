@@ -423,6 +423,7 @@ fn default_parse(
       || result.contains("import-map")
       || result.contains("no-remote")
       || result.contains("no-npm")
+      || result.contains("no-node")
       || result.contains("lock")
       || result.contains("no-lock")
       || result.contains("reload")
@@ -659,6 +660,11 @@ fn no_remote_arg_parse(result: &ParseResult, flags: &mut Flags) {
 
 fn no_npm_arg_parse(result: &ParseResult, flags: &mut Flags) {
   if result.get_bool("no-npm") {
+    flags.no_npm = true;
+  }
+  // `--no-node` turns off npm too.
+  if result.get_bool("no-node") {
+    flags.no_node = true;
     flags.no_npm = true;
   }
 }

@@ -1,0 +1,1 @@
+Importing 'node:path' is not allowed because Node.js compatibility is disabled (--no-node or "node": false in deno.json)

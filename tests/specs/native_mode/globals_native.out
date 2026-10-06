@@ -1,0 +1,5 @@
+setTimeout returns number
+process undefined
+Buffer undefined
+global undefined
+setImmediate undefined

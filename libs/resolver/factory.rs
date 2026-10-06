@@ -217,6 +217,9 @@ pub struct WorkspaceFactoryOptions {
   pub node_modules_linker: Option<NodeModulesLinkerMode>,
   pub no_lock: bool,
   pub no_npm: bool,
+  /// Deno-native mode (`--no-node`). Implies `no_npm`, and rejects `node:`
+  /// specifiers. `"node": false` in the root deno.json does the same.
+  pub no_node: bool,
   /// When no `deno.lock` exists, attempt to seed one by translating a
   /// sibling `package-lock.json`. Currently set by `deno install`.
   pub import_npm_lockfile: bool,
@@ -334,7 +337,16 @@ impl<TSys: WorkspaceFactorySys> WorkspaceFactory<TSys> {
   }
 
   pub fn no_npm(&self) -> bool {
-    self.options.no_npm
+    self.options.no_npm || self.no_node()
+  }
+
+  /// Whether Node.js compatibility is turned off, by `--no-node` or by
+  /// `"node": false` in the root deno.json.
+  pub fn no_node(&self) -> bool {
+    self.options.no_node
+      || self
+        .workspace_directory()
+        .is_ok_and(|dir| workspace_disables_node(&dir.workspace))
   }
 
   /// Resolves the raw node_modules dir mode before any promotion
@@ -553,7 +565,7 @@ impl<TSys: WorkspaceFactorySys> WorkspaceFactory<TSys> {
               self.options.config_discovery,
               ConfigDiscoveryOption::Disabled
             ),
-            no_npm: self.options.no_npm,
+            no_npm: self.no_npm(),
             import_npm_lockfile: self.options.import_npm_lockfile,
           },
           &workspace_directory.workspace,
@@ -612,8 +624,10 @@ impl<TSys: WorkspaceFactorySys> WorkspaceFactory<TSys> {
         },
         false => VendorEnablement::Disable,
       });
-      let resolve_workspace_discover_options = || {
-        let discover_pkg_json = !self.options.no_npm
+      let resolve_workspace_discover_options = |allow_pkg_json: bool| {
+        let discover_pkg_json = allow_pkg_json
+          && !self.options.no_npm
+          && !self.options.no_node
           && !self.has_flag_env_var("DENO_NO_PACKAGE_JSON");
         if !discover_pkg_json {
           log::debug!("package.json auto-discovery is disabled");
@@ -637,34 +651,49 @@ impl<TSys: WorkspaceFactorySys> WorkspaceFactory<TSys> {
           .unwrap_or(VendorEnablement::Disable),
       };
 
-      let dir = match &self.options.config_discovery {
-        ConfigDiscoveryOption::DiscoverCwd => WorkspaceDirectory::discover(
-          &self.sys,
-          WorkspaceDiscoverStart::Paths(std::slice::from_ref(
-            &self.initial_cwd,
-          )),
-          &resolve_workspace_discover_options(),
-        )?,
-        ConfigDiscoveryOption::Discover { start_paths } => {
-          WorkspaceDirectory::discover(
-            &self.sys,
-            WorkspaceDiscoverStart::Paths(start_paths),
-            &resolve_workspace_discover_options(),
-          )?
-        }
-        ConfigDiscoveryOption::Path(path) => {
-          #[cfg(not(target_arch = "wasm32"))]
-          debug_assert!(path.is_absolute());
-          WorkspaceDirectory::discover(
-            &self.sys,
-            WorkspaceDiscoverStart::ConfigFile(path),
-            &resolve_workspace_discover_options(),
-          )?
-        }
-        ConfigDiscoveryOption::Disabled => {
-          WorkspaceDirectory::empty(resolve_empty_options())
-        }
-      };
+      let discover =
+        |allow_pkg_json: bool| -> Result<_, WorkspaceDiscoverError> {
+          Ok(match &self.options.config_discovery {
+            ConfigDiscoveryOption::DiscoverCwd => WorkspaceDirectory::discover(
+              &self.sys,
+              WorkspaceDiscoverStart::Paths(std::slice::from_ref(
+                &self.initial_cwd,
+              )),
+              &resolve_workspace_discover_options(allow_pkg_json),
+            )?,
+            ConfigDiscoveryOption::Discover { start_paths } => {
+              WorkspaceDirectory::discover(
+                &self.sys,
+                WorkspaceDiscoverStart::Paths(start_paths),
+                &resolve_workspace_discover_options(allow_pkg_json),
+              )?
+            }
+            ConfigDiscoveryOption::Path(path) => {
+              #[cfg(not(target_arch = "wasm32"))]
+              debug_assert!(path.is_absolute());
+              WorkspaceDirectory::discover(
+                &self.sys,
+                WorkspaceDiscoverStart::ConfigFile(path),
+                &resolve_workspace_discover_options(allow_pkg_json),
+              )?
+            }
+            ConfigDiscoveryOption::Disabled => {
+              WorkspaceDirectory::empty(resolve_empty_options())
+            }
+          })
+        };
+      let mut dir = discover(true)?;
+      // `"node": false` is only known once the deno.json has been read, so
+      // discover again without package.json files.
+      if workspace_disables_node(&dir.workspace)
+        && !self.options.no_npm
+        && !self.options.no_node
+      {
+        log::debug!(
+          "\"node\": false in deno.json; ignoring package.json files"
+        );
+        dir = discover(false)?;
+      }
       Ok(dir)
     })
   }
@@ -848,6 +877,7 @@ impl<TSys: WorkspaceFactorySys> ResolverFactory<TSys> {
               .workspace
               .vendor_dir_path(),
             workspace_resolver: self.workspace_resolver().await?.clone(),
+            no_node: self.workspace_factory.no_node(),
           })))
         }
         // boxed to prevent the futures getting big and exploding the stack
@@ -1481,4 +1511,12 @@ mod tests {
     apply_minimum_dependency_age_fallbacks(&mut config, Some(2), now());
     assert_eq!(config.age, Some(NewestDependencyDate::Disabled));
   }
+}
+
+fn workspace_disables_node(
+  workspace: &deno_config::workspace::Workspace,
+) -> bool {
+  workspace
+    .root_deno_json()
+    .is_some_and(|config| config.json.node == Some(false))
 }

@@ -300,6 +300,8 @@ pub struct LibMainWorkerOptions {
   pub maybe_initial_cwd: Option<Url>,
   /// When true, the `OffscreenCanvas` global is removed at bootstrap.
   pub disable_offscreen_canvas: bool,
+  /// Deno-native mode (`--no-node`): no Node globals, web-standard timers.
+  pub no_node: bool,
 }
 
 #[derive(Default, Clone)]
@@ -505,6 +507,7 @@ impl<TSys: DenoLibSys> LibWorkerFactorySharedState<TSys> {
           no_legacy_abort: shared.options.no_legacy_abort,
           close_on_idle: args.close_on_idle,
           disable_offscreen_canvas: shared.options.disable_offscreen_canvas,
+          no_node: shared.options.no_node,
         },
         extensions: vec![],
         startup_snapshot: shared.options.startup_snapshot,
@@ -755,6 +758,7 @@ impl<TSys: DenoLibSys> LibMainWorkerFactory<TSys> {
         otel_config: shared.options.otel_config.clone(),
         close_on_idle: shared.options.close_on_idle,
         disable_offscreen_canvas: shared.options.disable_offscreen_canvas,
+        no_node: shared.options.no_node,
       },
       extensions: custom_extensions,
       startup_snapshot: shared.options.startup_snapshot,

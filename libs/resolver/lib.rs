@@ -119,6 +119,7 @@ impl DenoResolveError {
       | DenoResolveErrorKind::UnsupportedPackageJsonFileSpecifier
       | DenoResolveErrorKind::NodeModulesOutOfDate(_)
       | DenoResolveErrorKind::CatalogPackageNotFound(_)
+      | DenoResolveErrorKind::NodeCompatDisabled(_)
       | DenoResolveErrorKind::PackageJsonDepValueParse(_)
       | DenoResolveErrorKind::PackageJsonDepValueUrlParse(_) => None,
     }
@@ -140,6 +141,11 @@ pub enum DenoResolveErrorKind {
   #[class(type)]
   #[error("Package '{0}' not found in catalog")]
   CatalogPackageNotFound(String),
+  #[class(type)]
+  #[error(
+    "Importing '{0}' is not allowed because Node.js compatibility is disabled (--no-node or \"node\": false in deno.json)"
+  )]
+  NodeCompatDisabled(String),
   #[class(inherit)]
   #[error(transparent)]
   MappedResolution(#[from] MappedResolutionError),
@@ -175,6 +181,7 @@ impl DenoResolveErrorKind {
       DenoResolveErrorKind::InvalidVendorFolderImport
       | DenoResolveErrorKind::UnsupportedPackageJsonFileSpecifier
       | DenoResolveErrorKind::CatalogPackageNotFound { .. }
+      | DenoResolveErrorKind::NodeCompatDisabled { .. }
       | DenoResolveErrorKind::MappedResolution { .. }
       | DenoResolveErrorKind::NodeModulesOutOfDate { .. }
       | DenoResolveErrorKind::PackageJsonDepValueParse { .. }
@@ -237,6 +244,8 @@ pub struct DenoResolverOptions<
   /// what already exists on the file system.
   pub is_byonm: bool,
   pub maybe_vendor_dir: Option<&'a PathBuf>,
+  /// Deno-native mode: reject `node:` and `npm:` specifiers.
+  pub no_node: bool,
 }
 
 #[allow(clippy::disallowed_types, reason = "definition")]
@@ -283,6 +292,7 @@ pub struct RawDenoResolver<
   >,
   workspace_resolver: WorkspaceResolverRc<TSys>,
   is_byonm: bool,
+  no_node: bool,
   maybe_vendor_specifier: Option<Url>,
 }
 
@@ -312,6 +322,7 @@ impl<
       node_and_npm_resolver: options.node_and_req_resolver,
       workspace_resolver: options.workspace_resolver,
       is_byonm: options.is_byonm,
+      no_node: options.no_node,
       maybe_vendor_specifier: options
         .maybe_vendor_dir
         .and_then(|v| deno_path_util::url_from_directory_path(v).ok()),
@@ -503,6 +514,16 @@ impl<
       },
       Err(err) => Err(err.into()),
     };
+
+    if self.no_node
+      && let Ok(specifier) = &result
+      && matches!(specifier.scheme(), "node" | "npm")
+    {
+      return Err(
+        DenoResolveErrorKind::NodeCompatDisabled(specifier.to_string())
+          .into_box(),
+      );
+    }
 
     // When the user is vendoring, don't allow them to import directly from the vendor/ directory
     // as it might cause them confusion or duplicate dependencies. Additionally, this folder has

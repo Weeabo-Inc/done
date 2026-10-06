@@ -1,0 +1,46 @@
+{
+  "tests": {
+    // Node globals are not defined, and timers follow the web standard.
+    "globals": {
+      "args": "run --no-node globals.ts",
+      "output": "globals_native.out"
+    },
+    // Without --no-node, the Node globals are still there.
+    "globals_default": {
+      "args": "run globals.ts",
+      "output": "globals_default.out"
+    },
+    "node_specifier_rejected": {
+      "args": "run --no-node node_import.ts",
+      "output": "node_import.out",
+      "exitCode": 1
+    },
+    "dynamic_node_specifier_rejected": {
+      "args": "run --no-node dynamic_node_import.ts",
+      "output": "dynamic_node_import.out",
+      "exitCode": 0
+    },
+    "npm_specifier_rejected": {
+      "args": "run --no-node npm_import.ts",
+      "output": "npm_import.out",
+      "exitCode": 1
+    },
+    "config_node_false": {
+      "cwd": "config_node_false",
+      "args": "run main.ts",
+      "output": "config_node_false/main.out",
+      "exitCode": 1
+    },
+    // package.json files are not discovered, so their dependencies are never
+    // installed and bare specifiers don't resolve through them.
+    "package_json_ignored": {
+      "cwd": "package_json_ignored",
+      "args": "run --no-node main.ts",
+      "output": "package_json_ignored/main.out"
+    },
+    "test_subcommand": {
+      "args": "test --no-node globals_test.ts",
+      "output": "globals_test.out"
+    }
+  }
+}

@@ -975,6 +975,9 @@ pub struct Flags {
   pub no_remote: bool,
   pub no_lock: bool,
   pub no_npm: bool,
+  /// Deno-native mode: no `npm:`/`node:` specifiers, no package.json or
+  /// node_modules discovery, no Node globals, and web-standard timers.
+  pub no_node: bool,
   pub reload: bool,
   pub seed: Option<u64>,
   pub trace_ops: Option<Vec<String>>,

@@ -1389,6 +1389,7 @@ impl CliFactory {
         std::env::var("DENO_DISABLE_OFFSCREEN_CANVAS").as_deref(),
         Ok("1") | Ok("true")
       ),
+      no_node: workspace_factory.no_node(),
     })
   }
 
@@ -1610,6 +1611,7 @@ fn new_workspace_factory_options(
     lock_arg: flags.lock.as_ref().map(|l| initial_cwd.join(l)),
     lockfile_skip_write: flags.internal.lockfile_skip_write,
     no_npm: flags.no_npm,
+    no_node: flags.no_node,
     node_modules_dir: flags.node_modules_dir,
     node_modules_linker: flags.node_modules_linker,
     npm_process_state: npm_process_state(&CliSys::default()).as_ref().map(

@@ -1519,6 +1519,8 @@ pub struct ConfigFileJson {
   pub jsr_deps_in_node_modules: Option<bool>,
   pub prefer_package_json: Option<bool>,
   pub vendor: Option<bool>,
+  /// `"node": false` turns on Deno-native mode (same as `--no-node`).
+  pub node: Option<bool>,
   pub license: Option<Value>,
   pub permissions: Option<Value>,
   pub publish: Option<Value>,

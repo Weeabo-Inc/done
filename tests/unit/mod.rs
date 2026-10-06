@@ -67,7 +67,23 @@ fn main() {
   }
 }
 
+/// Test files that import `node:` modules and so can't run in Deno-native
+/// mode.
+const NODE_ONLY_TEST_FILES: &[&str] = &["::serve_test", "::umask_test"];
+
+/// `DENO_UNIT_NO_NODE=1` runs the suite with `--no-node` (Deno-native mode).
+fn no_node_mode() -> bool {
+  std::env::var_os("DENO_UNIT_NO_NODE").is_some_and(|v| v == "1")
+}
+
 fn run_test(test: &CollectedTest) -> TestResult {
+  if no_node_mode()
+    && NODE_ONLY_TEST_FILES
+      .iter()
+      .any(|name| test.name.ends_with(name))
+  {
+    return TestResult::Ignored;
+  }
   let mut deno = if test.name.ends_with("::bundle_test") {
     TestContextBuilder::new()
       .add_npm_env_vars()
@@ -130,6 +146,10 @@ fn run_test(test: &CollectedTest) -> TestResult {
   if test.name.ends_with("::tls_sni_test") {
     // TODO(lucacasonato): fix the SNI in the certs so that this is not needed
     deno = deno.arg("--unsafely-ignore-certificate-errors");
+  }
+
+  if no_node_mode() {
+    deno = deno.arg("--no-node");
   }
 
   let mut deno = deno.arg("-A").arg(test.path.clone());

@@ -2411,7 +2411,8 @@ Deno.test(
 // failed"` whose `.cause` carries the low-level detail, rather than leaking
 // the raw reqwest message into `.message` with an undefined `.cause`.
 Deno.test(
-  { permissions: { net: true } },
+  // Uses node:http, which isn't available with --no-node.
+  { permissions: { net: true }, ignore: !("process" in globalThis) },
   async function fetchConnectionClosedBeforeMessageComplete() {
     const { default: http } = await import("node:http");
     const server = http.createServer((_req, res) => {

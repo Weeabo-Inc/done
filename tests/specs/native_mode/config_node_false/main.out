@@ -1,0 +1,2 @@
+error: Importing 'node:process' is not allowed because Node.js compatibility is disabled (--no-node or "node": false in deno.json)
+    at [WILDCARD]main.ts:[WILDLINE]
