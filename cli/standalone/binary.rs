@@ -484,7 +484,7 @@ impl<'a> DenoCompileBinaryWriter<'a> {
         format!("canary/{}/{}", DENO_VERSION_INFO.git_hash, binary_name)
       }
       _ => {
-        format!("release/v{}/{}", DENO_VERSION_INFO.deno, binary_name)
+        format!("release/v{}/{}", DENO_VERSION_INFO.done, binary_name)
       }
     };
 
@@ -559,7 +559,7 @@ impl<'a> DenoCompileBinaryWriter<'a> {
         format!("canary/{}/{}", DENO_VERSION_INFO.git_hash, binary_name)
       }
       _ => {
-        format!("release/v{}/{}", DENO_VERSION_INFO.deno, binary_name)
+        format!("release/v{}/{}", DENO_VERSION_INFO.done, binary_name)
       }
     };
 
@@ -595,7 +595,7 @@ impl<'a> DenoCompileBinaryWriter<'a> {
     output_path: &Path,
     binary_path_suffix: &str,
   ) -> Result<Vec<u8>, AnyError> {
-    let download_url = format!("https://dl.deno.land/{binary_path_suffix}");
+    let download_url = base_binary_download_url(binary_path_suffix)?;
     let response = {
       let progress_bars = ProgressBar::new(ProgressBarStyle::DownloadBars);
       let progress = progress_bars.update(&download_url);
@@ -1896,6 +1896,29 @@ fn set_windows_binary_to_gui(bin: &mut [u8]) -> Result<(), AnyError> {
   bin[(subsystem_start)..(subsystem_start + 2)]
     .copy_from_slice(&subsystem.to_le_bytes());
   Ok(())
+}
+
+/// Where `deno compile` downloads its runtime (`denort`) from. Done serves it
+/// as an asset of the matching GitHub release, so a compiled program always
+/// embeds the Done runtime that compiled it. Set `DENORT_DOWNLOAD_URL` to use
+/// a mirror; the asset name is appended to it.
+fn base_binary_download_url(
+  binary_path_suffix: &str,
+) -> Result<String, AnyError> {
+  let Some(release_path) = binary_path_suffix.strip_prefix("release/") else {
+    bail!(
+      "Done does not publish canary runtimes. Set DENORT_BIN to the path of a locally built denort to compile with a canary build."
+    );
+  };
+  if let Ok(base) = env::var("DENORT_DOWNLOAD_URL") {
+    let asset = release_path.rsplit('/').next().unwrap_or(release_path);
+    return Ok(format!("{}/{}", base.trim_end_matches('/'), asset));
+  }
+  Ok(format!(
+    "{}/download/{}",
+    deno_lib::version::DONE_RELEASES_URL,
+    release_path
+  ))
 }
 
 #[cfg(test)]

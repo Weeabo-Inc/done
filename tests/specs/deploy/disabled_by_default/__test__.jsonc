@@ -1,0 +1,16 @@
+{
+  "tests": {
+    // Deno Deploy is an upstream service. Done refuses to download and run its
+    // CLI unless the user opts in.
+    "deploy": {
+      "args": "deploy",
+      "output": "deploy.out",
+      "exitCode": 1
+    },
+    "tunnel": {
+      "args": "run --tunnel main.ts",
+      "output": "tunnel.out",
+      "exitCode": 1
+    }
+  }
+}

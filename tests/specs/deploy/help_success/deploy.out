@@ -1,0 +1,2 @@
+error: deno deploy uses Deno Deploy, a service run by the upstream Deno project, and is disabled in Done.
+  hint: set DONE_ENABLE_DENO_DEPLOY=1 to use it anyway.

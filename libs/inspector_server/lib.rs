@@ -934,7 +934,7 @@ impl InspectorInfo {
     json!({
       "description": "deno",
       "devtoolsFrontendUrl": self.get_frontend_url(host),
-      "faviconUrl": "https://deno.land/favicon.ico",
+      "faviconUrl": "https://raw.githubusercontent.com/weeabo-inc/done/main/doc/assets/done-icon.svg",
       "id": self.uuid.to_string(),
       "title": self.get_title(),
       "type": "node",

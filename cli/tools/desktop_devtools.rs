@@ -507,7 +507,7 @@ fn json_list(
     "title": TargetKind::Unified.title(),
     "description": "Unified DevTools (CEF page + Deno runtime)",
     "url": "deno-desktop://unified",
-    "faviconUrl": "https://deno.land/favicon.ico",
+    "faviconUrl": "https://raw.githubusercontent.com/weeabo-inc/done/main/doc/assets/done-icon.svg",
     "devtoolsFrontendUrl": format!(
       "devtools://devtools/bundled/inspector.html?ws={}",
       strip_scheme(&unified_url),
@@ -523,7 +523,7 @@ fn json_list(
     "title": TargetKind::Deno.title(),
     "description": "Deno runtime V8 isolate (direct)",
     "url": format!("deno://{}", state.config.deno_internal),
-    "faviconUrl": "https://deno.land/favicon.ico",
+    "faviconUrl": "https://raw.githubusercontent.com/weeabo-inc/done/main/doc/assets/done-icon.svg",
     "devtoolsFrontendUrl": format!(
       "devtools://devtools/bundled/js_app.html?ws={}&experiments=true&v8only=true",
       strip_scheme(&deno_url),
@@ -536,7 +536,7 @@ fn json_list(
     "title": TargetKind::Cef.title(),
     "description": "CEF renderer V8 isolate (direct)",
     "url": format!("cef://{}", state.config.cef_internal),
-    "faviconUrl": "https://deno.land/favicon.ico",
+    "faviconUrl": "https://raw.githubusercontent.com/weeabo-inc/done/main/doc/assets/done-icon.svg",
     "devtoolsFrontendUrl": format!(
       "devtools://devtools/bundled/inspector.html?ws={}",
       strip_scheme(&cef_url),

@@ -166,6 +166,7 @@ async fn run_subcommand(
       tools::bundle::bundle(Arc::new(flags), bundle_flags).await
     }),
     DenoSubcommand::Deploy(deploy_flags) => spawn_subcommand(async move {
+      ensure_deno_deploy_enabled("deno deploy")?;
       tools::deploy::deploy(flags, deploy_flags).await
     }),
     DenoSubcommand::Doc(doc_flags) => spawn_subcommand(async {
@@ -1014,6 +1015,9 @@ async fn resolve_flags_and_init(
 
   // Tunnel sets up env vars and OTEL, so connect before everything else.
   if flags.tunnel && !matches!(flags.subcommand, DenoSubcommand::Deploy(_)) {
+    if let Err(err) = ensure_deno_deploy_enabled("--tunnel") {
+      exit_for_error(err, initial_cwd.as_deref());
+    }
     if let Err(err) = initialize_tunnel(&flags).await {
       exit_for_error(
         err.context("Failed to start with tunnel"),
@@ -1286,6 +1290,26 @@ struct AuthTunnelOutput {
   org: String,
   app: String,
   token: String,
+}
+
+/// Set to `1` to use the upstream Deno Deploy integrations (`deno deploy`,
+/// `deno sandbox`, `--tunnel`). They are off by default because they download
+/// and run Deno Deploy's CLI and connect to Deno's servers.
+const DENO_DEPLOY_OPT_IN_ENV_VAR: &str = "DONE_ENABLE_DENO_DEPLOY";
+
+fn ensure_deno_deploy_enabled(feature: &str) -> Result<(), AnyError> {
+  if deno_lib::args::has_flag_env_var(
+    &sys_traits::impls::RealSys,
+    DENO_DEPLOY_OPT_IN_ENV_VAR,
+  ) {
+    return Ok(());
+  }
+  Err(deno_core::anyhow::anyhow!(
+    "{feature} uses Deno Deploy, a service run by the upstream Deno project, and is disabled in Done.
+  {}: set {}=1 to use it anyway.",
+    colors::cyan("hint"),
+    DENO_DEPLOY_OPT_IN_ENV_VAR,
+  ))
 }
 
 async fn auth_tunnel(

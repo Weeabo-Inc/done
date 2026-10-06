@@ -1972,7 +1972,7 @@ impl LaufeyBackendResolver {
     // releases) start rate-limiting empty UAs aggressively.
     let mut headers = http::HeaderMap::new();
     if let Ok(ua) = http::HeaderValue::from_str(&format!(
-      "deno-desktop/{} (+https://deno.com)",
+      "done-desktop/{} (+https://github.com/weeabo-inc/done)",
       env!("CARGO_PKG_VERSION")
     )) {
       headers.insert(http::header::USER_AGENT, ua);
