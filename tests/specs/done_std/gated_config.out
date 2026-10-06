@@ -1,0 +1,11 @@
+openSqlite true
+password false
+hash false
+toml false
+glob false
+router false
+semver false
+uuid false
+parseArgs false
+assertEquals true
+expect true

@@ -385,4 +385,81 @@ core.defineGlobalProperties(denoNsUnstableById[unstableIds.webgpu], {
 
 // denoNsUnstableById[unstableIds.workerOptions] = { __proto__: null }
 
+// Done's built-in standard library (ext/done). Each API is loaded on first
+// access, so programs that don't use it pay nothing at startup.
+function lazyScript(specifier) {
+  let mod;
+  return () => mod ?? (mod = core.loadExtScript(specifier));
+}
+const loadDoneAssert = lazyScript("ext:deno_done/00_assert.js");
+const loadDoneSqlite = lazyScript("ext:deno_done/01_sqlite.js");
+const loadDonePassword = lazyScript(
+  "ext:deno_done/02_password.js",
+);
+const loadDoneHash = lazyScript("ext:deno_done/03_hash.js");
+const loadDoneFormats = lazyScript("ext:deno_done/04_formats.js");
+const loadDoneGlob = lazyScript("ext:deno_done/05_glob.js");
+const loadDoneRouter = lazyScript("ext:deno_done/06_router.js");
+const loadDoneSemver = lazyScript("ext:deno_done/07_semver.js");
+const loadDoneUuid = lazyScript("ext:deno_done/08_uuid.js");
+const loadDoneParseArgs = lazyScript(
+  "ext:deno_done/09_parse_args.js",
+);
+
+function lazyProps(names, loader) {
+  const props = { __proto__: null };
+  for (let i = 0; i < names.length; i++) {
+    const name = names[i];
+    props[name] = core.propWritableLazyLoaded((mod) => mod[name], loader);
+  }
+  const target = { __proto__: null };
+  core.defineGlobalProperties(target, props);
+  return target;
+}
+
+denoNsUnstableById[unstableIds.assert] = lazyProps([
+  "AssertionError",
+  "assert",
+  "assertArrayIncludes",
+  "assertEquals",
+  "assertExists",
+  "assertFalse",
+  "assertInstanceOf",
+  "assertMatch",
+  "assertNotEquals",
+  "assertNotStrictEquals",
+  "assertObjectMatch",
+  "assertRejects",
+  "assertStrictEquals",
+  "assertStringIncludes",
+  "assertThrows",
+  "expect",
+  "fail",
+  "unreachable",
+], loadDoneAssert);
+denoNsUnstableById[unstableIds.sqlite] = lazyProps(
+  ["openSqlite", "SqliteDatabase"],
+  loadDoneSqlite,
+);
+denoNsUnstableById[unstableIds.password] = lazyProps(
+  ["password"],
+  loadDonePassword,
+);
+denoNsUnstableById[unstableIds.hash] = lazyProps(["hash"], loadDoneHash);
+denoNsUnstableById[unstableIds.formats] = lazyProps(
+  ["csv", "toml", "yaml"],
+  loadDoneFormats,
+);
+denoNsUnstableById[unstableIds.glob] = lazyProps(
+  ["glob", "globSync"],
+  loadDoneGlob,
+);
+denoNsUnstableById[unstableIds.router] = lazyProps(["router"], loadDoneRouter);
+denoNsUnstableById[unstableIds.semver] = lazyProps(["semver"], loadDoneSemver);
+denoNsUnstableById[unstableIds.uuid] = lazyProps(["uuid"], loadDoneUuid);
+denoNsUnstableById[unstableIds.parseArgs] = lazyProps(
+  ["parseArgs"],
+  loadDoneParseArgs,
+);
+
 export { denoNs, denoNsUnstableById, unstableIds };

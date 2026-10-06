@@ -416,6 +416,57 @@ pub static UNSTABLE_DEPRECATED_ARG: &[ArgDef] = &[
 /// subcommand, so any command that omits them will reject flags the old
 /// parser accepted.
 pub static UNSTABLE_FEATURE_ARGS: &[ArgDef] = &[
+  // Done's built-in standard library (ext/done).
+  ArgDef::new("unstable-assert")
+    .long("unstable-assert")
+    .set_true()
+    .hidden()
+.help("Enable the built-in `Deno.assert*()` and `Deno.expect()` test assertions"),
+  ArgDef::new("unstable-formats")
+    .long("unstable-formats")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.toml`, `Deno.yaml` and `Deno.csv` APIs"),
+  ArgDef::new("unstable-glob")
+    .long("unstable-glob")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.glob()` API"),
+  ArgDef::new("unstable-hash")
+    .long("unstable-hash")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.hash` API"),
+  ArgDef::new("unstable-parse-args")
+    .long("unstable-parse-args")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.parseArgs()` API"),
+  ArgDef::new("unstable-password")
+    .long("unstable-password")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.password` API"),
+  ArgDef::new("unstable-router")
+    .long("unstable-router")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.router()` API"),
+  ArgDef::new("unstable-semver")
+    .long("unstable-semver")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.semver` API"),
+  ArgDef::new("unstable-sqlite")
+    .long("unstable-sqlite")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.openSqlite()` API"),
+  ArgDef::new("unstable-uuid")
+    .long("unstable-uuid")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.uuid` API"),
 ArgDef::new("unstable-bare-node-builtins")
     .long("unstable-bare-node-builtins")
     .set_true()

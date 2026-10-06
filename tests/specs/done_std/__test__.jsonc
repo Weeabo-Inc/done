@@ -1,0 +1,26 @@
+{
+  "tests": {
+    // Each API is only defined when its unstable flag is passed.
+    "gated_by_default": {
+      "args": "run gated.ts",
+      "output": "gated.out"
+    },
+    "gated_from_config": {
+      "args": "run --config unstable.json gated.ts",
+      "output": "gated_config.out"
+    },
+    "all_apis": {
+      "args": "run --unstable-sqlite --unstable-password --unstable-hash --unstable-formats --unstable-glob --unstable-router --unstable-semver --unstable-uuid --unstable-parse-args --unstable-assert -R=. main.ts --name=Done -v",
+      "output": "main.out"
+    },
+    "test_with_builtin_asserts": {
+      "args": "test --unstable-assert assert_test.ts",
+      "output": "assert_test.out"
+    },
+    "failing_assert_output": {
+      "args": "test --unstable-assert failing_test.ts",
+      "output": "failing_test.out",
+      "exitCode": 1
+    }
+  }
+}

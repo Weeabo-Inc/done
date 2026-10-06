@@ -1,0 +1,36 @@
+# Copyright 2018-2026 the Deno authors. MIT license.
+
+[package]
+name = "deno_done"
+version = "0.1.0"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+description = "Done's built-in standard library: SQLite, passwords, hashing, data formats, globbing and more"
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+argon2.workspace = true
+base64.workspace = true
+bcrypt.workspace = true
+crc32fast.workspace = true
+csv.workspace = true
+deno_core.workspace = true
+deno_error.workspace = true
+deno_fs.workspace = true
+deno_permissions.workspace = true
+deno_semver.workspace = true
+globset.workspace = true
+rand.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde_yaml_ng.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+uuid = { workspace = true, features = ["v4", "v7"] }
+walkdir.workspace = true
+xxhash-rust = { workspace = true, features = ["xxh32", "xxh64", "xxh3"] }

@@ -1,0 +1,12 @@
+args: Done true
+sqlite: ada
+password: true
+crc32: cbf43926
+toml: Done 8000
+yaml: {"a":[1,2]}
+csv: [{"a":"1","b":"2"}]
+glob: data.toml
+router: hi done
+semver: 1.4.0
+uuid: true
+expect: ok

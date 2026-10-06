@@ -963,6 +963,16 @@ fn unstable_args_parse(result: &ParseResult, flags: &mut Flags) {
     ("unstable-unsafe-proto", None),
     ("unstable-vsock", None),
     ("unstable-webgpu", None),
+    ("unstable-assert", None),
+    ("unstable-formats", None),
+    ("unstable-glob", None),
+    ("unstable-hash", None),
+    ("unstable-parse-args", None),
+    ("unstable-password", None),
+    ("unstable-router", None),
+    ("unstable-semver", None),
+    ("unstable-sqlite", None),
+    ("unstable-uuid", None),
   ];
 
   for (flag_name, setter) in unstable_features {

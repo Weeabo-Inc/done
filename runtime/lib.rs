@@ -5,6 +5,7 @@ pub use deno_canvas;
 pub use deno_core;
 pub use deno_cron;
 pub use deno_crypto;
+pub use deno_done;
 pub use deno_fetch;
 pub use deno_ffi;
 pub use deno_fs;

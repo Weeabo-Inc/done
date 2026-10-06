@@ -77,62 +77,64 @@ pub async fn init_project(
     create_file(
       &dir,
       "main.ts",
-      r#"import { serveDir } from "@std/http";
-
-const userPagePattern = new URLPattern({ pathname: "/users/:id" });
-const staticPathPattern = new URLPattern({ pathname: "/static/*" });
+      r#"const contentTypes: Record<string, string> = {
+  css: "text/css; charset=UTF-8",
+  html: "text/html; charset=UTF-8",
+  js: "text/javascript; charset=UTF-8",
+};
 
 export default {
-  fetch(req) {
-    const url = new URL(req.url);
-
-    if (url.pathname === "/") {
-      return new Response("Home page");
-    }
-
-    const userPageMatch = userPagePattern.exec(url);
-    if (userPageMatch) {
-      return new Response(userPageMatch.pathname.groups.id);
-    }
-
-    if (staticPathPattern.test(url)) {
-      return serveDir(req);
-    }
-
-    return new Response("Not found", { status: 404 });
-  },
+  fetch: Deno.router({
+    "GET /": () => new Response("Home page"),
+    "GET /users/:id": (_req, { params }) => new Response(params.id),
+    "GET /static/:file": async (_req, { params }) => {
+      const file = params.file!;
+      try {
+        const body = await Deno.readFile(
+          new URL(`./static/${file}`, import.meta.url),
+        );
+        const ext = file.slice(file.lastIndexOf(".") + 1);
+        return new Response(body, {
+          headers: {
+            "content-type": contentTypes[ext] ?? "application/octet-stream",
+          },
+        });
+      } catch {
+        return new Response("Not found", { status: 404 });
+      }
+    },
+  }),
 } satisfies Deno.ServeDefaultExport;
 "#,
     )?;
     create_file(
       &dir,
       "main_test.ts",
-      r#"import { assertEquals } from "@std/assert";
-import server from "./main.ts";
+      r#"import server from "./main.ts";
 
 Deno.test(async function serverFetch() {
   const req = new Request("https://deno.land");
   const res = await server.fetch(req);
-  assertEquals(await res.text(), "Home page");
+  Deno.assertEquals(await res.text(), "Home page");
 });
 
 Deno.test(async function serverFetchNotFound() {
   const req = new Request("https://deno.land/404");
   const res = await server.fetch(req);
-  assertEquals(res.status, 404);
+  Deno.assertEquals(res.status, 404);
 });
 
 Deno.test(async function serverFetchUsers() {
   const req = new Request("https://deno.land/users/123");
   const res = await server.fetch(req);
-  assertEquals(await res.text(), "123");
+  Deno.assertEquals(await res.text(), "123");
 });
 
 Deno.test(async function serverFetchStatic() {
   const req = new Request("https://deno.land/static/hello.js");
   const res = await server.fetch(req);
-  assertEquals(await res.text(), 'console.log("Hello, world!");\n');
-  assertEquals(res.headers.get("content-type"), "text/javascript; charset=UTF-8");
+  Deno.assertEquals(await res.text(), 'console.log("Hello, world!");\n');
+  Deno.assertEquals(res.headers.get("content-type"), "text/javascript; charset=UTF-8");
 });
 "#,
     )?;
@@ -153,10 +155,7 @@ Deno.test(async function serverFetchStatic() {
         "tasks": {
           "dev": "deno serve --watch -R main.ts",
         },
-        "imports": {
-          "@std/assert": "jsr:@std/assert@1",
-          "@std/http": "jsr:@std/http@1",
-        }
+        "unstable": ["assert", "router"]
       }),
     )?;
   } else if init_flags.lib {
@@ -178,11 +177,10 @@ Deno.test(async function serverFetchStatic() {
     create_file(
       &dir,
       "mod_test.ts",
-      r#"import { assertEquals } from "@std/assert";
-import { add } from "./mod.ts";
+      r#"import { add } from "./mod.ts";
 
 Deno.test(function addTest() {
-  assertEquals(add(2, 3), 5);
+  Deno.assertEquals(add(2, 3), 5);
 });
 "#,
     )?;
@@ -198,9 +196,7 @@ Deno.test(function addTest() {
           "dev": "deno test --watch"
         },
         "license": "MIT",
-        "imports": {
-          "@std/assert": "jsr:@std/assert@1"
-        },
+        "unstable": ["assert"],
       }),
     )?;
   } else {
@@ -230,21 +226,20 @@ if (import.meta.main) {
     create_file(
       &dir,
       "main_test.ts",
-      r#"import { assertEquals } from "@std/assert";
-import { handler } from "./main.ts";
+      r#"import { handler } from "./main.ts";
 
 Deno.test("returns html on /", async () => {
   const res = handler(new Request("http://localhost/"));
-  assertEquals(res.headers.get("content-type"), "text/html");
+  Deno.assertEquals(res.headers.get("content-type"), "text/html");
   const body = await res.text();
-  assertEquals(body.includes("Welcome to Deno"), true);
+  Deno.assertEquals(body.includes("Welcome to Deno"), true);
 });
 
 Deno.test("returns json on /api", async () => {
   const res = handler(new Request("http://localhost/api"));
   const data = await res.json();
-  assertEquals(data.message, "Hello, world!");
-  assertEquals(typeof data.time, "string");
+  Deno.assertEquals(data.message, "Hello, world!");
+  Deno.assertEquals(typeof data.time, "string");
 });
 "#,
     )?;
@@ -256,9 +251,7 @@ Deno.test("returns json on /api", async () => {
         "tasks": {
           "dev": "deno run --watch --allow-net main.ts"
         },
-        "imports": {
-          "@std/assert": "jsr:@std/assert@1"
-        }
+        "unstable": ["assert"]
       }),
     )?;
   }

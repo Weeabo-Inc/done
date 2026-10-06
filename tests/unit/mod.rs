@@ -121,6 +121,24 @@ fn run_test(test: &CollectedTest) -> TestResult {
     deno = deno.arg("--unstable-kv");
   }
 
+  // Done's built-in standard library (ext/done).
+  if test.name.contains("::done_") {
+    for feature in [
+      "assert",
+      "formats",
+      "glob",
+      "hash",
+      "parse-args",
+      "password",
+      "router",
+      "semver",
+      "sqlite",
+      "uuid",
+    ] {
+      deno = deno.arg(format!("--unstable-{feature}"));
+    }
+  }
+
   if test.name.ends_with("::webgpu_test") {
     deno = deno.arg("--unstable-webgpu");
   }

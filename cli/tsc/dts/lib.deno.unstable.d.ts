@@ -5098,3 +5098,764 @@ declare var CSSStyleSheet: {
   readonly prototype: CSSStyleSheet;
   new (): CSSStyleSheet;
 };
+
+// Done's built-in standard library. Each group of APIs below is gated behind
+// its own `--unstable-<name>` flag.
+declare namespace Deno {
+  /**
+   * Thrown by the built-in assertions when an assertion fails.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`.
+   */
+  export class AssertionError extends Error {
+    constructor(message: string, options?: ErrorOptions);
+  }
+
+  /** Asserts that `expr` is truthy.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assert(expr: unknown, msg?: string): asserts expr;
+  /** Asserts that `expr` is falsy.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assertFalse(expr: unknown, msg?: string): void;
+  /** Asserts that `actual` and `expected` are deeply equal.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assertEquals<T>(
+    actual: unknown,
+    expected: T,
+    msg?: string,
+  ): asserts actual is T;
+  /** Asserts that `actual` and `expected` are not deeply equal.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assertNotEquals(
+    actual: unknown,
+    expected: unknown,
+    msg?: string,
+  ): void;
+  /** Asserts that `actual` and `expected` are the same value (`Object.is`).
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assertStrictEquals<T>(
+    actual: unknown,
+    expected: T,
+    msg?: string,
+  ): asserts actual is T;
+  /** Asserts that `actual` and `expected` are not the same value.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assertNotStrictEquals(
+    actual: unknown,
+    expected: unknown,
+    msg?: string,
+  ): void;
+  /** Asserts that `actual` is neither `null` nor `undefined`.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assertExists<T>(
+    actual: T,
+    msg?: string,
+  ): asserts actual is NonNullable<T>;
+  /** Asserts that `actual` is an instance of `expectedType`.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assertInstanceOf<
+    // deno-lint-ignore no-explicit-any
+    T extends abstract new (...args: any[]) => any,
+  >(
+    actual: unknown,
+    expectedType: T,
+    msg?: string,
+  ): asserts actual is InstanceType<T>;
+  /** Asserts that `actual` matches the regular expression `expected`.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assertMatch(
+    actual: string,
+    expected: RegExp,
+    msg?: string,
+  ): void;
+  /** Asserts that `actual` contains `expected`.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assertStringIncludes(
+    actual: string,
+    expected: string,
+    msg?: string,
+  ): void;
+  /** Asserts that `actual` includes every value in `expected`, compared
+   * deeply.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assertArrayIncludes<T>(
+    actual: ArrayLike<T>,
+    expected: ArrayLike<T>,
+    msg?: string,
+  ): void;
+  /** Asserts that `actual` has at least the properties of `expected`.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assertObjectMatch(
+    // deno-lint-ignore no-explicit-any
+    actual: Record<PropertyKey, any>,
+    expected: Record<PropertyKey, unknown>,
+    msg?: string,
+  ): void;
+  /** Asserts that `fn` throws, optionally an instance of `ErrorClass` whose
+   * message includes `msgIncludes`. Returns the thrown error.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assertThrows<E extends Error = Error>(
+    fn: () => unknown,
+    // deno-lint-ignore no-explicit-any
+    ErrorClass?: abstract new (...args: any[]) => E,
+    msgIncludes?: string,
+    msg?: string,
+  ): E;
+  /** Asserts that the promise returned by `fn` rejects. Returns the rejection
+   * reason.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function assertRejects<E extends Error = Error>(
+    fn: () => PromiseLike<unknown>,
+    // deno-lint-ignore no-explicit-any
+    ErrorClass?: abstract new (...args: any[]) => E,
+    msgIncludes?: string,
+    msg?: string,
+  ): Promise<E>;
+  /** Throws an `AssertionError` with `msg`.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function fail(msg?: string): never;
+  /** Throws an `AssertionError`, marking code that must not be reached.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function unreachable(msg?: string): never;
+
+  /**
+   * The result of a matcher: `void`, or a promise for `resolves`/`rejects`.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`.
+   */
+  export type ExpectResult<IsAsync extends boolean> = IsAsync extends true
+    ? Promise<void>
+    : void;
+
+  /**
+   * Jest-style matchers returned by {@linkcode Deno.expect}.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`.
+   */
+  export interface Expected<IsAsync extends boolean = false> {
+    readonly not: Expected<IsAsync>;
+    readonly resolves: Expected<true>;
+    readonly rejects: Expected<true>;
+    toBe(expected: unknown): ExpectResult<IsAsync>;
+    toEqual(expected: unknown): ExpectResult<IsAsync>;
+    toStrictEqual(expected: unknown): ExpectResult<IsAsync>;
+    toMatchObject(
+      expected: Record<PropertyKey, unknown> | unknown[],
+    ): ExpectResult<IsAsync>;
+    toBeTruthy(): ExpectResult<IsAsync>;
+    toBeFalsy(): ExpectResult<IsAsync>;
+    toBeNull(): ExpectResult<IsAsync>;
+    toBeUndefined(): ExpectResult<IsAsync>;
+    toBeDefined(): ExpectResult<IsAsync>;
+    toBeNaN(): ExpectResult<IsAsync>;
+    // deno-lint-ignore no-explicit-any
+    toBeInstanceOf(
+      expected: abstract new (...args: any[]) => any,
+    ): ExpectResult<
+      IsAsync
+    >;
+    toBeGreaterThan(expected: number | bigint): ExpectResult<IsAsync>;
+    toBeGreaterThanOrEqual(expected: number | bigint): ExpectResult<IsAsync>;
+    toBeLessThan(expected: number | bigint): ExpectResult<IsAsync>;
+    toBeLessThanOrEqual(expected: number | bigint): ExpectResult<IsAsync>;
+    toBeCloseTo(expected: number, numDigits?: number): ExpectResult<IsAsync>;
+    toContain(expected: unknown): ExpectResult<IsAsync>;
+    toContainEqual(expected: unknown): ExpectResult<IsAsync>;
+    toHaveLength(expected: number): ExpectResult<IsAsync>;
+    toHaveProperty(key: PropertyKey, value?: unknown): ExpectResult<IsAsync>;
+    toMatch(expected: RegExp | string): ExpectResult<IsAsync>;
+    toThrow(
+      expected?:
+        | string
+        | RegExp
+        | Error
+        // deno-lint-ignore no-explicit-any
+        | (abstract new (...args: any[]) => Error),
+    ): ExpectResult<IsAsync>;
+  }
+
+  /**
+   * Jest-style assertions.
+   *
+   * ```ts
+   * Deno.test("add", () => {
+   *   Deno.expect(1 + 2).toBe(3);
+   *   Deno.expect({ a: 1 }).toEqual({ a: 1 });
+   * });
+   * ```
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`.
+   */
+  export function expect(value: unknown): Expected;
+
+  /**
+   * Options for {@linkcode Deno.openSqlite}.
+   *
+   * @category SQLite
+   * @experimental Requires `--unstable-sqlite`.
+   */
+  export interface OpenSqliteOptions {
+    /** Open the database read-only. @default {false} */
+    readOnly?: boolean;
+    /** Enforce foreign key constraints. @default {true} */
+    foreignKeys?: boolean;
+    /** How long to wait, in milliseconds, for a lock held by another
+     * connection. @default {0} */
+    timeout?: number;
+    /** Return integer columns as `bigint`. @default {false} */
+    readBigInts?: boolean;
+    /** Allow loading SQLite extensions. Requires `--allow-ffi`.
+     * @default {false} */
+    allowExtension?: boolean;
+  }
+
+  /**
+   * A value that can be bound to an SQL parameter.
+   *
+   * @category SQLite
+   * @experimental Requires `--unstable-sqlite`.
+   */
+  export type SqliteValue = null | number | bigint | string | ArrayBufferView;
+
+  /**
+   * Parameters for a statement: positional values, or one object of named
+   * values (`$name`, `:name` or `@name` in the SQL).
+   *
+   * @category SQLite
+   * @experimental Requires `--unstable-sqlite`.
+   */
+  export type SqliteParams = SqliteValue[] | [Record<string, SqliteValue>];
+
+  /**
+   * The result of a statement that changes rows.
+   *
+   * @category SQLite
+   * @experimental Requires `--unstable-sqlite`.
+   */
+  export interface SqliteRunResult {
+    changes: number | bigint;
+    lastInsertRowid: number | bigint;
+  }
+
+  /**
+   * A prepared statement.
+   *
+   * @category SQLite
+   * @experimental Requires `--unstable-sqlite`.
+   */
+  export interface SqliteStatement {
+    // deno-lint-ignore no-explicit-any
+    all<T = Record<string, any>>(...params: SqliteParams): T[];
+    // deno-lint-ignore no-explicit-any
+    get<T = Record<string, any>>(...params: SqliteParams): T | undefined;
+    run(...params: SqliteParams): SqliteRunResult;
+    // deno-lint-ignore no-explicit-any
+    iterate<T = Record<string, any>>(
+      ...params: SqliteParams
+    ): IterableIterator<T>;
+    readonly sourceSQL: string;
+    readonly expandedSQL: string;
+  }
+
+  /**
+   * An open SQLite database.
+   *
+   * @category SQLite
+   * @experimental Requires `--unstable-sqlite`.
+   */
+  export class SqliteDatabase implements Disposable {
+    private constructor();
+    /** The path the database was opened with. */
+    readonly path: string;
+    readonly isOpen: boolean;
+    readonly inTransaction: boolean;
+    /** Runs one or more SQL statements that return no rows. */
+    exec(sql: string): void;
+    /** Prepares a statement for repeated use. */
+    prepare(sql: string): SqliteStatement;
+    /** Runs a query and returns every row. */
+    // deno-lint-ignore no-explicit-any
+    query<T = Record<string, any>>(sql: string, ...params: SqliteParams): T[];
+    /** Runs a query and returns the first row, or `undefined`. */
+    // deno-lint-ignore no-explicit-any
+    get<T = Record<string, any>>(
+      sql: string,
+      ...params: SqliteParams
+    ): T | undefined;
+    /** Runs a statement that changes rows. */
+    run(sql: string, ...params: SqliteParams): SqliteRunResult;
+    /** Runs `fn` in a transaction: committed if it returns, rolled back if it
+     * throws. Nested calls use savepoints. `fn` must be synchronous. */
+    transaction<T>(fn: (db: SqliteDatabase) => T): T;
+    close(): void;
+    [Symbol.dispose](): void;
+  }
+
+  /**
+   * Opens (or creates) an SQLite database. Pass `":memory:"` for an in-memory
+   * database. Requires `--allow-read` and `--allow-write` for the file.
+   *
+   * ```ts
+   * using db = Deno.openSqlite("app.db");
+   * db.exec("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT)");
+   * db.run("INSERT INTO users (name) VALUES (?)", "Ada");
+   * console.log(db.query("SELECT * FROM users"));
+   * ```
+   *
+   * @tags allow-read, allow-write
+   * @category SQLite
+   * @experimental Requires `--unstable-sqlite`.
+   */
+  export function openSqlite(
+    path: string | URL,
+    options?: OpenSqliteOptions,
+  ): SqliteDatabase;
+
+  /**
+   * Password hashing.
+   *
+   * @category Crypto
+   * @experimental Requires `--unstable-password`.
+   */
+  export namespace password {
+    /** @category Crypto
+     * @experimental Requires `--unstable-password`. */
+    export interface HashOptions {
+      /** @default {"argon2id"} */
+      algorithm?: "argon2id" | "argon2i" | "argon2d" | "bcrypt";
+      /** Argon2 memory cost in KiB. @default {19456} */
+      memoryCost?: number;
+      /** Argon2 iterations. @default {2} */
+      timeCost?: number;
+      /** Argon2 lanes. @default {1} */
+      parallelism?: number;
+      /** bcrypt cost, 4 to 31. @default {10} */
+      cost?: number;
+    }
+
+    /**
+     * Hashes a password off the main thread. The result includes the
+     * algorithm, its parameters and a random salt, and can be stored as-is.
+     *
+     * ```ts
+     * const hash = await Deno.password.hash("hunter2");
+     * console.log(await Deno.password.verify("hunter2", hash)); // true
+     * ```
+     *
+     * @category Crypto
+     * @experimental Requires `--unstable-password`.
+     */
+    export function hash(
+      password: string,
+      options?: HashOptions,
+    ): Promise<string>;
+    /** Checks a password against an Argon2 (PHC) or bcrypt hash.
+     *
+     * @category Crypto
+     * @experimental Requires `--unstable-password`. */
+    export function verify(password: string, hash: string): Promise<boolean>;
+  }
+
+  /**
+   * Fast, synchronous, non-cryptographic hashes. Don't use these for
+   * passwords or signatures.
+   *
+   * @category Crypto
+   * @experimental Requires `--unstable-hash`.
+   */
+  export namespace hash {
+    /** @category Crypto
+     * @experimental Requires `--unstable-hash`. */
+    export type Data = string | ArrayBuffer | ArrayBufferView;
+    /** 32-bit xxHash.
+     *
+     * @category Crypto
+     * @experimental Requires `--unstable-hash`. */
+    export function xxhash32(data: Data, seed?: number): number;
+    /** 64-bit xxHash.
+     *
+     * @category Crypto
+     * @experimental Requires `--unstable-hash`. */
+    export function xxhash64(data: Data, seed?: bigint | number): bigint;
+    /** 64-bit XXH3.
+     *
+     * @category Crypto
+     * @experimental Requires `--unstable-hash`. */
+    export function xxhash3(data: Data, seed?: bigint | number): bigint;
+    /** CRC-32 (IEEE). Pass the previous result as `initial` to hash in
+     * chunks.
+     *
+     * @category Crypto
+     * @experimental Requires `--unstable-hash`. */
+    export function crc32(data: Data, initial?: number): number;
+  }
+
+  /**
+   * TOML parsing and serialization. Dates and times are parsed as strings.
+   *
+   * @category Data Formats
+   * @experimental Requires `--unstable-formats`.
+   */
+  export namespace toml {
+    /** @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    // deno-lint-ignore no-explicit-any
+    export function parse(text: string): Record<string, any>;
+    /** @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    export function stringify(value: Record<string, unknown>): string;
+  }
+
+  /**
+   * YAML parsing and serialization.
+   *
+   * @category Data Formats
+   * @experimental Requires `--unstable-formats`.
+   */
+  export namespace yaml {
+    /** Parses the first document.
+     *
+     * @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    export function parse(text: string): unknown;
+    /** Parses every document in a multi-document stream.
+     *
+     * @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    export function parseAll(text: string): unknown[];
+    /** @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    export function stringify(value: unknown): string;
+  }
+
+  /**
+   * CSV parsing and serialization.
+   *
+   * @category Data Formats
+   * @experimental Requires `--unstable-formats`.
+   */
+  export namespace csv {
+    /** @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    export interface ParseOptions {
+      /** @default {","} */
+      separator?: string;
+      /** Use the first row as keys and return objects. @default {false} */
+      header?: boolean;
+      /** Trim whitespace around fields. @default {false} */
+      trim?: boolean;
+    }
+    /** @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    export function parse(
+      text: string,
+      options: ParseOptions & { header: true },
+    ): Record<string, string>[];
+    /** @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    export function parse(text: string, options?: ParseOptions): string[][];
+    /** @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    export interface StringifyOptions {
+      /** @default {","} */
+      separator?: string;
+      /** Columns to write when rows are objects, in order. Defaults to the
+       * keys of every row in first-seen order. */
+      columns?: string[];
+    }
+    /** @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    export function stringify(
+      rows: unknown[][] | Record<string, unknown>[],
+      options?: StringifyOptions,
+    ): string;
+  }
+
+  /**
+   * Options for {@linkcode Deno.glob}.
+   *
+   * @category File System
+   * @experimental Requires `--unstable-glob`.
+   */
+  export interface GlobOptions {
+    /** The directory to search. @default {"."} */
+    root?: string | URL;
+    /** Patterns to skip, matched against paths relative to the root. */
+    exclude?: string | string[];
+    /** Include matching directories. @default {false} */
+    includeDirs?: boolean;
+    /** Include hidden files and directories (names starting with `.`).
+     * @default {false} */
+    includeHidden?: boolean;
+    /** @default {false} */
+    followSymlinks?: boolean;
+    /** @default {false} */
+    caseInsensitive?: boolean;
+    /** Return entries with file types instead of paths. @default {false} */
+    withFileTypes?: boolean;
+  }
+
+  /**
+   * An entry returned by {@linkcode Deno.glob} with `withFileTypes: true`.
+   *
+   * @category File System
+   * @experimental Requires `--unstable-glob`.
+   */
+  export interface GlobEntry {
+    /** Path relative to the root, with `/` separators. */
+    path: string;
+    isFile: boolean;
+    isDirectory: boolean;
+    isSymlink: boolean;
+  }
+
+  /**
+   * Finds files matching glob patterns (`*`, `**`, `?`, `[a-z]`, `{a,b}`).
+   * Returns paths relative to the root, sorted, with `/` separators.
+   *
+   * ```ts
+   * const files = await Deno.glob("src/**\/*.ts", { exclude: "**\/*_test.ts" });
+   * ```
+   *
+   * @tags allow-read
+   * @category File System
+   * @experimental Requires `--unstable-glob`.
+   */
+  export function glob(
+    patterns: string | string[],
+    options: GlobOptions & { withFileTypes: true },
+  ): Promise<GlobEntry[]>;
+  /** @category File System
+   * @experimental Requires `--unstable-glob`. */
+  export function glob(
+    patterns: string | string[],
+    options?: GlobOptions,
+  ): Promise<string[]>;
+  /** Synchronous {@linkcode Deno.glob}.
+   *
+   * @tags allow-read
+   * @category File System
+   * @experimental Requires `--unstable-glob`. */
+  export function globSync(
+    patterns: string | string[],
+    options: GlobOptions & { withFileTypes: true },
+  ): GlobEntry[];
+  /** @category File System
+   * @experimental Requires `--unstable-glob`. */
+  export function globSync(
+    patterns: string | string[],
+    options?: GlobOptions,
+  ): string[];
+
+  /**
+   * The context passed to a {@linkcode Deno.router} handler.
+   *
+   * @category HTTP Server
+   * @experimental Requires `--unstable-router`.
+   */
+  export interface RouteContext<Info = ServeHandlerInfo> {
+    /** Named groups from the route's pattern, such as `id` in `/users/:id`. */
+    params: Readonly<Record<string, string | undefined>>;
+    info: Info;
+    /** The route key that matched, for example `"GET /users/:id"`. */
+    route: string;
+  }
+
+  /**
+   * A route handler.
+   *
+   * @category HTTP Server
+   * @experimental Requires `--unstable-router`.
+   */
+  export type RouteHandler<Info = ServeHandlerInfo> = (
+    request: Request,
+    context: RouteContext<Info>,
+  ) => Response | Promise<Response>;
+
+  /**
+   * Builds a {@linkcode Deno.serve} handler from a route table. Keys are
+   * `"METHOD /path"` or `"/path"` (any method), with `URLPattern` path
+   * syntax. The first matching route wins. A path that matches with the
+   * wrong method gets `405` with an `Allow` header; anything else goes to
+   * `options.fallback` (default: `404`).
+   *
+   * ```ts
+   * Deno.serve(Deno.router({
+   *   "GET /": () => new Response("home"),
+   *   "GET /users/:id": (_req, { params }) => Response.json({ id: params.id }),
+   * }));
+   * ```
+   *
+   * @category HTTP Server
+   * @experimental Requires `--unstable-router`.
+   */
+  export function router<Info = ServeHandlerInfo>(
+    routes:
+      | Record<string, RouteHandler<Info>>
+      | [string, RouteHandler<Info>][],
+    options?: {
+      fallback?: (
+        request: Request,
+        info: Info,
+      ) => Response | Promise<Response>;
+    },
+  ): (request: Request, info: Info) => Response | Promise<Response>;
+
+  /**
+   * Semantic versions and npm-style ranges, with the same rules Deno uses to
+   * resolve npm and JSR dependencies.
+   *
+   * @category Semver
+   * @experimental Requires `--unstable-semver`.
+   */
+  export namespace semver {
+    /** @category Semver
+     * @experimental Requires `--unstable-semver`. */
+    export interface SemVer {
+      major: number;
+      minor: number;
+      patch: number;
+      prerelease: string[];
+      build: string[];
+    }
+    /** Parses a version. Throws a `TypeError` if it is invalid.
+     *
+     * @category Semver
+     * @experimental Requires `--unstable-semver`. */
+    export function parse(version: string): SemVer;
+    /** @category Semver
+     * @experimental Requires `--unstable-semver`. */
+    export function valid(version: string): boolean;
+    /** Returns -1, 0 or 1. Usable with `Array.prototype.sort()`.
+     *
+     * @category Semver
+     * @experimental Requires `--unstable-semver`. */
+    export function compare(a: string, b: string): -1 | 0 | 1;
+    /** @category Semver
+     * @experimental Requires `--unstable-semver`. */
+    export function satisfies(version: string, range: string): boolean;
+    /** @category Semver
+     * @experimental Requires `--unstable-semver`. */
+    export function maxSatisfying(
+      versions: string[],
+      range: string,
+    ): string | undefined;
+    /** Returns a sorted copy, lowest first.
+     *
+     * @category Semver
+     * @experimental Requires `--unstable-semver`. */
+    export function sort(versions: string[]): string[];
+  }
+
+  /**
+   * UUIDs.
+   *
+   * @category Crypto
+   * @experimental Requires `--unstable-uuid`.
+   */
+  export namespace uuid {
+    /** A random UUID (version 4).
+     *
+     * @category Crypto
+     * @experimental Requires `--unstable-uuid`. */
+    export function v4(): string;
+    /** A time-ordered UUID (version 7), which sorts by creation time.
+     *
+     * @category Crypto
+     * @experimental Requires `--unstable-uuid`. */
+    export function v7(): string;
+    /** @category Crypto
+     * @experimental Requires `--unstable-uuid`. */
+    export function validate(value: unknown): boolean;
+  }
+
+  /**
+   * Options for {@linkcode Deno.parseArgs}.
+   *
+   * @category Runtime
+   * @experimental Requires `--unstable-parse-args`.
+   */
+  export interface ParseArgsOptions {
+    /** Flags that are booleans, or `true` to treat every flag without a
+     * value as a boolean. */
+    boolean?: string | string[] | true;
+    /** Flags whose values are always strings. */
+    string?: string | string[];
+    /** Flags that may repeat; their values are collected into arrays. */
+    collect?: string | string[];
+    /** Booleans that accept a `--no-<name>` form. */
+    negatable?: string | string[];
+    /** Alternative names, such as `{ h: "help" }`. */
+    alias?: Record<string, string | string[]>;
+    default?: Record<string, unknown>;
+    /** Stop parsing at the first positional argument. */
+    stopEarly?: boolean;
+    /** Put arguments after `--` in `result["--"]` instead of `result._`. */
+    "--"?: boolean;
+    /** Called for unknown flags and positionals; return `false` to drop
+     * them. */
+    unknown?: (arg: string, key?: string, value?: unknown) => unknown;
+  }
+
+  /**
+   * Parses command line arguments, compatibly with `parseArgs` from
+   * `jsr:@std/cli`.
+   *
+   * ```ts
+   * const flags = Deno.parseArgs(Deno.args, {
+   *   boolean: ["help"],
+   *   string: ["name"],
+   *   alias: { h: "help" },
+   *   default: { name: "world" },
+   * });
+   * ```
+   *
+   * @category Runtime
+   * @experimental Requires `--unstable-parse-args`.
+   */
+  export function parseArgs(
+    args: string[],
+    options?: ParseArgsOptions,
+  ): {
+    _: (string | number)[];
+    "--"?: string[];
+    // deno-lint-ignore no-explicit-any
+    [key: string]: any;
+  };
+}
