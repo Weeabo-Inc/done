@@ -7,8 +7,8 @@
 
 # Done
 
-**Done** is a hard fork of [Deno](https://github.com/denoland/deno) that aims
-to finish what Deno started: a secure, native JavaScript and TypeScript runtime
+**Done** is a hard fork of [Deno](https://github.com/denoland/deno) that aims to
+finish what Deno started: a secure, native JavaScript and TypeScript runtime
 that is useful without anything else installed.
 
 It forks Deno 2.9.7 and keeps everything that made Deno good: V8, Rust, Tokio,

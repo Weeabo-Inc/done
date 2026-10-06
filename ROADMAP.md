@@ -1,9 +1,9 @@
 # Done Roadmap
 
 This file turns the five goals in the [README](README.md) into milestones you
-can ship. Each milestone lists concrete work items and what "done" means for
-it. Facts about the starting tree, such as sizes, file paths and upstream
-links, are in [doc/done-audit.md](doc/done-audit.md).
+can ship. Each milestone lists concrete work items and what "done" means for it.
+Facts about the starting tree, such as sizes, file paths and upstream links, are
+in [doc/done-audit.md](doc/done-audit.md).
 
 Milestones are ordered by dependency, not by size. M0 blocks shipping a release.
 M1 to M4 can run in parallel once M0 has landed.
@@ -15,25 +15,39 @@ M1 to M4 can run in parallel once M0 has landed.
 _Goal: a Done binary that never talks to, updates from, or reports bugs to
 upstream Deno by accident._
 
-| # | Work item                                                                                                                       | Where                                                       |
-| - | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| 1 | Rename the binary to `done`, and decide whether to ship a `deno` alias for drop-in compatibility                                  | `cli/Cargo.toml`, `cli/main.rs`, packaging, spec tests      |
-| 2 | Give Done its own version scheme (suggestion: `done 0.1.0 (deno 2.9.7 base)` in `--version`)                                     | `cli/lib/version.rs`, `runtime/js/01_version.ts`                |
-| 3 | ✅ Point `upgrade` at Done releases. Stable and pre-release builds come from `weeabo-inc/done` GitHub releases, and the canary channel is refused until Done builds canaries. Release jobs must upload `deno-<target>.zip` and `release-latest.txt` as assets | `cli/tools/upgrade.rs`, `cli/lib/version.rs` (`DONE_RELEASES_URL`) |
-| 4 | ✅ Send panic and bug reports to `weeabo-inc/done`                                                                                | `cli/lib/version.rs` (`DONE_NEW_ISSUE_URL`), `cli/lib.rs`, `cli/rt_desktop/lib.rs` |
-| 5 | Make CI and release workflows run on this repo. 21 places are gated on `isRepository("denoland/deno")`                             | `.github/workflows/ci.ts`, then regenerate `*.generated.yml` |
-| 6 | Review every outbound default, including telemetry, `deploy` (which fetches the Deno Deploy CLI from JSR) and default registries, and keep, rename or remove each one | `cli/tools/deploy.rs`, `libs/npmrc`, `libs/resolver/factory.rs` |
-| 7 | Change the user agent and `navigator.userAgent` to `Done/<ver>`. Keep `Deno.build`/`Deno.version` so feature detection still works | `runtime/js/97_navigator_user_agent_data.js`, `ext/fetch`    |
+| # | Work item                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Where                                                                              |
+| - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| 1 | ✅ **Decided: the binary stays `deno`.** `done` is a POSIX shell reserved word: `done run main.ts` is a syntax error in bash, zsh and sh, in npm scripts, Makefiles and CI `run:` steps, and inside `deno task`. Done is the product name, used in `--version`, the user agent, panics and upgrade messages. Revisit if a shell-safe name is chosen                                                                                                                                 | n/a                                                                                |
+| 2 | ✅ Own version scheme. `cli/lib/done_version.txt` holds Done's version, which `--version` (`done 0.1.0 (deno 2.9.7 base, …)`), `upgrade`, panics and the REPL banner use. `Deno.version.deno` still reports the Deno base so feature detection keeps working                                                                                                                                                                                                                        | `cli/lib/done_version.txt`, `cli/lib/version.rs` (`DONE_VERSION`)                  |
+| 3 | ✅ Point `upgrade` at Done releases. Stable and pre-release builds come from `weeabo-inc/done` GitHub releases, and the canary channel is refused until Done builds canaries. Release jobs must upload `deno-<target>.zip` and `release-latest.txt` as assets                                                                                                                                                                                                                       | `cli/tools/upgrade.rs`, `cli/lib/version.rs` (`DONE_RELEASES_URL`)                 |
+| 4 | ✅ Send panic and bug reports to `weeabo-inc/done`. The `panic.deno.com` trace link is gone, because that service only symbolizes upstream builds                                                                                                                                                                                                                                                                                                                                   | `cli/lib/version.rs` (`DONE_NEW_ISSUE_URL`), `cli/lib.rs`, `cli/rt_desktop/lib.rs` |
+| 5 | ✅ CI and release workflows run on this repo. Packaging, release builds and tests, delta patches (now from Done's own previous release) and the GitHub release upload, including `release-latest.txt`, run on `weeabo-inc/done`. Larger runners, code signing, dl.deno.land, wpt.fyi and benchmark data stay gated to `denoland/deno` because they need upstream secrets. Still open: `tools/release/` bumps only the Deno version, so it must also bump `cli/lib/done_version.txt` | `.github/workflows/ci.ts` (`isReleaseRepo`), `ci.generated.yml`                    |
+| 6 | ✅ Outbound defaults reviewed, see the table below                                                                                                                                                                                                                                                                                                                                                                                                                                  | `cli/lib.rs`, `cli/standalone/binary.rs`, `cli/schemas/`                           |
+| 7 | ✅ The user agent and `navigator.userAgent` are `Done/<ver> Deno/<base>`. The `Deno/` token stays so servers and libraries that detect Deno keep working. `navigator.userAgentData.brands` lists both. `Deno.build`/`Deno.version` are unchanged                                                                                                                                                                                                                                    | `cli/lib/version.rs`, `runtime/js/97_navigator_user_agent_data.js`                 |
 
-**Done when:** `done --version`, `done upgrade`, a forced panic, and a CI run on
+### Outbound defaults (M0 #6)
+
+| Default                                                                                                 | Decision                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `deno deploy`, `deno sandbox`, `--tunnel`, `DENO_CONNECTED`                                             | **Disabled.** They download Deno Deploy's CLI and run it with all permissions, or connect to Deno's tunnel servers. `DONE_ENABLE_DENO_DEPLOY=1` opts back in                                                       |
+| `deno compile` runtime (`denort`) download                                                              | **Renamed** from `dl.deno.land` to Done's GitHub release for the same Done version. `DENORT_DOWNLOAD_URL` sets a mirror, and `DENORT_BIN` still uses a local build. Release jobs must upload `denort-<target>.zip` |
+| `panic.deno.com` stack trace link                                                                       | **Removed**                                                                                                                                                                                                        |
+| `deno.json` schema `$id`s, DevTools favicon, `deno desktop` user agent                                  | **Renamed** to `weeabo-inc/done`                                                                                                                                                                                   |
+| `deno desktop` backends (`laufey` from `github.com/littledivy`)                                         | **Kept.** Downloads are SHA-pinned in `cli/laufey_sums.lock`. Mirror them before the first Done desktop release                                                                                                    |
+| `jsr.io`, `registry.npmjs.org`, `npm.jsr.io`, sigstore (`deno publish`), Socket (`deno audit --socket`) | **Kept.** Ecosystem endpoints, and all can be overridden (`JSR_URL`, `NPM_CONFIG_REGISTRY`, `.npmrc`, `JSR_NPM_URL`, `FULCIO_URL`/`REKOR_URL`)                                                                     |
+| OpenTelemetry                                                                                           | **Kept.** Off unless `OTEL_DENO=1`, and it defaults to localhost                                                                                                                                                   |
+| LSP import completions (`/.well-known/deno-import-intellisense.json`)                                   | **Kept.** Only probes origins the user types                                                                                                                                                                       |
+| Links to `docs.deno.com` in help and error text                                                         | **Kept for now.** Cosmetic. Replace them once Done has its own docs                                                                                                                                                |
+
+**Done when:** `deno --version`, `deno upgrade`, a forced panic, and a CI run on
 `weeabo-inc/done` all point at Done and never at upstream Deno.
 
 ### Decision needed: the `Deno` global
 
-Recommendation: **keep `Deno.*` as the canonical namespace**, and optionally
-add `globalThis.Done` as an alias. If we rename it, every Deno program, JSR
-package and type definition stops working, and we gain nothing in return. The
-binary and branding can change, but the API surface stays.
+Recommendation: **keep `Deno.*` as the canonical namespace**, and optionally add
+`globalThis.Done` as an alias. If we rename it, every Deno program, JSR package
+and type definition stops working, and we gain nothing in return. The binary and
+branding can change, but the API surface stays.
 
 ---
 
@@ -48,17 +62,34 @@ Node compatibility is about 255k lines (around 42% of everything under `ext/`,
 (`runtime/js/98_global_scope_shared.js`), and the `node-globals` flag is a no-op
 because that behavior can no longer be turned off.
 
-1. Add a **`--no-node` flag and a `"node": false` setting in `deno.json`** that:
-   - reject `npm:` and `node:` specifiers with a clear error,
-   - skip `package.json` / `node_modules` discovery,
-   - restore web-standard timer globals (`setTimeout` returns a number).
-2. **Do not load `ext/node` at all** in that mode (it should not be in the
-   snapshot and not be initialized), then measure the startup and memory
-   savings.
-3. Add a spec test suite under `tests/specs/native_mode/`.
+1. ✅ Add a **`--no-node` flag and a `"node": false` setting in `deno.json`**
+   that:
+   - reject `npm:` and `node:` specifiers, static or dynamic, with a clear
+     error,
+   - skip `package.json` / `node_modules` discovery (`--no-node` implies
+     `--no-npm`),
+   - restore web-standard timer globals (`setTimeout` returns a number), and
+     remove `process`, `Buffer`, `global`, `setImmediate` and `clearImmediate`.
+2. 🟡 **Do not load `ext/node` at all** in that mode. The Node bootstrap is now
+   skipped and no `ext/node` module is ever evaluated. The extension is still
+   registered and still in the startup snapshot, where it is already lazily
+   deserialized, so the measured gain is small: about 1% on `002_hello.ts`
+   (median 42.4 ms against 42.8 ms, debug build) and none on worker startup.
+   Taking it out of the snapshot needs a second snapshot built without
+   `ext/node`. That would add several MB to the binary, so measure it against
+   the startup win before doing it.
+3. ✅ Spec tests in `tests/specs/native_mode/`.
+   `DENO_UNIT_NO_NODE=1 cargo test
+   -p unit_tests --test unit` runs the whole
+   unit suite in native mode.
 4. Later, decide whether `deno init` scaffolds should default to native mode.
 
-**Done when:** `done run --no-node` passes the full `tests/unit` suite and
+**Status:** with `--no-node`, 109 of 113 `tests/unit` files pass. Two import
+`node:` modules and are skipped (`serve_test`, `umask_test`). Two need a GPU
+(`webgpu_test`, `canvas_test`) and fail the same way in default mode on machines
+without one. Native mode starts slightly faster than default mode, see item 2.
+
+**Done when:** `deno run --no-node` passes the full `tests/unit` suite and
 starts faster than the default mode on `tests/bench`.
 
 ---
@@ -73,22 +104,33 @@ competitor today. Everything ships as `Deno.*`, typed in
 `cli/tsc/dts/lib.deno.ns.d.ts`, guarded by permissions, and starts behind
 `--unstable-<name>`.
 
-| Priority | API                                                     | Why / starting point                                                                                         |
-| -------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| P0       | `Deno.openSqlite()` / `Database`                        | Exists today only as `node:sqlite`. Wrap the Rust code in `ext/node_sqlite` behind a native API.             |
-| P0       | `Deno.password.hash/verify` (argon2id, bcrypt)          | Every web app needs it. Today it takes WASM or npm. The `argon2` crate is already in `Cargo.lock`. Run it off-thread.                               |
-| P0       | Built-in `assert` / `expect` for `Deno.test`             | `deno init` currently scaffolds `jsr:@std/assert` just to write a test (`cli/tools/init/mod.rs`).            |
-| P1       | `Deno.serve` routing (`URLPattern`-based route table)  | `URLPattern` is already global. Adding route tables removes the need for a router dependency.               |
-| P1       | `Deno.hash` (fast non-crypto: xxhash, plus crc32)        | Sync and fast, unlike `crypto.subtle`. `xxhash-rust` and `crc32fast` are already in `Cargo.lock`.             |
-| P1       | Data formats: `Deno.parseToml/Yaml`, `stringify*`, CSV  | Config files and data. `toml` is already in `Cargo.lock`. YAML and CSV need new crates.                               |
-| P1       | `Deno.glob()`                                            | Native filesystem globbing that respects permissions. `glob` and `globset` are already in `Cargo.lock`.      |
-| P2       | `Deno.$` shell (built on the `deno task` shell)          | The task shell already exists in Rust. Expose it as a tagged template.                                       |
-| P2       | `Deno.semver`, `Deno.uuid.v7()`                          | Small, but common reasons to add a dependency.                                                               |
-| P2       | CLI argument parsing (`Deno.parseArgs`)                 | Built-in for scripts.                                                                                        |
-| P3       | Built-in SQL clients (Postgres, Redis)                  | A large surface. Design it after the SQLite API settles.                                                     |
+| Priority | API                                                    | Why / starting point                                                                                                  |
+| -------- | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| P0       | `Deno.openSqlite()` / `Database`                       | Exists today only as `node:sqlite`. Wrap the Rust code in `ext/node_sqlite` behind a native API.                      |
+| P0       | `Deno.password.hash/verify` (argon2id, bcrypt)         | Every web app needs it. Today it takes WASM or npm. The `argon2` crate is already in `Cargo.lock`. Run it off-thread. |
+| P0       | Built-in `assert` / `expect` for `Deno.test`           | `deno init` currently scaffolds `jsr:@std/assert` just to write a test (`cli/tools/init/mod.rs`).                     |
+| P1       | `Deno.serve` routing (`URLPattern`-based route table)  | `URLPattern` is already global. Adding route tables removes the need for a router dependency.                         |
+| P1       | `Deno.hash` (fast non-crypto: xxhash, plus crc32)      | Sync and fast, unlike `crypto.subtle`. `xxhash-rust` and `crc32fast` are already in `Cargo.lock`.                     |
+| P1       | Data formats: `Deno.parseToml/Yaml`, `stringify*`, CSV | Config files and data. `toml` is already in `Cargo.lock`. YAML and CSV need new crates.                               |
+| P1       | `Deno.glob()`                                          | Native filesystem globbing that respects permissions. `glob` and `globset` are already in `Cargo.lock`.               |
+| P2       | `Deno.$` shell (built on the `deno task` shell)        | The task shell already exists in Rust. Expose it as a tagged template.                                                |
+| P2       | `Deno.semver`, `Deno.uuid.v7()`                        | Small, but common reasons to add a dependency.                                                                        |
+| P2       | CLI argument parsing (`Deno.parseArgs`)                | Built-in for scripts.                                                                                                 |
+| P3       | Built-in SQL clients (Postgres, Redis)                 | A large surface. Design it after the SQLite API settles.                                                              |
 
-**Done when:** every P0 and P1 item has shipped behind a flag with docs and
-spec tests, and `deno init` produces a project with zero dependencies.
+**Done when:** every P0 and P1 item has shipped behind a flag with docs and spec
+tests, and `deno init` produces a project with zero dependencies.
+
+**Status:** done. Every P0 and P1 item, plus `Deno.semver`, `Deno.uuid` and
+`Deno.parseArgs` from P2, ships in `ext/done`, each behind its own
+`--unstable-<name>` flag. They are documented in
+`cli/tsc/dts/lib.deno.unstable.d.ts` and `ext/done/README.md`, with unit tests
+(`tests/unit/done_*_test.ts`) and spec tests (`tests/specs/done_std/`).
+`Deno.serve` routing is `Deno.router()`, which builds a handler for
+`Deno.serve`. `deno init` (the default, `--lib` and `--serve` templates) now
+writes `"unstable": ["assert"]` (plus `"router"` for `--serve`) instead of
+importing `jsr:@std/assert` and `jsr:@std/http`, so new projects have no
+dependencies. Still open: `Deno.$` (P2) and SQL clients (P3).
 
 ---
 
@@ -127,9 +169,9 @@ _Goal: build the products that make Done a platform._
   `doc/desktop-architecture.md`, `cli/tsc/dts/lib.deno.desktop.d.ts`). It
   downloads pinned `laufey` backends. Decide whether to keep that dependency or
   host the binaries ourselves, then finish and stabilize the API.
-- **First-party web framework.** A Fresh-style framework built on M2 routing
-  and `Deno.bundle`, with zero npm dependencies. `deno compile .` already
-  detects frameworks (`cli/tools/framework.rs`).
+- **First-party web framework.** A Fresh-style framework built on M2 routing and
+  `Deno.bundle`, with zero npm dependencies. `deno compile .` already detects
+  frameworks (`cli/tools/framework.rs`).
 - **Templates.** `done init --web | --desktop | --cli`, each with zero
   dependencies.
 
