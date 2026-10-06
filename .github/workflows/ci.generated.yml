@@ -709,7 +709,7 @@ jobs:
         run: echo $GITHUB_WORKSPACE/third_party/prebuilt/mac >> $GITHUB_PATH
       - name: Install Deno
         uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '(!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'') || (!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done''))'
         with:
           deno-version: v2.x
       - name: Restore cache cargo home
@@ -784,10 +784,10 @@ jobs:
           echo '*** Installed packages'
           command -v dpkg && dpkg -l || echo 'No dpkg found or bad executable'
       - name: Configure canary build
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && !startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && !startsWith(github.ref, ''refs/tags/'')'
         run: echo "DENO_CANARY=true" >> $GITHUB_ENV
       - name: Build release
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           DENO_SNAPSHOT_MINIFY_SOURCES: '1'
         run: |-
@@ -802,7 +802,7 @@ jobs:
           cargo build --release --locked -p denort_desktop
           df -h
       - name: Generate symcache
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           NO_COLOR: 1
         run: |-
@@ -815,14 +815,14 @@ jobs:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: ./tools/install_prebuilt.js rcodesign
       - name: Pre-release (mac)
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           APPLE_CODESIGN_KEY: '${{ secrets.APPLE_CODESIGN_KEY }}'
           APPLE_CODESIGN_PASSWORD: '${{ secrets.APPLE_CODESIGN_PASSWORD }}'
         run: |-
           target/release/deno -A tools/release/create_symcache.ts target/release/deno-x86_64-apple-darwin.symcache
           strip -x -S target/release/deno
-          if [[ "$GITHUB_REF" == "refs/heads/main" || "$GITHUB_REF" == refs/tags/* ]]; then
+          if [[ -n "$APPLE_CODESIGN_KEY" ]] && command -v rcodesign >/dev/null && [[ "$GITHUB_REF" == "refs/heads/main" || "$GITHUB_REF" == refs/tags/* ]]; then
             echo "Key is $(echo $APPLE_CODESIGN_KEY | base64 -d | wc -c) bytes"
             rcodesign sign target/release/deno --code-signature-flags=runtime --p12-password="$APPLE_CODESIGN_PASSWORD" --p12-file=<(echo $APPLE_CODESIGN_KEY | base64 -d) --entitlements-xml-file=cli/entitlements.plist
           fi
@@ -853,16 +853,16 @@ jobs:
           restore_v8_runtimes
           trap - EXIT
       - name: Build bsdiff helper
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: cargo build --release -p bsdiff_helper
       - name: Generate delta patch (mac)
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: |-
           TARGET="x86_64-apple-darwin"
-          PREV_VERSION=$(curl -sf https://dl.deno.land/release-latest.txt | tr -d "v\n") || true
+          PREV_VERSION=$(curl -sfL "${{ github.server_url }}/${{ github.repository }}/releases/latest/download/release-latest.txt" | tr -d "v\n") || true
           if [ -z "$PREV_VERSION" ]; then echo "No previous version found, skipping delta"; exit 0; fi
           echo "Generating delta from $PREV_VERSION for $TARGET"
-          curl -fSL -o prev.zip "https://github.com/denoland/deno/releases/download/v${PREV_VERSION}/deno-${TARGET}.zip" || { echo "Previous release not found, skipping delta"; exit 0; }
+          curl -fSL -o prev.zip "${{ github.server_url }}/${{ github.repository }}/releases/download/v${PREV_VERSION}/deno-${TARGET}.zip" || { echo "Previous release not found, skipping delta"; exit 0; }
           unzip -o prev.zip -d prev/
           ./target/release/bsdiff_helper prev/deno target/release/deno "target/release/deno-${TARGET}.from-${PREV_VERSION}.bsdiff"
           cd target/release && shasum -a 256 "deno-${TARGET}.from-${PREV_VERSION}.bsdiff" > "deno-${TARGET}.from-${PREV_VERSION}.bsdiff.sha256sum"
@@ -881,7 +881,7 @@ jobs:
           aws s3 cp canary-latest.txt s3://dl-deno-land/canary-$(rustc -vV | sed -n "s|host: ||p")-latest.txt
           rm canary-latest.txt
       - name: Build product size info
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/''))'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/''))'
         run: |-
           du -hd1 "./target/release"
           du -ha  "./target/release/deno"
@@ -913,7 +913,7 @@ jobs:
           path: target/release/test_server
           retention-days: 3
       - name: Upload release to dl.deno.land
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && startsWith(github.ref, ''refs/tags/'') && github.repository == ''denoland/deno'''
         env:
           AWS_ACCESS_KEY_ID: '${{ vars.S3_ACCESS_KEY_ID }}'
           AWS_SECRET_ACCESS_KEY: '${{ secrets.S3_SECRET_ACCESS_KEY }}'
@@ -924,14 +924,17 @@ jobs:
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.sha256sum"
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.symcache"
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.bsdiff"
+      - name: Write release-latest.txt
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
+        run: 'echo "${GITHUB_REF#refs/*/}" > target/release/release-latest.txt'
       - name: Create release notes
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: |-
           export PATH=$PATH:$(pwd)/target/release
           ./tools/release/05_create_release_notes.ts
       - name: Upload release to GitHub
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         with:
@@ -982,6 +985,7 @@ jobs:
             target/release/lib.deno.d.ts
             target/release/deno-*.bsdiff
             target/release/deno-*.bsdiff.sha256sum
+            target/release/release-latest.txt
           body_path: target/release/release-notes.md
           draft: true
           prerelease: '${{ contains(github.ref_name, ''-'') }}'
@@ -1177,7 +1181,7 @@ jobs:
         if: '!startsWith(github.ref, ''refs/tags/'') && !(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (matrix.shard_index == 0 || github.event_name == ''pull_request'') && matrix.test_crate == ''specs'''
         run: cargo build --release -p test_ffi
       - name: Test (release)
-        if: '!startsWith(github.ref, ''refs/tags/'') && !(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (matrix.shard_index == 0 || github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!startsWith(github.ref, ''refs/tags/'') && !(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (matrix.shard_index == 0 || github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           CI_SHARD_INDEX: '${{ github.event_name == ''pull_request'' && matrix.shard_index || '''' }}'
           CI_SHARD_TOTAL: '${{ github.event_name == ''pull_request'' && matrix.shard_total || '''' }}'
@@ -1734,7 +1738,7 @@ jobs:
         if: '!startsWith(github.ref, ''refs/tags/'')'
         env:
           CARGO_PROFILE_DEV_DEBUG: 0
-        run: cargo test --locked --lib -p deno -p denort -p node_shim -p bsdiff_helper -p deno_lib -p denort_desktop -p deno_snapshots -p deno_bundle_runtime -p deno_cache -p deno_canvas -p deno_cron -p deno_crypto -p deno_fetch -p deno_ffi -p deno_fs -p deno_http -p deno_image -p deno_io -p deno_kv -p deno_napi -p napi_sym -p deno_net -p deno_node -p deno_node_crypto -p deno_node_sqlite -p denort_helper -p deno_signals -p deno_telemetry -p deno_url -p deno_web -p deno_webgpu -p deno_webidl -p deno_websocket -p deno_webstorage -p deno_cache_dir -p deno_cli_parser -p deno_config -p deno_crypto_provider -p deno_v8 -p deno_dotenv -p eszip -p deno_http_h1 -p deno_inspector_server -p deno_lockfile -p deno_maybe_sync -p napi_sys -p node_resolver -p deno_npm -p deno_npm_cache -p deno_npm_installer -p deno_npmrc -p deno_package_json -p deno_print -p deno_resolver -p deno_runtime -p deno_features -p deno_permissions -p deno_subprocess_windows
+        run: cargo test --locked --lib -p deno -p denort -p node_shim -p bsdiff_helper -p deno_lib -p denort_desktop -p deno_snapshots -p deno_bundle_runtime -p deno_cache -p deno_canvas -p deno_cron -p deno_crypto -p deno_done -p deno_fetch -p deno_ffi -p deno_fs -p deno_http -p deno_image -p deno_io -p deno_kv -p deno_napi -p napi_sym -p deno_net -p deno_node -p deno_node_crypto -p deno_node_sqlite -p denort_helper -p deno_signals -p deno_telemetry -p deno_url -p deno_web -p deno_webgpu -p deno_webidl -p deno_websocket -p deno_webstorage -p deno_cache_dir -p deno_cli_parser -p deno_config -p deno_crypto_provider -p deno_v8 -p deno_dotenv -p eszip -p deno_http_h1 -p deno_inspector_server -p deno_lockfile -p deno_maybe_sync -p napi_sys -p node_resolver -p deno_npm -p deno_npm_cache -p deno_npm_installer -p deno_npmrc -p deno_package_json -p deno_print -p deno_resolver -p deno_runtime -p deno_features -p deno_permissions -p deno_subprocess_windows
       - name: Cache cargo home
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
         if: '!startsWith(github.ref, ''refs/tags/'') && github.ref == ''refs/heads/main'''
@@ -1882,10 +1886,10 @@ jobs:
           echo '*** Installed packages'
           command -v dpkg && dpkg -l || echo 'No dpkg found or bad executable'
       - name: Configure canary build
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && !startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && !startsWith(github.ref, ''refs/tags/'')'
         run: echo "DENO_CANARY=true" >> $GITHUB_ENV
       - name: Build release
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           DENO_SNAPSHOT_MINIFY_SOURCES: '1'
         run: |-
@@ -1900,7 +1904,7 @@ jobs:
           cargo build --release --locked -p denort_desktop
           df -h
       - name: Trace startup order
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/'') || contains(github.event.pull_request.labels.*.name, ''ci-full''))'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/'') || contains(github.event.pull_request.labels.*.name, ''ci-full''))'
         env:
           NO_COLOR: 1
         run: |-
@@ -1911,14 +1915,14 @@ jobs:
             --repeats 3 \
             --workload-profile run-first
       - name: Relink release deno with startup order
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/'') || contains(github.event.pull_request.labels.*.name, ''ci-full''))'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/'') || contains(github.event.pull_request.labels.*.name, ''ci-full''))'
         env:
           DENO_SNAPSHOT_MINIFY_SOURCES: '1'
           DENO_USE_STARTUP_ORDER: '1'
           DENO_STARTUP_ORDER_FILE: '${{ github.workspace }}/target/release/startup-order-aarch64-apple-darwin.order'
         run: cargo build --release --locked -p deno -p denort -p test_server --bin deno --bin denort --bin test_server --features=deno/panic-trace
       - name: Verify startup order
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/'') || contains(github.event.pull_request.labels.*.name, ''ci-full''))'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/'') || contains(github.event.pull_request.labels.*.name, ''ci-full''))'
         env:
           NO_COLOR: 1
         run: |-
@@ -1929,7 +1933,7 @@ jobs:
             --output target/release/startup-order-aarch64-apple-darwin.order.verify.json
       - name: Upload startup order
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/'') || contains(github.event.pull_request.labels.*.name, ''ci-full'')) && always()'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/'') || contains(github.event.pull_request.labels.*.name, ''ci-full'')) && always()'
         with:
           name: startup-order-release-macos-aarch64
           path: |-
@@ -1939,7 +1943,7 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
       - name: Generate symcache
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           NO_COLOR: 1
         run: |-
@@ -1952,14 +1956,14 @@ jobs:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: ./tools/install_prebuilt.js rcodesign
       - name: Pre-release (mac)
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           APPLE_CODESIGN_KEY: '${{ secrets.APPLE_CODESIGN_KEY }}'
           APPLE_CODESIGN_PASSWORD: '${{ secrets.APPLE_CODESIGN_PASSWORD }}'
         run: |-
           target/release/deno -A tools/release/create_symcache.ts target/release/deno-aarch64-apple-darwin.symcache
           strip -x -S target/release/deno
-          if [[ "$GITHUB_REF" == "refs/heads/main" || "$GITHUB_REF" == refs/tags/* ]]; then
+          if [[ -n "$APPLE_CODESIGN_KEY" ]] && command -v rcodesign >/dev/null && [[ "$GITHUB_REF" == "refs/heads/main" || "$GITHUB_REF" == refs/tags/* ]]; then
             echo "Key is $(echo $APPLE_CODESIGN_KEY | base64 -d | wc -c) bytes"
             rcodesign sign target/release/deno --code-signature-flags=runtime --p12-password="$APPLE_CODESIGN_PASSWORD" --p12-file=<(echo $APPLE_CODESIGN_KEY | base64 -d) --entitlements-xml-file=cli/entitlements.plist
           fi
@@ -1990,16 +1994,16 @@ jobs:
           restore_v8_runtimes
           trap - EXIT
       - name: Build bsdiff helper
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: cargo build --release -p bsdiff_helper
       - name: Generate delta patch (mac)
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: |-
           TARGET="aarch64-apple-darwin"
-          PREV_VERSION=$(curl -sf https://dl.deno.land/release-latest.txt | tr -d "v\n") || true
+          PREV_VERSION=$(curl -sfL "${{ github.server_url }}/${{ github.repository }}/releases/latest/download/release-latest.txt" | tr -d "v\n") || true
           if [ -z "$PREV_VERSION" ]; then echo "No previous version found, skipping delta"; exit 0; fi
           echo "Generating delta from $PREV_VERSION for $TARGET"
-          curl -fSL -o prev.zip "https://github.com/denoland/deno/releases/download/v${PREV_VERSION}/deno-${TARGET}.zip" || { echo "Previous release not found, skipping delta"; exit 0; }
+          curl -fSL -o prev.zip "${{ github.server_url }}/${{ github.repository }}/releases/download/v${PREV_VERSION}/deno-${TARGET}.zip" || { echo "Previous release not found, skipping delta"; exit 0; }
           unzip -o prev.zip -d prev/
           ./target/release/bsdiff_helper prev/deno target/release/deno "target/release/deno-${TARGET}.from-${PREV_VERSION}.bsdiff"
           cd target/release && shasum -a 256 "deno-${TARGET}.from-${PREV_VERSION}.bsdiff" > "deno-${TARGET}.from-${PREV_VERSION}.bsdiff.sha256sum"
@@ -2018,7 +2022,7 @@ jobs:
           aws s3 cp canary-latest.txt s3://dl-deno-land/canary-$(rustc -vV | sed -n "s|host: ||p")-latest.txt
           rm canary-latest.txt
       - name: Build product size info
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/''))'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/''))'
         run: |-
           du -hd1 "./target/release"
           du -ha  "./target/release/deno"
@@ -2050,7 +2054,7 @@ jobs:
           path: target/release/test_server
           retention-days: 3
       - name: Upload release to dl.deno.land
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && startsWith(github.ref, ''refs/tags/'') && github.repository == ''denoland/deno'''
         env:
           AWS_ACCESS_KEY_ID: '${{ vars.S3_ACCESS_KEY_ID }}'
           AWS_SECRET_ACCESS_KEY: '${{ secrets.S3_SECRET_ACCESS_KEY }}'
@@ -2061,14 +2065,17 @@ jobs:
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.sha256sum"
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.symcache"
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.bsdiff"
+      - name: Write release-latest.txt
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
+        run: 'echo "${GITHUB_REF#refs/*/}" > target/release/release-latest.txt'
       - name: Create release notes
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: |-
           export PATH=$PATH:$(pwd)/target/release
           ./tools/release/05_create_release_notes.ts
       - name: Upload release to GitHub
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         with:
@@ -2119,6 +2126,7 @@ jobs:
             target/release/lib.deno.d.ts
             target/release/deno-*.bsdiff
             target/release/deno-*.bsdiff.sha256sum
+            target/release/release-latest.txt
           body_path: target/release/release-notes.md
           draft: true
           prerelease: '${{ contains(github.ref_name, ''-'') }}'
@@ -2328,7 +2336,7 @@ jobs:
         if: '!startsWith(github.ref, ''refs/tags/'') && !(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (matrix.shard_index == 0 || github.event_name == ''pull_request'') && matrix.test_crate == ''specs'''
         run: cargo build --release -p test_ffi
       - name: Test (release)
-        if: '!startsWith(github.ref, ''refs/tags/'') && !(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (matrix.shard_index == 0 || github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!startsWith(github.ref, ''refs/tags/'') && !(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (matrix.shard_index == 0 || github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           CI_SHARD_INDEX: '${{ github.event_name == ''pull_request'' && matrix.shard_index || '''' }}'
           CI_SHARD_TOTAL: '${{ github.event_name == ''pull_request'' && matrix.shard_total || '''' }}'
@@ -2818,7 +2826,7 @@ jobs:
         if: '!startsWith(github.ref, ''refs/tags/'')'
         env:
           CARGO_PROFILE_DEV_DEBUG: 0
-        run: cargo test --locked --lib -p deno -p denort -p node_shim -p bsdiff_helper -p deno_lib -p denort_desktop -p deno_snapshots -p deno_bundle_runtime -p deno_cache -p deno_canvas -p deno_cron -p deno_crypto -p deno_fetch -p deno_ffi -p deno_fs -p deno_http -p deno_image -p deno_io -p deno_kv -p deno_napi -p napi_sym -p deno_net -p deno_node -p deno_node_crypto -p deno_node_sqlite -p denort_helper -p deno_signals -p deno_telemetry -p deno_url -p deno_web -p deno_webgpu -p deno_webidl -p deno_websocket -p deno_webstorage -p deno_cache_dir -p deno_cli_parser -p deno_config -p deno_crypto_provider -p deno_v8 -p deno_dotenv -p eszip -p deno_http_h1 -p deno_inspector_server -p deno_lockfile -p deno_maybe_sync -p napi_sys -p node_resolver -p deno_npm -p deno_npm_cache -p deno_npm_installer -p deno_npmrc -p deno_package_json -p deno_print -p deno_resolver -p deno_runtime -p deno_features -p deno_permissions -p deno_subprocess_windows
+        run: cargo test --locked --lib -p deno -p denort -p node_shim -p bsdiff_helper -p deno_lib -p denort_desktop -p deno_snapshots -p deno_bundle_runtime -p deno_cache -p deno_canvas -p deno_cron -p deno_crypto -p deno_done -p deno_fetch -p deno_ffi -p deno_fs -p deno_http -p deno_image -p deno_io -p deno_kv -p deno_napi -p napi_sym -p deno_net -p deno_node -p deno_node_crypto -p deno_node_sqlite -p denort_helper -p deno_signals -p deno_telemetry -p deno_url -p deno_web -p deno_webgpu -p deno_webidl -p deno_websocket -p deno_webstorage -p deno_cache_dir -p deno_cli_parser -p deno_config -p deno_crypto_provider -p deno_v8 -p deno_dotenv -p eszip -p deno_http_h1 -p deno_inspector_server -p deno_lockfile -p deno_maybe_sync -p napi_sys -p node_resolver -p deno_npm -p deno_npm_cache -p deno_npm_installer -p deno_npmrc -p deno_package_json -p deno_print -p deno_resolver -p deno_runtime -p deno_features -p deno_permissions -p deno_subprocess_windows
       - name: Cache cargo home
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
         if: '!startsWith(github.ref, ''refs/tags/'') && github.ref == ''refs/heads/main'''
@@ -2875,7 +2883,7 @@ jobs:
         run: git submodule update --init --recursive --depth=1 -- ./tests/util/std
       - name: Install Deno
         uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         with:
           deno-version: v2.x
       - name: Restore cache cargo home
@@ -2950,10 +2958,10 @@ jobs:
           echo '*** Installed packages'
           command -v dpkg && dpkg -l || echo 'No dpkg found or bad executable'
       - name: Configure canary build
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && !startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && !startsWith(github.ref, ''refs/tags/'')'
         run: echo "DENO_CANARY=true" >> $GITHUB_ENV
       - name: Build release
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           DENO_SNAPSHOT_MINIFY_SOURCES: '1'
         run: |-
@@ -2968,7 +2976,7 @@ jobs:
           cargo build --release --locked -p denort_desktop
           df -h
       - name: Generate symcache
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           NO_COLOR: 1
         run: |-
@@ -3010,7 +3018,7 @@ jobs:
           $SignToolPath = $SignTool.FullName
           & $SignToolPath verify /pa /v target\release\deno.exe
       - name: Pre-release (windows)
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         shell: pwsh
         run: |-
           Get-FileHash target/release/deno.exe -Algorithm SHA256 | Format-List > target/release/deno-x86_64-pc-windows-msvc.sha256sum
@@ -3037,17 +3045,17 @@ jobs:
           }
           target/release/deno.exe -A tools/release/create_symcache.ts target/release/deno-x86_64-pc-windows-msvc.symcache
       - name: Build bsdiff helper
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: cargo build --release -p bsdiff_helper
       - name: Generate delta patch (windows)
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         shell: pwsh
         run: |-
           $Target = "x86_64-pc-windows-msvc"
-          $PrevVersion = (Invoke-RestMethod https://dl.deno.land/release-latest.txt).Trim() -replace "^v", ""
+          $PrevVersion = try { (Invoke-RestMethod "${{ github.server_url }}/${{ github.repository }}/releases/latest/download/release-latest.txt").Trim() -replace "^v", "" } catch { "" }
           if (-not $PrevVersion) { Write-Host "No previous version found, skipping delta"; exit 0 }
           Write-Host "Generating delta from $PrevVersion for $Target"
-          try { Invoke-WebRequest -Uri "https://github.com/denoland/deno/releases/download/v$PrevVersion/deno-$Target.zip" -OutFile prev.zip } catch { Write-Host "Previous release not found, skipping delta"; exit 0 }
+          try { Invoke-WebRequest -Uri "${{ github.server_url }}/${{ github.repository }}/releases/download/v$PrevVersion/deno-$Target.zip" -OutFile prev.zip } catch { Write-Host "Previous release not found, skipping delta"; exit 0 }
           Remove-Item -Recurse -Force prev -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Path prev | Out-Null
           Expand-Archive -Force -Path prev.zip -DestinationPath prev
           & .\target\release\bsdiff_helper.exe "prev\deno.exe" "target\release\deno.exe" "target\release\deno-$Target.from-$PrevVersion.bsdiff"
@@ -3067,7 +3075,7 @@ jobs:
           aws s3 cp canary-latest.txt s3://dl-deno-land/canary-$(rustc -vV | sed -n "s|host: ||p")-latest.txt
           rm canary-latest.txt
       - name: Build product size info
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/''))'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/''))'
         run: |-
           du -hd1 "./target/release"
           du -ha  "./target/release/deno"
@@ -3099,7 +3107,7 @@ jobs:
           path: target/release/test_server.exe
           retention-days: 3
       - name: Upload release to dl.deno.land
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && startsWith(github.ref, ''refs/tags/'') && github.repository == ''denoland/deno'''
         env:
           AWS_ACCESS_KEY_ID: '${{ vars.S3_ACCESS_KEY_ID }}'
           AWS_SECRET_ACCESS_KEY: '${{ secrets.S3_SECRET_ACCESS_KEY }}'
@@ -3110,14 +3118,17 @@ jobs:
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.sha256sum"
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.symcache"
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.bsdiff"
+      - name: Write release-latest.txt
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
+        run: 'echo "${GITHUB_REF#refs/*/}" > target/release/release-latest.txt'
       - name: Create release notes
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: |-
           export PATH=$PATH:$(pwd)/target/release
           ./tools/release/05_create_release_notes.ts
       - name: Upload release to GitHub
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         with:
@@ -3168,6 +3179,7 @@ jobs:
             target/release/lib.deno.d.ts
             target/release/deno-*.bsdiff
             target/release/deno-*.bsdiff.sha256sum
+            target/release/release-latest.txt
           body_path: target/release/release-notes.md
           draft: true
           prerelease: '${{ contains(github.ref_name, ''-'') }}'
@@ -3354,7 +3366,7 @@ jobs:
         if: '!startsWith(github.ref, ''refs/tags/'') && !(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (matrix.shard_index == 0 || github.event_name == ''pull_request'') && matrix.test_crate == ''specs'''
         run: cargo build --release -p test_ffi
       - name: Test (release)
-        if: '!startsWith(github.ref, ''refs/tags/'') && !(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (matrix.shard_index == 0 || github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!startsWith(github.ref, ''refs/tags/'') && !(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (matrix.shard_index == 0 || github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           CI_SHARD_INDEX: '${{ github.event_name == ''pull_request'' && matrix.shard_index || '''' }}'
           CI_SHARD_TOTAL: '${{ github.event_name == ''pull_request'' && matrix.shard_total || '''' }}'
@@ -3782,7 +3794,7 @@ jobs:
         run: git submodule update --init --recursive --depth=1 -- ./tests/util/std
       - name: Install Deno
         uses: denoland/setup-deno@667a34cdef165d8d2b2e98dde39547c9daac7282
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         with:
           deno-version: v2.x
       - name: Restore cache cargo home
@@ -3857,10 +3869,10 @@ jobs:
           echo '*** Installed packages'
           command -v dpkg && dpkg -l || echo 'No dpkg found or bad executable'
       - name: Configure canary build
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && !startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && !startsWith(github.ref, ''refs/tags/'')'
         run: echo "DENO_CANARY=true" >> $GITHUB_ENV
       - name: Build release
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           DENO_SNAPSHOT_MINIFY_SOURCES: '1'
         run: |-
@@ -3875,7 +3887,7 @@ jobs:
           cargo build --release --locked -p denort_desktop
           df -h
       - name: Generate symcache
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           NO_COLOR: 1
         run: |-
@@ -3917,7 +3929,7 @@ jobs:
           $SignToolPath = $SignTool.FullName
           & $SignToolPath verify /pa /v target\release\deno.exe
       - name: Pre-release (windows)
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         shell: pwsh
         run: |-
           Get-FileHash target/release/deno.exe -Algorithm SHA256 | Format-List > target/release/deno-aarch64-pc-windows-msvc.sha256sum
@@ -3944,17 +3956,17 @@ jobs:
           }
           target/release/deno.exe -A tools/release/create_symcache.ts target/release/deno-aarch64-pc-windows-msvc.symcache
       - name: Build bsdiff helper
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: cargo build --release -p bsdiff_helper
       - name: Generate delta patch (windows)
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         shell: pwsh
         run: |-
           $Target = "aarch64-pc-windows-msvc"
-          $PrevVersion = (Invoke-RestMethod https://dl.deno.land/release-latest.txt).Trim() -replace "^v", ""
+          $PrevVersion = try { (Invoke-RestMethod "${{ github.server_url }}/${{ github.repository }}/releases/latest/download/release-latest.txt").Trim() -replace "^v", "" } catch { "" }
           if (-not $PrevVersion) { Write-Host "No previous version found, skipping delta"; exit 0 }
           Write-Host "Generating delta from $PrevVersion for $Target"
-          try { Invoke-WebRequest -Uri "https://github.com/denoland/deno/releases/download/v$PrevVersion/deno-$Target.zip" -OutFile prev.zip } catch { Write-Host "Previous release not found, skipping delta"; exit 0 }
+          try { Invoke-WebRequest -Uri "${{ github.server_url }}/${{ github.repository }}/releases/download/v$PrevVersion/deno-$Target.zip" -OutFile prev.zip } catch { Write-Host "Previous release not found, skipping delta"; exit 0 }
           Remove-Item -Recurse -Force prev -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Path prev | Out-Null
           Expand-Archive -Force -Path prev.zip -DestinationPath prev
           & .\target\release\bsdiff_helper.exe "prev\deno.exe" "target\release\deno.exe" "target\release\deno-$Target.from-$PrevVersion.bsdiff"
@@ -3974,7 +3986,7 @@ jobs:
           aws s3 cp canary-latest.txt s3://dl-deno-land/canary-$(rustc -vV | sed -n "s|host: ||p")-latest.txt
           rm canary-latest.txt
       - name: Build product size info
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/''))'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && (github.ref == ''refs/heads/main'' || startsWith(github.ref, ''refs/tags/''))'
         run: |-
           du -hd1 "./target/release"
           du -ha  "./target/release/deno"
@@ -4006,7 +4018,7 @@ jobs:
           path: target/release/test_server.exe
           retention-days: 3
       - name: Upload release to dl.deno.land
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && startsWith(github.ref, ''refs/tags/'') && github.repository == ''denoland/deno'''
         env:
           AWS_ACCESS_KEY_ID: '${{ vars.S3_ACCESS_KEY_ID }}'
           AWS_SECRET_ACCESS_KEY: '${{ secrets.S3_SECRET_ACCESS_KEY }}'
@@ -4017,14 +4029,17 @@ jobs:
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.sha256sum"
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.symcache"
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.bsdiff"
+      - name: Write release-latest.txt
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
+        run: 'echo "${GITHUB_REF#refs/*/}" > target/release/release-latest.txt'
       - name: Create release notes
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: |-
           export PATH=$PATH:$(pwd)/target/release
           ./tools/release/05_create_release_notes.ts
       - name: Upload release to GitHub
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         with:
@@ -4075,6 +4090,7 @@ jobs:
             target/release/lib.deno.d.ts
             target/release/deno-*.bsdiff
             target/release/deno-*.bsdiff.sha256sum
+            target/release/release-latest.txt
           body_path: target/release/release-notes.md
           draft: true
           prerelease: '${{ contains(github.ref_name, ''-'') }}'
@@ -4261,7 +4277,7 @@ jobs:
         if: '!startsWith(github.ref, ''refs/tags/'') && !(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (matrix.shard_index == 0 || github.event_name == ''pull_request'') && matrix.test_crate == ''specs'''
         run: cargo build --release -p test_ffi
       - name: Test (release)
-        if: '!startsWith(github.ref, ''refs/tags/'') && !(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (matrix.shard_index == 0 || github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!startsWith(github.ref, ''refs/tags/'') && !(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (matrix.shard_index == 0 || github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         env:
           CI_SHARD_INDEX: '${{ github.event_name == ''pull_request'' && matrix.shard_index || '''' }}'
           CI_SHARD_TOTAL: '${{ github.event_name == ''pull_request'' && matrix.shard_total || '''' }}'
@@ -4312,7 +4328,7 @@ jobs:
       - name: Clone submodule ./tests/util/std
         run: git submodule update --init --recursive --depth=1 -- ./tests/util/std
       - name: 'Create source tarballs (release, linux)'
-        if: 'github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '(github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: |-
           mkdir -p target/release
           tar --exclude=".git*" --exclude=target --exclude=third_party/prebuilt \
@@ -4569,7 +4585,7 @@ jobs:
           du -h deno.symcache
           du -h target/release/deno
       - name: Pre-release (linux)
-        if: github.repository == 'denoland/deno'
+        if: github.repository == 'denoland/deno' || github.repository == 'weeabo-inc/done'
         run: |-
           cd target/release
           ./deno -A ../../tools/release/create_symcache.ts deno-x86_64-unknown-linux-gnu.symcache
@@ -4607,16 +4623,16 @@ jobs:
           trap - EXIT
           ./deno types > lib.deno.d.ts
       - name: Build bsdiff helper
-        if: 'github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '(github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: cargo build --release -p bsdiff_helper
       - name: Generate delta patch (linux)
-        if: 'github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '(github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: |-
           TARGET="x86_64-unknown-linux-gnu"
-          PREV_VERSION=$(curl -sf https://dl.deno.land/release-latest.txt | tr -d "v\n") || true
+          PREV_VERSION=$(curl -sfL "${{ github.server_url }}/${{ github.repository }}/releases/latest/download/release-latest.txt" | tr -d "v\n") || true
           if [ -z "$PREV_VERSION" ]; then echo "No previous version found, skipping delta"; exit 0; fi
           echo "Generating delta from $PREV_VERSION for $TARGET"
-          curl -fSL -o prev.zip "https://github.com/denoland/deno/releases/download/v${PREV_VERSION}/deno-${TARGET}.zip" || { echo "Previous release not found, skipping delta"; exit 0; }
+          curl -fSL -o prev.zip "${{ github.server_url }}/${{ github.repository }}/releases/download/v${PREV_VERSION}/deno-${TARGET}.zip" || { echo "Previous release not found, skipping delta"; exit 0; }
           unzip -o prev.zip -d prev/
           ./target/release/bsdiff_helper prev/deno target/release/deno "target/release/deno-${TARGET}.from-${PREV_VERSION}.bsdiff"
           cd target/release && shasum -a 256 "deno-${TARGET}.from-${PREV_VERSION}.bsdiff" > "deno-${TARGET}.from-${PREV_VERSION}.bsdiff.sha256sum"
@@ -4665,7 +4681,7 @@ jobs:
           path: target/release/test_server
           retention-days: 3
       - name: Upload release to dl.deno.land
-        if: 'github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: 'startsWith(github.ref, ''refs/tags/'') && github.repository == ''denoland/deno'''
         env:
           AWS_ACCESS_KEY_ID: '${{ vars.S3_ACCESS_KEY_ID }}'
           AWS_SECRET_ACCESS_KEY: '${{ secrets.S3_SECRET_ACCESS_KEY }}'
@@ -4676,14 +4692,17 @@ jobs:
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.sha256sum"
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.symcache"
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.bsdiff"
+      - name: Write release-latest.txt
+        if: '(github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
+        run: 'echo "${GITHUB_REF#refs/*/}" > target/release/release-latest.txt'
       - name: Create release notes
-        if: 'github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '(github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: |-
           export PATH=$PATH:$(pwd)/target/release
           ./tools/release/05_create_release_notes.ts
       - name: Upload release to GitHub
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe
-        if: 'github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '(github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         with:
@@ -4734,6 +4753,7 @@ jobs:
             target/release/lib.deno.d.ts
             target/release/deno-*.bsdiff
             target/release/deno-*.bsdiff.sha256sum
+            target/release/release-latest.txt
           body_path: target/release/release-notes.md
           draft: true
           prerelease: '${{ contains(github.ref_name, ''-'') }}'
@@ -6384,7 +6404,7 @@ jobs:
         if: '!startsWith(github.ref, ''refs/tags/'')'
         env:
           CARGO_PROFILE_DEV_DEBUG: 0
-        run: cargo test --locked --lib -p deno -p denort -p node_shim -p bsdiff_helper -p deno_lib -p denort_desktop -p deno_snapshots -p deno_bundle_runtime -p deno_cache -p deno_canvas -p deno_cron -p deno_crypto -p deno_fetch -p deno_ffi -p deno_fs -p deno_http -p deno_image -p deno_io -p deno_kv -p deno_napi -p napi_sym -p deno_net -p deno_node -p deno_node_crypto -p deno_node_sqlite -p denort_helper -p deno_signals -p deno_telemetry -p deno_url -p deno_web -p deno_webgpu -p deno_webidl -p deno_websocket -p deno_webstorage -p deno_cache_dir -p deno_cli_parser -p deno_config -p deno_crypto_provider -p deno_v8 -p deno_dotenv -p eszip -p deno_http_h1 -p deno_inspector_server -p deno_lockfile -p deno_maybe_sync -p napi_sys -p node_resolver -p deno_npm -p deno_npm_cache -p deno_npm_installer -p deno_npmrc -p deno_package_json -p deno_print -p deno_resolver -p deno_runtime -p deno_features -p deno_permissions -p deno_subprocess_windows
+        run: cargo test --locked --lib -p deno -p denort -p node_shim -p bsdiff_helper -p deno_lib -p denort_desktop -p deno_snapshots -p deno_bundle_runtime -p deno_cache -p deno_canvas -p deno_cron -p deno_crypto -p deno_done -p deno_fetch -p deno_ffi -p deno_fs -p deno_http -p deno_image -p deno_io -p deno_kv -p deno_napi -p napi_sym -p deno_net -p deno_node -p deno_node_crypto -p deno_node_sqlite -p denort_helper -p deno_signals -p deno_telemetry -p deno_url -p deno_web -p deno_webgpu -p deno_webidl -p deno_websocket -p deno_webstorage -p deno_cache_dir -p deno_cli_parser -p deno_config -p deno_crypto_provider -p deno_v8 -p deno_dotenv -p eszip -p deno_http_h1 -p deno_inspector_server -p deno_lockfile -p deno_maybe_sync -p napi_sys -p node_resolver -p deno_npm -p deno_npm_cache -p deno_npm_installer -p deno_npmrc -p deno_package_json -p deno_print -p deno_resolver -p deno_runtime -p deno_features -p deno_permissions -p deno_subprocess_windows
       - name: Cache cargo home
         uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
         if: '!startsWith(github.ref, ''refs/tags/'') && github.ref == ''refs/heads/main'''
@@ -6702,7 +6722,7 @@ jobs:
           du -h deno.symcache
           du -h target/release/deno
       - name: Pre-release (linux)
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'''
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'')'
         run: |-
           cd target/release
           ./deno -A ../../tools/release/create_symcache.ts deno-aarch64-unknown-linux-gnu.symcache
@@ -6740,16 +6760,16 @@ jobs:
           trap - EXIT
           ./deno types > lib.deno.d.ts
       - name: Build bsdiff helper
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: cargo build --release -p bsdiff_helper
       - name: Generate delta patch (linux)
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: |-
           TARGET="aarch64-unknown-linux-gnu"
-          PREV_VERSION=$(curl -sf https://dl.deno.land/release-latest.txt | tr -d "v\n") || true
+          PREV_VERSION=$(curl -sfL "${{ github.server_url }}/${{ github.repository }}/releases/latest/download/release-latest.txt" | tr -d "v\n") || true
           if [ -z "$PREV_VERSION" ]; then echo "No previous version found, skipping delta"; exit 0; fi
           echo "Generating delta from $PREV_VERSION for $TARGET"
-          curl -fSL -o prev.zip "https://github.com/denoland/deno/releases/download/v${PREV_VERSION}/deno-${TARGET}.zip" || { echo "Previous release not found, skipping delta"; exit 0; }
+          curl -fSL -o prev.zip "${{ github.server_url }}/${{ github.repository }}/releases/download/v${PREV_VERSION}/deno-${TARGET}.zip" || { echo "Previous release not found, skipping delta"; exit 0; }
           unzip -o prev.zip -d prev/
           ./target/release/bsdiff_helper prev/deno target/release/deno "target/release/deno-${TARGET}.from-${PREV_VERSION}.bsdiff"
           cd target/release && shasum -a 256 "deno-${TARGET}.from-${PREV_VERSION}.bsdiff" > "deno-${TARGET}.from-${PREV_VERSION}.bsdiff.sha256sum"
@@ -6803,7 +6823,7 @@ jobs:
           path: target/release/test_server
           retention-days: 3
       - name: Upload release to dl.deno.land
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && startsWith(github.ref, ''refs/tags/'') && github.repository == ''denoland/deno'''
         env:
           AWS_ACCESS_KEY_ID: '${{ vars.S3_ACCESS_KEY_ID }}'
           AWS_SECRET_ACCESS_KEY: '${{ secrets.S3_SECRET_ACCESS_KEY }}'
@@ -6814,14 +6834,17 @@ jobs:
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.sha256sum"
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.symcache"
           aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.bsdiff"
+      - name: Write release-latest.txt
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
+        run: 'echo "${GITHUB_REF#refs/*/}" > target/release/release-latest.txt'
       - name: Create release notes
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         run: |-
           export PATH=$PATH:$(pwd)/target/release
           ./tools/release/05_create_release_notes.ts
       - name: Upload release to GitHub
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe
-        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && github.repository == ''denoland/deno'' && startsWith(github.ref, ''refs/tags/'')'
+        if: '!(!contains(github.event.pull_request.labels.*.name, ''ci-full'') && github.event_name == ''pull_request'') && (github.repository == ''denoland/deno'' || github.repository == ''weeabo-inc/done'') && startsWith(github.ref, ''refs/tags/'')'
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         with:
@@ -6872,6 +6895,7 @@ jobs:
             target/release/lib.deno.d.ts
             target/release/deno-*.bsdiff
             target/release/deno-*.bsdiff.sha256sum
+            target/release/release-latest.txt
           body_path: target/release/release-notes.md
           draft: true
           prerelease: '${{ contains(github.ref_name, ''-'') }}'

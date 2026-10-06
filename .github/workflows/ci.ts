@@ -30,7 +30,13 @@ const macosX86Runner = "macos-15-intel";
 const macosArmRunner = "macos-14";
 
 // shared conditions
+// Upstream-only infrastructure (larger runners, code signing secrets,
+// dl.deno.land, wpt.fyi, benchmark data) is gated on `isDenoland`. Release
+// machinery that only needs GitHub (packaging, release builds and tests,
+// delta patches, GitHub release uploads) runs on Done's repository too.
 const isDenoland = conditions.isRepository("denoland/deno");
+const isDone = conditions.isRepository("weeabo-inc/done");
+const isReleaseRepo = isDenoland.or(isDone);
 const isMainBranch = conditions.isBranch("main");
 const isTag = conditions.isTag();
 const isNotTag = isTag.not();
@@ -741,7 +747,7 @@ const buildJobs = buildItems.map((rawBuildItem) => {
         const preRelease = step(
           {
             name: "Pre-release (linux)",
-            if: isLinux.and(isDenoland),
+            if: isLinux.and(isReleaseRepo),
             run: [
               "cd target/release",
               `./deno -A ../../tools/release/create_symcache.ts deno-${buildItem.arch}-unknown-linux-gnu.symcache`,
@@ -801,7 +807,7 @@ const buildJobs = buildItems.map((rawBuildItem) => {
           }),
           {
             name: "Pre-release (mac)",
-            if: isMacos.and(isDenoland),
+            if: isMacos.and(isReleaseRepo),
             env: {
               "APPLE_CODESIGN_KEY": "${{ secrets.APPLE_CODESIGN_KEY }}",
               "APPLE_CODESIGN_PASSWORD":
@@ -810,7 +816,7 @@ const buildJobs = buildItems.map((rawBuildItem) => {
             run: [
               `target/release/deno -A tools/release/create_symcache.ts target/release/deno-${buildItem.arch}-apple-darwin.symcache`,
               "strip -x -S target/release/deno",
-              'if [[ "$GITHUB_REF" == "refs/heads/main" || "$GITHUB_REF" == refs/tags/* ]]; then',
+              'if [[ -n "$APPLE_CODESIGN_KEY" ]] && command -v rcodesign >/dev/null && [[ "$GITHUB_REF" == "refs/heads/main" || "$GITHUB_REF" == refs/tags/* ]]; then',
               '  echo "Key is $(echo $APPLE_CODESIGN_KEY | base64 -d | wc -c) bytes"',
               "  rcodesign sign target/release/deno " +
               "--code-signature-flags=runtime " +
@@ -895,7 +901,7 @@ const buildJobs = buildItems.map((rawBuildItem) => {
           },
           {
             name: "Pre-release (windows)",
-            if: isWindows.and(isDenoland),
+            if: isWindows.and(isReleaseRepo),
             shell: "pwsh",
             run: [
               `Get-FileHash target/release/deno.exe -Algorithm SHA256 | Format-List > target/release/deno-${buildItem.arch}-pc-windows-msvc.sha256sum`,
@@ -929,20 +935,20 @@ const buildJobs = buildItems.map((rawBuildItem) => {
           },
           {
             name: "Build bsdiff helper",
-            if: isDenoland.and(isTag),
+            if: isReleaseRepo.and(isTag),
             run: [
               "cargo build --release -p bsdiff_helper",
             ],
           },
           {
             name: "Generate delta patch (linux)",
-            if: isLinux.and(isDenoland).and(isTag),
+            if: isLinux.and(isReleaseRepo).and(isTag),
             run: [
               `TARGET="${buildItem.arch}-unknown-linux-gnu"`,
-              'PREV_VERSION=$(curl -sf https://dl.deno.land/release-latest.txt | tr -d "v\\n") || true',
+              'PREV_VERSION=$(curl -sfL "${{ github.server_url }}/${{ github.repository }}/releases/latest/download/release-latest.txt" | tr -d "v\\n") || true',
               'if [ -z "$PREV_VERSION" ]; then echo "No previous version found, skipping delta"; exit 0; fi',
               'echo "Generating delta from $PREV_VERSION for $TARGET"',
-              'curl -fSL -o prev.zip "https://github.com/denoland/deno/releases/download/v${PREV_VERSION}/deno-${TARGET}.zip" || { echo "Previous release not found, skipping delta"; exit 0; }',
+              'curl -fSL -o prev.zip "${{ github.server_url }}/${{ github.repository }}/releases/download/v${PREV_VERSION}/deno-${TARGET}.zip" || { echo "Previous release not found, skipping delta"; exit 0; }',
               "unzip -o prev.zip -d prev/",
               './target/release/bsdiff_helper prev/deno target/release/deno "target/release/deno-${TARGET}.from-${PREV_VERSION}.bsdiff"',
               'cd target/release && shasum -a 256 "deno-${TARGET}.from-${PREV_VERSION}.bsdiff" > "deno-${TARGET}.from-${PREV_VERSION}.bsdiff.sha256sum"',
@@ -950,13 +956,13 @@ const buildJobs = buildItems.map((rawBuildItem) => {
           },
           {
             name: "Generate delta patch (mac)",
-            if: isMacos.and(isDenoland).and(isTag),
+            if: isMacos.and(isReleaseRepo).and(isTag),
             run: [
               `TARGET="${buildItem.arch}-apple-darwin"`,
-              'PREV_VERSION=$(curl -sf https://dl.deno.land/release-latest.txt | tr -d "v\\n") || true',
+              'PREV_VERSION=$(curl -sfL "${{ github.server_url }}/${{ github.repository }}/releases/latest/download/release-latest.txt" | tr -d "v\\n") || true',
               'if [ -z "$PREV_VERSION" ]; then echo "No previous version found, skipping delta"; exit 0; fi',
               'echo "Generating delta from $PREV_VERSION for $TARGET"',
-              'curl -fSL -o prev.zip "https://github.com/denoland/deno/releases/download/v${PREV_VERSION}/deno-${TARGET}.zip" || { echo "Previous release not found, skipping delta"; exit 0; }',
+              'curl -fSL -o prev.zip "${{ github.server_url }}/${{ github.repository }}/releases/download/v${PREV_VERSION}/deno-${TARGET}.zip" || { echo "Previous release not found, skipping delta"; exit 0; }',
               "unzip -o prev.zip -d prev/",
               './target/release/bsdiff_helper prev/deno target/release/deno "target/release/deno-${TARGET}.from-${PREV_VERSION}.bsdiff"',
               'cd target/release && shasum -a 256 "deno-${TARGET}.from-${PREV_VERSION}.bsdiff" > "deno-${TARGET}.from-${PREV_VERSION}.bsdiff.sha256sum"',
@@ -964,14 +970,14 @@ const buildJobs = buildItems.map((rawBuildItem) => {
           },
           {
             name: "Generate delta patch (windows)",
-            if: isWindows.and(isDenoland).and(isTag),
+            if: isWindows.and(isReleaseRepo).and(isTag),
             shell: "pwsh",
             run: [
               `$Target = "${buildItem.arch}-pc-windows-msvc"`,
-              '$PrevVersion = (Invoke-RestMethod https://dl.deno.land/release-latest.txt).Trim() -replace "^v", ""',
+              '$PrevVersion = try { (Invoke-RestMethod "${{ github.server_url }}/${{ github.repository }}/releases/latest/download/release-latest.txt").Trim() -replace "^v", "" } catch { "" }',
               'if (-not $PrevVersion) { Write-Host "No previous version found, skipping delta"; exit 0 }',
               'Write-Host "Generating delta from $PrevVersion for $Target"',
-              'try { Invoke-WebRequest -Uri "https://github.com/denoland/deno/releases/download/v$PrevVersion/deno-$Target.zip" -OutFile prev.zip } catch { Write-Host "Previous release not found, skipping delta"; exit 0 }',
+              'try { Invoke-WebRequest -Uri "${{ github.server_url }}/${{ github.repository }}/releases/download/v$PrevVersion/deno-$Target.zip" -OutFile prev.zip } catch { Write-Host "Previous release not found, skipping delta"; exit 0 }',
               "Remove-Item -Recurse -Force prev -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Path prev | Out-Null",
               "Expand-Archive -Force -Path prev.zip -DestinationPath prev",
               '& .\\target\\release\\bsdiff_helper.exe "prev\\deno.exe" "target\\release\\deno.exe" "target\\release\\deno-$Target.from-$PrevVersion.bsdiff"',
@@ -1000,7 +1006,7 @@ const buildJobs = buildItems.map((rawBuildItem) => {
           `cargo build${buildStdArgs} --release --locked ${packagesToBuild} ${binsToBuild} --features=${panicTraceFeatures}`;
         const cargoBuildReleaseStep = step
           .if(
-            isRelease.and(isDenoland.or(buildItem.use_sysroot)),
+            isRelease.and(isReleaseRepo.or(buildItem.use_sysroot)),
           )
           .dependsOn(
             installLldStep,
@@ -1226,11 +1232,12 @@ const buildJobs = buildItems.map((rawBuildItem) => {
             testServerArtifact.upload(),
           );
 
-        const shouldPublishCondition = isRelease.and(isDenoland)
+        const shouldPublishCondition = isRelease.and(isReleaseRepo)
           .and(isTag);
         const publishStep = step.if(shouldPublishCondition)(
           {
             name: "Upload release to dl.deno.land",
+            if: isDenoland,
             env: S3Envs,
             run: [
               'aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.zip"',
@@ -1238,6 +1245,13 @@ const buildJobs = buildItems.map((rawBuildItem) => {
               'aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.symcache"',
               'aws s3 sync ./target/release/ s3://dl-deno-land/release/${GITHUB_REF#refs/*/}/ --exclude "*" --include "*.bsdiff"',
             ],
+          },
+          {
+            // `deno upgrade` reads the newest stable release's
+            // `release-latest.txt` asset to find the latest version.
+            name: "Write release-latest.txt",
+            run:
+              'echo "${GITHUB_REF#refs/*/}" > target/release/release-latest.txt',
           },
           {
             name: "Create release notes",
@@ -1300,6 +1314,7 @@ const buildJobs = buildItems.map((rawBuildItem) => {
                 "target/release/lib.deno.d.ts",
                 "target/release/deno-*.bsdiff",
                 "target/release/deno-*.bsdiff.sha256sum",
+                "target/release/release-latest.txt",
               ].join("\n"),
               body_path: "target/release/release-notes.md",
               draft: true,
@@ -1505,7 +1520,7 @@ const buildJobs = buildItems.map((rawBuildItem) => {
           {
             name: "Test (release)",
             if: isRelease.and(
-              isDenoland.or(buildItem.use_sysroot),
+              isReleaseRepo.or(buildItem.use_sysroot),
             ),
             run:
               `cargo test -p ${testMatrix.test_package} --test ${testMatrix.test_crate} --release`,
