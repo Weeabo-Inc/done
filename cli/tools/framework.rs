@@ -789,14 +789,14 @@ fn detect_package_version(dir: &Path, package: &str) -> Option<u32> {
     .ok()
 }
 
-/// Read the `imports` keys from deno.json / deno.jsonc.
+/// Read the `imports` keys from mokou.json(c) / deno.json(c).
 ///
 /// Uses JSONC-aware parsing so that commented deno.jsonc files are
 /// handled correctly instead of silently failing detection.
 fn read_deno_json_imports(dir: &Path) -> Option<Vec<String>> {
-  let content = std::fs::read_to_string(dir.join("deno.json"))
-    .or_else(|_| std::fs::read_to_string(dir.join("deno.jsonc")))
-    .ok()?;
+  let content = deno_config::deno_json::CONFIG_FILE_NAMES
+    .iter()
+    .find_map(|name| std::fs::read_to_string(dir.join(name)).ok())?;
   let config: serde_json::Value =
     jsonc_parser::parse_to_serde_value(&content, &Default::default())
       .ok()

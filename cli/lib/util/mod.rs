@@ -1,6 +1,7 @@
 // Copyright 2018-2026 the Deno authors. MIT license.
 
 pub mod checksum;
+pub mod env_aliases;
 pub mod hash;
 pub mod logger;
 pub mod net;

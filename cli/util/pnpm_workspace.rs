@@ -171,11 +171,15 @@ fn pick_target_config(dir: &Path) -> (PathBuf, ConfigKind) {
   if package_json.is_file() {
     return (package_json, ConfigKind::PackageJson);
   }
-  let jsonc = dir.join("deno.jsonc");
-  if jsonc.is_file() {
-    return (jsonc, ConfigKind::DenoConfig);
+  // Use an existing config file, preferring Mokou's names, before creating a
+  // `mokou.json`.
+  for name in ["mokou.jsonc", "mokou.json", "deno.jsonc", "deno.json"] {
+    let path = dir.join(name);
+    if path.is_file() {
+      return (path, ConfigKind::DenoConfig);
+    }
   }
-  (dir.join("deno.json"), ConfigKind::DenoConfig)
+  (dir.join("mokou.json"), ConfigKind::DenoConfig)
 }
 
 /// Merges the parsed pnpm workspace into an existing config file (preserving

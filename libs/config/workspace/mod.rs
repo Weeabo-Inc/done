@@ -3453,6 +3453,43 @@ pub mod test {
   }
 
   #[test]
+  fn mokou_json_is_preferred_and_discovered_in_members() {
+    let sys = InMemorySys::default();
+    sys.fs_insert_json(
+      root_dir().join("mokou.json"),
+      json!({ "workspace": ["./a", "./b"], "tasks": { "from": "mokou" } }),
+    );
+    sys.fs_insert_json(
+      root_dir().join("deno.json"),
+      json!({ "tasks": { "from": "deno" } }),
+    );
+    sys.fs_insert_json(
+      root_dir().join("a/mokou.jsonc"),
+      json!({ "name": "@scope/a", "version": "0.1.0" }),
+    );
+    sys.fs_insert_json(
+      root_dir().join("b/deno.json"),
+      json!({ "name": "@scope/b", "version": "0.1.0" }),
+    );
+
+    let workspace_dir = WorkspaceDirectory::discover(
+      &sys,
+      WorkspaceDiscoverStart::Paths(&[root_dir()]),
+      &WorkspaceDiscoverOptions {
+        ..Default::default()
+      },
+    )
+    .unwrap();
+    let root = workspace_dir.workspace.root_deno_json().unwrap();
+    assert!(root.specifier.path().ends_with("/mokou.json"));
+    assert_eq!(workspace_dir.workspace.config_folders.len(), 3);
+    assert_eq!(
+      workspace_dir.workspace.resolve_lockfile_path().unwrap(),
+      Some(root_dir().join("mokou.lock")),
+    );
+  }
+
+  #[test]
   fn test_tasks() {
     let sys = InMemorySys::default();
     sys.fs_insert_json(

@@ -150,7 +150,7 @@ fn has_permission_args(cmd: &CommandDef) -> bool {
 fn render_env_vars() -> String {
   use crate::env_vars::ENV_VARS;
   let mut out = String::from(
-    "\nEnvironment variables:\nDocs: https://docs.deno.com/go/env-vars\n\n",
+    "\nEnvironment variables:\nDocs: https://docs.deno.com/go/env-vars\nEvery DENO_* variable can also be set as MOKOU_*, which takes precedence.\n\n",
   );
   let width = ENV_VARS.iter().map(|v| v.name.len()).max().unwrap_or(0) + 1;
   let entries: Vec<String> = ENV_VARS

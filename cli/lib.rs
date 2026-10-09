@@ -827,6 +827,9 @@ pub(crate) fn boot_phase(label: &str) {
 }
 
 pub fn main() {
+  // `MOKOU_*` environment variables override their `DENO_*` equivalents.
+  // Applied first, before anything reads the environment or spawns a thread.
+  deno_lib::util::env_aliases::apply_mokou_env_aliases();
   boot_phase("main start");
   #[cfg(feature = "dhat-heap")]
   let profiler = dhat::Profiler::new_heap();

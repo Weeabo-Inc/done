@@ -6,6 +6,7 @@ use std::path::PathBuf;
 use anyhow::Context;
 use anyhow::Error as AnyError;
 use capacity_builder::StringBuilder;
+use deno_config::deno_json::LockConfig;
 use deno_config::workspace::Workspace;
 use deno_error::JsErrorBox;
 use deno_lockfile::Lockfile;
@@ -161,6 +162,31 @@ pub trait LockfileSys:
   + sys_traits::FsCanonicalize
   + std::fmt::Debug
 {
+}
+
+/// `mokou.lock` and `deno.lock` are both default lockfile names: a
+/// `mokou.json` defaults to `mokou.lock`, and a `deno.json` or `package.json`
+/// to `deno.lock`. When the default lockfile doesn't exist yet but the other
+/// one does, keep using the existing one, so adding a `mokou.json` to a
+/// project that already has a `deno.lock` doesn't start a second lockfile.
+fn prefer_existing_default_lockfile(
+  sys: &impl sys_traits::FsMetadata,
+  path: PathBuf,
+) -> PathBuf {
+  let other_name = match path.file_name().and_then(|name| name.to_str()) {
+    Some("mokou.lock") => "deno.lock",
+    Some("deno.lock") => "mokou.lock",
+    _ => return path,
+  };
+  if sys.fs_is_file_no_err(&path) {
+    return path;
+  }
+  let other = path.with_file_name(other_name);
+  if sys.fs_is_file_no_err(&other) {
+    other
+  } else {
+    path
+  }
 }
 
 pub struct Guard<'a, T> {
@@ -340,14 +366,31 @@ impl<TSys: LockfileSys> LockfileLock<TSys> {
     if flags.no_lock {
       return Ok(None);
     }
+    let root_folder = workspace.root_folder_configs();
     let file_path = match flags.lock {
       Some(path) => path,
       None => match workspace.resolve_lockfile_path()? {
-        Some(path) => path,
+        Some(path) => {
+          let has_explicit_path = root_folder
+            .deno_json
+            .as_ref()
+            .and_then(|c| c.to_lock_config().ok().flatten())
+            .is_some_and(|c| {
+              matches!(
+                c,
+                LockConfig::PathBuf(_)
+                  | LockConfig::Object { path: Some(_), .. }
+              )
+            });
+          if has_explicit_path {
+            path
+          } else {
+            prefer_existing_default_lockfile(&sys, path)
+          }
+        }
         None => return Ok(None),
       },
     };
-    let root_folder = workspace.root_folder_configs();
     let frozen = flags.frozen_lockfile.unwrap_or_else(|| {
       root_folder
         .deno_json
@@ -728,5 +771,76 @@ impl<TSys: LockfileSys> deno_graph::source::Locker
       .0
       .lock()
       .insert_package(package_nv.clone(), checksum.into_string());
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use std::path::PathBuf;
+
+  use sys_traits::FsCreateDirAll;
+  use sys_traits::FsWrite;
+  use sys_traits::impls::InMemorySys;
+
+  use super::prefer_existing_default_lockfile;
+
+  fn root() -> PathBuf {
+    if cfg!(windows) {
+      PathBuf::from("C:\\project")
+    } else {
+      PathBuf::from("/project")
+    }
+  }
+
+  fn sys() -> InMemorySys {
+    let sys = InMemorySys::default();
+    sys.fs_create_dir_all(root()).unwrap();
+    sys
+  }
+
+  #[test]
+  fn keeps_the_default_lockfile_when_neither_exists() {
+    let sys = sys();
+    let path = root().join("mokou.lock");
+    assert_eq!(prefer_existing_default_lockfile(&sys, path.clone()), path);
+  }
+
+  #[test]
+  fn keeps_an_existing_deno_lock_next_to_a_new_mokou_json() {
+    let sys = sys();
+    sys.fs_write(root().join("deno.lock"), "{}").unwrap();
+    assert_eq!(
+      prefer_existing_default_lockfile(&sys, root().join("mokou.lock")),
+      root().join("deno.lock"),
+    );
+  }
+
+  #[test]
+  fn prefers_the_default_when_both_exist() {
+    let sys = sys();
+    sys.fs_write(root().join("deno.lock"), "{}").unwrap();
+    sys.fs_write(root().join("mokou.lock"), "{}").unwrap();
+    assert_eq!(
+      prefer_existing_default_lockfile(&sys, root().join("mokou.lock")),
+      root().join("mokou.lock"),
+    );
+  }
+
+  #[test]
+  fn uses_an_existing_mokou_lock_for_a_package_json_project() {
+    let sys = sys();
+    sys.fs_write(root().join("mokou.lock"), "{}").unwrap();
+    assert_eq!(
+      prefer_existing_default_lockfile(&sys, root().join("deno.lock")),
+      root().join("mokou.lock"),
+    );
+  }
+
+  #[test]
+  fn leaves_custom_lockfile_names_alone() {
+    let sys = sys();
+    sys.fs_write(root().join("deno.lock"), "{}").unwrap();
+    let path = root().join("custom.lock");
+    assert_eq!(prefer_existing_default_lockfile(&sys, path.clone()), path);
   }
 }

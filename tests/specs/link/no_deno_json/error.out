@@ -1,1 +1,1 @@
-error: Cannot link './empty': no deno.json found in directory. A linked package must contain a deno.json with a "name" field.
+error: Cannot link './empty': no mokou.json or deno.json found in directory. A linked package must contain a mokou.json or deno.json with a "name" field.

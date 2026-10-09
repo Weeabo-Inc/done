@@ -816,14 +816,20 @@ fn resolve_workspace_for_config_folder<
       .iter()
       .partition(|member| is_glob_pattern(member) || member.starts_with('!'));
 
-    // Deno workspaces can discover wildcard members that use either `deno.json`, `deno.jsonc` or `package.json`.
+    // Deno workspaces can discover wildcard members that use either `mokou.json(c)`, `deno.json(c)` or `package.json`.
     // But it only works for Deno workspaces, npm workspaces don't discover `deno.json(c)` files, otherwise
     // we'd be incompatible with npm workspaces if we discovered more files.
     let deno_json_paths = collect_member_config_folders(
       "Deno",
       pattern_members,
       &deno_json.dir_path(),
-      &["deno.json", "deno.jsonc", "package.json"],
+      &[
+        "mokou.json",
+        "mokou.jsonc",
+        "deno.json",
+        "deno.jsonc",
+        "package.json",
+      ],
     )?;
 
     let mut member_dir_urls =
@@ -1081,9 +1087,15 @@ fn collect_link_config_folders<TSys: FsRead + FsMetadata + FsReadDir>(
   let pattern_entries = raw_links
     .into_iter()
     .flat_map(|raw_link| {
-      ["deno.json", "deno.jsonc", "package.json"]
-        .into_iter()
-        .map(move |config_file_name| (raw_link, config_file_name))
+      [
+        "mokou.json",
+        "mokou.jsonc",
+        "deno.json",
+        "deno.jsonc",
+        "package.json",
+      ]
+      .into_iter()
+      .map(move |config_file_name| (raw_link, config_file_name))
     })
     .map(|(raw_link, config_file_name)| {
       let link =

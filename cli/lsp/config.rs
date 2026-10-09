@@ -1516,6 +1516,14 @@ impl ConfigData {
         // check if any of these need to be added to the workspace
         let files = [
           (
+            scope.join("mokou.json").unwrap(),
+            ConfigWatchedFileType::DenoJson,
+          ),
+          (
+            scope.join("mokou.jsonc").unwrap(),
+            ConfigWatchedFileType::DenoJson,
+          ),
+          (
             scope.join("deno.json").unwrap(),
             ConfigWatchedFileType::DenoJson,
           ),
@@ -1985,7 +1993,9 @@ impl ConfigTree {
       let Ok(file_url) = Url::from_file_path(path) else {
         continue;
       };
-      if !(file_url.path().ends_with("/deno.json")
+      if !(file_url.path().ends_with("/mokou.json")
+        || file_url.path().ends_with("/mokou.jsonc")
+        || file_url.path().ends_with("/deno.json")
         || file_url.path().ends_with("/deno.jsonc")
         || file_url.path().ends_with("/package.json"))
       {

@@ -770,7 +770,7 @@ fn runtime_transpile_options(
       return fallback;
     };
     let cfg_path = 'outer: loop {
-      for name in ["deno.json", "deno.jsonc"] {
+      for name in ["mokou.json", "mokou.jsonc", "deno.json", "deno.jsonc"] {
         let candidate = dir.join(name);
         if candidate.exists() {
           break 'outer Some(candidate);

@@ -1096,7 +1096,7 @@ impl Inner {
       }
     }
     for root_ancestor in root_ancestors {
-      for deno_json in ["deno.json", "deno.jsonc"] {
+      for deno_json in deno_config::deno_json::CONFIG_FILE_NAMES {
         let path = root_ancestor.join(deno_json);
         if path.exists() {
           workspace_files.insert(path);
@@ -1712,7 +1712,9 @@ impl Inner {
     let has_config_changes = changes.iter().any(|(specifier, _)| {
       let path = specifier.path();
       !path.contains("/node_modules/")
-        && (path.ends_with("/deno.json")
+        && (path.ends_with("/mokou.json")
+          || path.ends_with("/mokou.jsonc")
+          || path.ends_with("/deno.json")
           || path.ends_with("/deno.jsonc")
           || path.ends_with("/package.json")
           || path.ends_with("/tsconfig.json"))

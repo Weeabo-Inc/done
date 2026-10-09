@@ -62,8 +62,15 @@ were renamed outright. The GitHub repository stays `weeabo-inc/done`.
    in `lib.deno.ns.d.ts`). Development builds are still `target/debug/deno`, and
    messages that suggest a command (for example `` run `deno task` ``) still say
    `deno`, which the alias keeps correct.
-3. `mokou.json` / `mokou.jsonc` and `MOKOU_*` environment variables are read
-   first, with `deno.json` and `DENO_*` as fallbacks.
+3. ✅ Config and environment. `mokou.json` and `mokou.jsonc` are discovered
+   before `deno.json` and `deno.jsonc` (including workspace members, links, the
+   LSP and `deno compile`d programs). `init`, `add` without a config and pnpm
+   workspace import create `mokou.json`. A `mokou.json` defaults to a
+   `mokou.lock`, but an existing `deno.lock` keeps being used, and a
+   `package.json`-only project picks up an existing `mokou.lock`. Every `DENO_*`
+   environment variable can also be set as `MOKOU_*`, which wins
+   (`cli/lib/util/env_aliases.rs` copies them over at startup, in both the CLI
+   and `denort`).
 
 ### Decided: the `Deno` global
 

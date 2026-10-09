@@ -382,9 +382,9 @@ fn create_deno_json(
   flags: &Arc<Flags>,
   options: &CliOptions,
 ) -> Result<CliFactory, AnyError> {
-  std::fs::write(options.initial_cwd().join("deno.json"), "{}\n")
-    .context("Failed to create deno.json file")?;
-  log::info!("Created deno.json configuration file.");
+  std::fs::write(options.initial_cwd().join("mokou.json"), "{}\n")
+    .context("Failed to create mokou.json file")?;
+  log::info!("Created mokou.json configuration file.");
   let factory = CliFactory::from_flags(flags.clone());
   Ok(factory)
 }
@@ -508,8 +508,8 @@ fn load_configs(
       let options = factory.cli_options()?.clone();
       let Some(deno_json) = options.start_dir.member_or_root_deno_json() else {
         bail!(
-          "Failed to discover the newly created deno.json at \"{}\". This can happen when the current directory is inside a node_modules directory.",
-          options.initial_cwd().join("deno.json").display(),
+          "Failed to discover the newly created mokou.json at \"{}\". This can happen when the current directory is inside a node_modules directory.",
+          options.initial_cwd().join("mokou.json").display(),
         );
       };
       (
@@ -1397,9 +1397,10 @@ fn path_to_link_string(path: &Path) -> String {
   s.strip_prefix("./").map(|s| s.to_string()).unwrap_or(s)
 }
 
-/// Read the `"name"` field from a deno.json(c) in the given directory.
+/// Read the `"name"` field from a mokou.json(c) or deno.json(c) in the given
+/// directory.
 fn read_link_target_name(dir: &Path) -> Option<String> {
-  for filename in ["deno.json", "deno.jsonc"] {
+  for filename in deno_config::deno_json::CONFIG_FILE_NAMES {
     let path = dir.join(filename);
     let Ok(text) = std::fs::read_to_string(&path) else {
       continue;
@@ -1487,12 +1488,13 @@ pub async fn link(
     if !abs.is_dir() {
       bail!("Cannot link '{}': not a directory", raw_path);
     }
-    let has_config =
-      abs.join("deno.json").exists() || abs.join("deno.jsonc").exists();
+    let has_config = deno_config::deno_json::CONFIG_FILE_NAMES
+      .iter()
+      .any(|name| abs.join(name).exists());
     if !has_config {
       bail!(
-        "Cannot link '{}': no deno.json found in directory. \
-         A linked package must contain a deno.json with a \"name\" field.",
+        "Cannot link '{}': no mokou.json or deno.json found in directory. \
+         A linked package must contain a mokou.json or deno.json with a \"name\" field.",
         raw_path
       );
     }

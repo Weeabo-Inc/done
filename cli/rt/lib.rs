@@ -66,6 +66,9 @@ pub fn load_env_vars(env_vars: &IndexMap<String, String>) {
 
 #[inline(always)]
 pub fn main() {
+  // `MOKOU_*` environment variables override their `DENO_*` equivalents.
+  // Applied first, before anything reads the environment or spawns a thread.
+  deno_lib::util::env_aliases::apply_mokou_env_aliases();
   init_logging(None, None);
 
   // Enable ANSI virtual terminal processing on Windows consoles that don't

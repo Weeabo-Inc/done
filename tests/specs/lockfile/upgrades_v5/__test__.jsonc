@@ -8,7 +8,7 @@
           "output": "[WILDCARD]"
         },
         {
-          "args": ["eval", "console.log(Deno.readTextFileSync('deno.lock'))"],
+          "args": ["eval", "console.log(Deno.readTextFileSync('mokou.lock'))"],
           "output": "deno.lock.json.out"
         },
         {
@@ -18,7 +18,7 @@
         {
           "args": [
             "eval",
-            "console.log(Deno.readTextFileSync('deno.lock'))"
+            "console.log(Deno.readTextFileSync('mokou.lock'))"
           ],
           "output": "deno.lock.v5.json.out"
         }

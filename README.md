@@ -84,6 +84,11 @@ mokou run --allow-net server.ts
 `Mokou` is an alias of the `Deno` namespace, so `Deno.serve` works too, and
 existing Deno programs, JSR packages and type definitions run unchanged.
 
+Configuration lives in `mokou.json` (or `mokou.jsonc`), and new projects get a
+`mokou.lock`. Existing `deno.json`, `deno.jsonc` and `deno.lock` files keep
+working. Every `DENO_*` environment variable can also be set as `MOKOU_*`, for
+example `MOKOU_DIR`, and the `MOKOU_*` name wins when both are set.
+
 ## Contributing
 
 Read [ROADMAP.md](ROADMAP.md) to find a milestone, and see

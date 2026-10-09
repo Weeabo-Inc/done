@@ -963,7 +963,7 @@ pub fn is_deno_config_url(url: &ModuleSpecifier) -> bool {
   let Some(name) = url.path_segments().and_then(|mut s| s.next_back()) else {
     return false;
   };
-  name == "deno.json" || name == "deno.jsonc"
+  deno_config::deno_json::is_config_file_name(name)
 }
 
 /// Walk a `jsonc_parser` AST looking for the innermost string literal whose

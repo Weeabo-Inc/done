@@ -1728,6 +1728,27 @@ pub enum ToLockConfigError {
 #[allow(clippy::disallowed_types, reason = "definition")]
 pub type ConfigFileRc = deno_maybe_sync::MaybeArc<ConfigFile>;
 
+/// Config file names that are discovered automatically, in order of
+/// preference. Mokou's own names come first, and Deno's still work.
+pub const CONFIG_FILE_NAMES: [&str; 4] =
+  ["mokou.json", "mokou.jsonc", "deno.json", "deno.jsonc"];
+
+/// Whether `file_name` is one of the automatically discovered config file
+/// names (`mokou.json`, `mokou.jsonc`, `deno.json` or `deno.jsonc`).
+pub fn is_config_file_name(file_name: &str) -> bool {
+  CONFIG_FILE_NAMES.contains(&file_name)
+}
+
+/// The default lockfile name for a config file: `mokou.lock` next to a
+/// `mokou.json(c)`, and `deno.lock` otherwise.
+pub fn default_lockfile_name(config_file_path: &Path) -> &'static str {
+  let is_mokou = config_file_path
+    .file_name()
+    .and_then(|name| name.to_str())
+    .is_some_and(|name| name.starts_with("mokou."));
+  if is_mokou { "mokou.lock" } else { "deno.lock" }
+}
+
 #[derive(Clone, Debug)]
 pub struct ConfigFile {
   pub specifier: Url,
@@ -1739,7 +1760,6 @@ impl ConfigFile {
   pub(crate) fn resolve_config_file_names<'a>(
     additional_config_file_names: &[&'a str],
   ) -> Cow<'a, [&'a str]> {
-    const CONFIG_FILE_NAMES: [&str; 2] = ["deno.json", "deno.jsonc"];
     if additional_config_file_names.is_empty() {
       Cow::Borrowed(&CONFIG_FILE_NAMES)
     } else {
@@ -2759,7 +2779,8 @@ impl ConfigFile {
       Some(LockConfig::Object { path, .. }) if path.is_some() => Ok(path),
       _ => {
         let mut path = url_to_file_path(&self.specifier)?;
-        path.set_file_name("deno.lock");
+        let lockfile_name = default_lockfile_name(&path);
+        path.set_file_name(lockfile_name);
         Ok(Some(path))
       }
     }
@@ -3816,6 +3837,25 @@ mod tests {
         .unwrap()
         .join("import_map.json"),
     );
+  }
+
+  #[test]
+  fn default_lockfile_name_follows_config_name() {
+    for (config_name, lock_name) in [
+      ("mokou.json", "mokou.lock"),
+      ("mokou.jsonc", "mokou.lock"),
+      ("deno.json", "deno.lock"),
+      ("deno.jsonc", "deno.lock"),
+    ] {
+      let specifier = root_url().join(config_name).unwrap();
+      let config_file = ConfigFile::new("{}", specifier.clone()).unwrap();
+      let mut expected = deno_path_util::url_to_file_path(&specifier).unwrap();
+      expected.set_file_name(lock_name);
+      assert_eq!(
+        config_file.resolve_lockfile_path().unwrap().unwrap(),
+        expected,
+      );
+    }
   }
 
   #[test]
