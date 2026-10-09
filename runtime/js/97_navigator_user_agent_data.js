@@ -74,7 +74,7 @@ function getArchitecture(arch) {
 }
 
 // `op_bootstrap_user_agent()` returns one or more space separated
-// `<brand>/<version>` products, for example `Done/0.1.0 Deno/2.9.7`. Parse them
+// `<brand>/<version>` products, for example `Mokou/0.1.0 Deno/2.9.7`. Parse them
 // once, lazily.
 let brands_ = null;
 function brands() {

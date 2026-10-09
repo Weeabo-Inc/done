@@ -33,7 +33,7 @@ const macosArmRunner = "macos-14";
 // Upstream-only infrastructure (larger runners, code signing secrets,
 // dl.deno.land, wpt.fyi, benchmark data) is gated on `isDenoland`. Release
 // machinery that only needs GitHub (packaging, release builds and tests,
-// delta patches, GitHub release uploads) runs on Done's repository too.
+// delta patches, GitHub release uploads) runs on Mokou's repository too.
 const isDenoland = conditions.isRepository("denoland/deno");
 const isDone = conditions.isRepository("weeabo-inc/done");
 const isReleaseRepo = isDenoland.or(isDone);

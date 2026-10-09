@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="215 20 690 200" width="690" height="200" role="img" aria-label="Mokou">
+  <title>Mokou</title>
+  <defs><linearGradient id="g" x1="685.00" y1="172.00" x2="684.00" y2="64.00" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#E8461E"/><stop offset="1" stop-color="#FF9F1C"/></linearGradient></defs>
+  <g fill="none" stroke="#0B0F14" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M240 100V200M240 150A30 50 0 0 1 300 150V200M300 150A30 50 0 0 1 360 150V200"/>
+    <path d="M505 150A50 50 0 1 1 405 150A50 50 0 1 1 505 150"/>
+    <path d="M545 40V200M600 100L545 152M565 133L605 200"/>
+    <path d="M710 106.70A50 50 0 1 1 660 106.70"/>
+    <path d="M685 172C660 150 675 128 690 112C702 98 696 80 684 64" stroke="url(#g)"/>
+    <path d="M775 100V150A50 50 0 0 0 875 150M875 100V200"/>
+  </g>
+</svg>

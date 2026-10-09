@@ -1,6 +1,6 @@
 {
-  // `deno deploy --help` is answered by the Deno Deploy CLI, which Done only
-  // downloads when DONE_ENABLE_DENO_DEPLOY=1 is set.
+  // `deno deploy --help` is answered by the Deno Deploy CLI, which Mokou only
+  // downloads when MOKOU_ENABLE_DENO_DEPLOY=1 is set.
   "args": "deploy --help",
   "output": "deploy.out",
   "exitCode": 1

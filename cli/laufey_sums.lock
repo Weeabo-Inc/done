@@ -8,7 +8,7 @@
 # `SHA256SUMS` and verify the digests against the release out-of-band before
 # committing — this is what removes the TOFU on the unsigned SHA256SUMS.
 #
-# `deno desktop` downloads these archives from Done's mirror,
+# `deno desktop` downloads these archives from Mokou's mirror,
 #   https://github.com/weeabo-inc/done/releases/download/laufey-<version>/<file>
 # which `.github/workflows/laufey_mirror.ts` publishes from this file whenever
 # it changes on main.

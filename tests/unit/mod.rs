@@ -121,8 +121,8 @@ fn run_test(test: &CollectedTest) -> TestResult {
     deno = deno.arg("--unstable-kv");
   }
 
-  // Done's built-in standard library (ext/done).
-  if test.name.contains("::done_") {
+  // Mokou's built-in standard library (ext/mokou).
+  if test.name.contains("::mokou_") {
     for feature in [
       "assert",
       "formats",

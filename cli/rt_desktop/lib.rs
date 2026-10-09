@@ -1295,8 +1295,10 @@ laufey::main!(|| {
       eprintln!(
         "\n============================================================"
       );
-      eprintln!("Done has panicked. This is a bug in Done. Please report this");
-      eprintln!("at {}.", deno_lib::version::DONE_NEW_ISSUE_URL);
+      eprintln!(
+        "Mokou has panicked. This is a bug in Mokou. Please report this"
+      );
+      eprintln!("at {}.", deno_lib::version::MOKOU_NEW_ISSUE_URL);
       eprintln!();
       eprintln!("Platform: {} {}", env::consts::OS, env::consts::ARCH);
       eprintln!();

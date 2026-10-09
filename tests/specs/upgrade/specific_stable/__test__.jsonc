@@ -1,6 +1,6 @@
 {
-  // Verifies that `upgrade` downloads from Done's GitHub releases rather than
-  // upstream Deno. v1.43.2 is an upstream Deno version that Done will never
+  // Verifies that `upgrade` downloads from Mokou's GitHub releases rather than
+  // upstream Deno. v1.43.2 is an upstream Deno version that Mokou will never
   // publish, so the download must come back as not found.
   "if": "notWindowsArm",
   "tempDir": true,

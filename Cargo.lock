@@ -2465,32 +2465,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "deno_done"
-version = "0.1.0"
-dependencies = [
- "argon2",
- "base64 0.22.1",
- "bcrypt",
- "crc32fast",
- "csv",
- "deno_core",
- "deno_error",
- "deno_fs",
- "deno_permissions",
- "deno_semver",
- "globset",
- "rand 0.8.5",
- "serde",
- "serde_json",
- "serde_yaml_ng",
- "thiserror 2.0.12",
- "toml 0.9.6",
- "uuid",
- "walkdir",
- "xxhash-rust",
-]
-
-[[package]]
 name = "deno_dotenv"
 version = "0.28.0"
 dependencies = [
@@ -2883,6 +2857,32 @@ dependencies = [
  "encoding_rs",
  "serde",
  "url",
+]
+
+[[package]]
+name = "deno_mokou"
+version = "0.1.0"
+dependencies = [
+ "argon2",
+ "base64 0.22.1",
+ "bcrypt",
+ "crc32fast",
+ "csv",
+ "deno_core",
+ "deno_error",
+ "deno_fs",
+ "deno_permissions",
+ "deno_semver",
+ "globset",
+ "rand 0.8.5",
+ "serde",
+ "serde_json",
+ "serde_yaml_ng",
+ "thiserror 2.0.12",
+ "toml 0.9.6",
+ "uuid",
+ "walkdir",
+ "xxhash-rust",
 ]
 
 [[package]]
@@ -3406,7 +3406,6 @@ dependencies = [
  "deno_core",
  "deno_cron",
  "deno_crypto",
- "deno_done",
  "deno_error",
  "deno_features",
  "deno_fetch",
@@ -3417,6 +3416,7 @@ dependencies = [
  "deno_inspector_server",
  "deno_io",
  "deno_kv",
+ "deno_mokou",
  "deno_napi",
  "deno_net",
  "deno_node",

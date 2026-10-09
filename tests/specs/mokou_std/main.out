@@ -1,8 +1,8 @@
-args: Done true
+args: Mokou true
 sqlite: ada
 password: true
 crc32: cbf43926
-toml: Done 8000
+toml: Mokou 8000
 yaml: {"a":[1,2]}
 csv: [{"a":"1","b":"2"}]
 glob: data.toml

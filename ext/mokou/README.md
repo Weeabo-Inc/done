@@ -1,6 +1,6 @@
-# deno_done
+# deno_mokou
 
-Done's built-in standard library: APIs that most apps need, available on the
+Mokou's built-in standard library: APIs that most apps need, available on the
 `Deno` namespace with no import. Each one starts behind its own
 `--unstable-<name>` flag (or `"unstable": ["<name>"]` in `deno.json`).
 
@@ -20,7 +20,7 @@ Done's built-in standard library: APIs that most apps need, available on the
 The JavaScript files are lazy-loaded scripts. `runtime/js/90_deno_ns.js` loads
 each one the first time its API is accessed, so a program that doesn't use them
 pays nothing at startup. Types live in `cli/tsc/dts/lib.deno.unstable.d.ts`, and
-tests in `tests/unit/done_*_test.ts`.
+tests in `tests/unit/mokou_*_test.ts`.
 
 ```ts
 // deno run --unstable-sqlite --unstable-password -RW app.ts

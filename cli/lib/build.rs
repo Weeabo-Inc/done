@@ -10,12 +10,12 @@ fn main() {
   let text = std::fs::read_to_string(version_path).unwrap();
   println!("cargo:rustc-env=DENO_VERSION={}", text);
 
-  // Done is versioned independently of the Deno release it is based on.
-  let done_version_path = std::path::Path::new(".").join("done_version.txt");
-  println!("cargo:rerun-if-changed={}", done_version_path.display());
+  // Mokou is versioned independently of the Deno release it is based on.
+  let mokou_version_path = std::path::Path::new(".").join("mokou_version.txt");
+  println!("cargo:rerun-if-changed={}", mokou_version_path.display());
   #[allow(clippy::disallowed_methods, reason = "build code")]
-  let done_version = std::fs::read_to_string(done_version_path).unwrap();
-  println!("cargo:rustc-env=DONE_VERSION={}", done_version.trim());
+  let mokou_version = std::fs::read_to_string(mokou_version_path).unwrap();
+  println!("cargo:rustc-env=MOKOU_VERSION={}", mokou_version.trim());
 
   let commit_hash = git_commit_hash();
   println!("cargo:rustc-env=GIT_COMMIT_HASH={}", commit_hash);

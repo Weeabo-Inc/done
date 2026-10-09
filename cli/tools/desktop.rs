@@ -26,7 +26,7 @@ use crate::util::progress_bar::ProgressBarStyle;
 
 /// Version of the `laufey` capi crate pinned in the workspace Cargo.lock.
 /// Populated by `cli/build.rs` and used to resolve matching prebuilt backend
-/// binaries from the `laufey-v{LAUFEY_VERSION}` release on Done's repository,
+/// binaries from the `laufey-v{LAUFEY_VERSION}` release on Mokou's repository,
 /// which mirrors `github.com/littledivy/laufey/releases/tag/v{LAUFEY_VERSION}`.
 const LAUFEY_VERSION: &str = env!("LAUFEY_VERSION");
 
@@ -1906,7 +1906,7 @@ async fn package_linux_app_dir(
 const LAUFEY_DEV_DIR_ENV: &str = "LAUFEY_DEV_DIR";
 
 /// Resolves LAUFEY backend binaries and `.app` bundles, falling back to
-/// downloading prebuilt archives from Done's laufey mirror release when
+/// downloading prebuilt archives from Mokou's laufey mirror release when
 /// `LAUFEY_DEV_DIR` is not set.
 struct LaufeyBackendResolver {
   http_client_provider: Arc<HttpClientProvider>,
@@ -1973,7 +1973,7 @@ impl LaufeyBackendResolver {
     // releases) start rate-limiting empty UAs aggressively.
     let mut headers = http::HeaderMap::new();
     if let Ok(ua) = http::HeaderValue::from_str(&format!(
-      "done-desktop/{} (+https://github.com/weeabo-inc/done)",
+      "mokou-desktop/{} (+https://github.com/weeabo-inc/done)",
       env!("CARGO_PKG_VERSION")
     )) {
       headers.insert(http::header::USER_AGENT, ua);
@@ -2181,7 +2181,7 @@ fn laufey_archive_name(backend: &str, target: &str) -> String {
 /// name is appended to it.
 const LAUFEY_DOWNLOAD_URL_ENV: &str = "LAUFEY_DOWNLOAD_URL";
 
-/// Where a laufey backend archive is downloaded from. Done mirrors the pinned
+/// Where a laufey backend archive is downloaded from. Mokou mirrors the pinned
 /// upstream archives as assets of its `laufey-v{LAUFEY_VERSION}` release (see
 /// `.github/workflows/laufey_mirror.ts`), so `deno desktop` does not depend on
 /// a third-party release page. Set `LAUFEY_DOWNLOAD_URL` to use another
@@ -2198,7 +2198,7 @@ fn laufey_release_url_with_base(base: Option<&str>, file: &str) -> String {
     Some(base) => format!("{}/{file}", base.trim_end_matches('/')),
     None => format!(
       "{}/download/laufey-v{LAUFEY_VERSION}/{file}",
-      deno_lib::version::DONE_RELEASES_URL
+      deno_lib::version::MOKOU_RELEASES_URL
     ),
   }
 }
@@ -5942,7 +5942,7 @@ mod tests {
   }
 
   #[test]
-  fn release_url_uses_done_mirror() {
+  fn release_url_uses_mokou_mirror() {
     let url = laufey_release_url_with_base(
       None,
       "laufey-cef-aarch64-apple-darwin.tar.gz",
@@ -5965,7 +5965,7 @@ mod tests {
       ),
       "https://mirror.example/laufey/laufey-winit-x86_64-unknown-linux-gnu.tar.gz"
     );
-    // An empty override falls back to the Done mirror.
+    // An empty override falls back to the Mokou mirror.
     assert!(
       laufey_release_url_with_base(Some(""), "a.zip")
         .starts_with("https://github.com/weeabo-inc/done/releases/")

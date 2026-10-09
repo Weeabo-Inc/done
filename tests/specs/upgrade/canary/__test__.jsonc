@@ -1,5 +1,5 @@
 {
-  // Done has no canary build infrastructure, so this channel is refused before
+  // Mokou has no canary build infrastructure, so this channel is refused before
   // anything is downloaded.
   "args": "upgrade --canary --force",
   "output": "upgrade.out",

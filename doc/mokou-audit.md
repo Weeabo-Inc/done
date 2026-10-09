@@ -1,6 +1,6 @@
-# Done fork audit (baseline: Deno 2.9.7)
+# Mokou fork audit (baseline: Deno 2.9.7)
 
-This is a snapshot of what Done inherited at the fork point (upstream commit
+This is a snapshot of what Mokou inherited at the fork point (upstream commit
 `3d44d1d8`). Line counts are `.rs`/`.js`/`.ts`/`.mjs` source and exclude
 `tests/` directories. Re-run the commands at the bottom to refresh it.
 
@@ -37,26 +37,26 @@ The native Deno extensions, largest first: `web` 42k, `crypto` 18k, `http` 15k,
 
 ## 3. Links back to upstream that a hard fork must cut (M0)
 
-| What                    | Where                                                                                          | Risk                                                                                                  |
-| ----------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `upgrade` download URLs | `cli/tools/upgrade.rs:42-44` (`github.com/denoland/deno/releases`, `dl.deno.land`)             | **High.** `deno upgrade` replaced a Done build with upstream Deno. **Fixed in M0.**                   |
-| Panic report URL        | `cli/lib.rs:634`, `cli/tools/upgrade.rs:279`                                                   | Users were sent to file Done bugs upstream. **Fixed in M0.**                                          |
-| CI gating               | `.github/workflows/ci.ts:33` `isRepository("denoland/deno")`, referenced 21 more times         | Release, cache and publish jobs silently skip on this repo. **Fixed in M0** (`isReleaseRepo`).        |
-| CI delta builds         | `.github/workflows/ci.ts:945-974`                                                              | Downloads the previous **upstream** release to build deltas from. **Fixed in M0.**                    |
-| `deploy` subcommand     | `cli/tools/deploy.rs`                                                                          | Fetches and runs the Deno Deploy CLI from JSR. **Disabled in M0** unless `DONE_ENABLE_DENO_DEPLOY=1`. |
-| `compile` runtime       | `cli/standalone/binary.rs` (`download_base_binary`)                                            | Embedded upstream's `denort` from `dl.deno.land`. **Fixed in M0** (Done releases).                    |
-| `desktop` backends      | `cli/tools/desktop.rs`, `cli/laufey_sums.lock`                                                 | Downloaded third-party `laufey` binaries. **Fixed in M0** (mirrored on Done releases, SHA-pinned).    |
-| Version and user agent  | `cli/lib/version.rs`, `runtime/js/01_version.ts`, `runtime/js/97_navigator_user_agent_data.js` | Done identifies itself as Deno. **Fixed in M0** (`Done/<ver> Deno/<base>`).                           |
+| What                    | Where                                                                                          | Risk                                                                                                   |
+| ----------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `upgrade` download URLs | `cli/tools/upgrade.rs:42-44` (`github.com/denoland/deno/releases`, `dl.deno.land`)             | **High.** `deno upgrade` replaced a Mokou build with upstream Deno. **Fixed in M0.**                   |
+| Panic report URL        | `cli/lib.rs:634`, `cli/tools/upgrade.rs:279`                                                   | Users were sent to file Mokou bugs upstream. **Fixed in M0.**                                          |
+| CI gating               | `.github/workflows/ci.ts:33` `isRepository("denoland/deno")`, referenced 21 more times         | Release, cache and publish jobs silently skip on this repo. **Fixed in M0** (`isReleaseRepo`).         |
+| CI delta builds         | `.github/workflows/ci.ts:945-974`                                                              | Downloads the previous **upstream** release to build deltas from. **Fixed in M0.**                     |
+| `deploy` subcommand     | `cli/tools/deploy.rs`                                                                          | Fetches and runs the Deno Deploy CLI from JSR. **Disabled in M0** unless `MOKOU_ENABLE_DENO_DEPLOY=1`. |
+| `compile` runtime       | `cli/standalone/binary.rs` (`download_base_binary`)                                            | Embedded upstream's `denort` from `dl.deno.land`. **Fixed in M0** (Mokou releases).                    |
+| `desktop` backends      | `cli/tools/desktop.rs`, `cli/laufey_sums.lock`                                                 | Downloaded third-party `laufey` binaries. **Fixed in M0** (mirrored on Mokou releases, SHA-pinned).    |
+| Version and user agent  | `cli/lib/version.rs`, `runtime/js/01_version.ts`, `runtime/js/97_navigator_user_agent_data.js` | Mokou identifies itself as Deno. **Fixed in M0** (`Mokou/<ver> Deno/<base>`).                          |
 
 The default registries (`jsr.io` in `libs/resolver/factory.rs:187`, and
 `registry.npmjs.org` in `libs/npmrc/lib.rs:22`) are ecosystem endpoints, not
 upstream control. Keep them, but document them.
 
-## 4. Assets Done can build on
+## 4. Assets Mokou can build on
 
 - **`deno desktop`** (`cli/tools/desktop.rs`, 8.4k lines, plus
   `desktop_devtools.rs` and `doc/desktop-architecture.md`) is already in the
-  tree. It is the foundation for Done Desktop.
+  tree. It is the foundation for Mokou Desktop.
 - **Framework detection for `deno compile .`** (`cli/tools/framework.rs`) covers
   Fresh, Next, Astro, SvelteKit and others.
 - **Already-vendored crates** that make M2 APIs cheap to add: `argon2`,
@@ -65,7 +65,7 @@ upstream control. Keep them, but document them.
 - The **task shell** (`deno task`) is a Rust shell implementation that could
   back a `Deno.$` API.
 - The **unstable feature registry** (`runtime/features/data.rs`) is the place to
-  gate every new Done API.
+  gate every new Mokou API.
 
 ## Refreshing these numbers
 

@@ -5099,7 +5099,7 @@ declare var CSSStyleSheet: {
   new (): CSSStyleSheet;
 };
 
-// Done's built-in standard library. Each group of APIs below is gated behind
+// Mokou's built-in standard library. Each group of APIs below is gated behind
 // its own `--unstable-<name>` flag.
 declare namespace Deno {
   /**

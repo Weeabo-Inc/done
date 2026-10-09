@@ -1,6 +1,6 @@
 {
   "tests": {
-    // Deno Deploy is an upstream service. Done refuses to download and run its
+    // Deno Deploy is an upstream service. Mokou refuses to download and run its
     // CLI unless the user opts in.
     "deploy": {
       "args": "deploy",

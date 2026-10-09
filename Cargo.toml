@@ -13,7 +13,6 @@ members = [
   "ext/canvas",
   "ext/cron",
   "ext/crypto",
-  "ext/done",
   "ext/fetch",
   "ext/ffi",
   "ext/fs",
@@ -21,6 +20,7 @@ members = [
   "ext/image",
   "ext/io",
   "ext/kv",
+  "ext/mokou",
   "ext/napi",
   "ext/napi/sym",
   "ext/net",
@@ -120,7 +120,6 @@ deno_cache = { version = "0.192.0", path = "./ext/cache" }
 deno_canvas = { version = "0.121.0", path = "./ext/canvas" }
 deno_cron = { version = "0.139.0", path = "./ext/cron" }
 deno_crypto = { version = "0.273.0", path = "./ext/crypto" }
-deno_done = { version = "0.1.0", path = "./ext/done" }
 deno_fetch = { version = "0.283.0", path = "./ext/fetch" }
 deno_ffi = { version = "0.246.0", path = "./ext/ffi" }
 deno_fs = { version = "0.169.0", path = "./ext/fs" }
@@ -128,6 +127,7 @@ deno_http = { version = "0.257.0", path = "./ext/http" }
 deno_image = { version = "0.35.0", path = "./ext/image" }
 deno_io = { version = "0.169.0", path = "./ext/io" }
 deno_kv = { version = "0.167.0", path = "./ext/kv" }
+deno_mokou = { version = "0.1.0", path = "./ext/mokou" }
 deno_napi = { version = "0.190.0", path = "./ext/napi" }
 deno_net = { version = "0.251.0", path = "./ext/net" }
 deno_node = { version = "0.197.0", path = "./ext/node" }

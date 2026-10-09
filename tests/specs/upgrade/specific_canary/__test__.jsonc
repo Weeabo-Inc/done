@@ -1,5 +1,5 @@
 {
-  // Done has no canary build infrastructure, so a specific canary hash is
+  // Mokou has no canary build infrastructure, so a specific canary hash is
   // refused before anything is downloaded.
   "args": "upgrade --canary --version bda3850f84f24b71e02512c1ba2d6bf2e3daa2fd",
   "output": "upgrade.out",

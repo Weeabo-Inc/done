@@ -1,14 +1,14 @@
 # Copyright 2018-2026 the Deno authors. MIT license.
 
 [package]
-name = "deno_done"
+name = "deno_mokou"
 version = "0.1.0"
 authors.workspace = true
 edition.workspace = true
 license.workspace = true
 readme = "README.md"
 repository.workspace = true
-description = "Done's built-in standard library: SQLite, passwords, hashing, data formats, globbing and more"
+description = "Mokou's built-in standard library: SQLite, passwords, hashing, data formats, globbing and more"
 
 [lib]
 path = "lib.rs"

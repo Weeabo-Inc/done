@@ -1,9 +1,9 @@
-# Done Roadmap
+# Mokou Roadmap
 
 This file turns the five goals in the [README](README.md) into milestones you
 can ship. Each milestone lists concrete work items and what "done" means for it.
 Facts about the starting tree, such as sizes, file paths and upstream links, are
-in [doc/done-audit.md](doc/done-audit.md).
+in [doc/mokou-audit.md](doc/mokou-audit.md).
 
 Milestones are ordered by dependency, not by size. M0 blocks shipping a release.
 M1 to M4 can run in parallel once M0 has landed.
@@ -12,40 +12,57 @@ M1 to M4 can run in parallel once M0 has landed.
 
 ## M0: Independence (hard-fork hygiene)
 
-_Goal: a Done binary that never talks to, updates from, or reports bugs to
+_Goal: a Mokou binary that never talks to, updates from, or reports bugs to
 upstream Deno by accident._
 
-| # | Work item                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Where                                                                              |
-| - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| 1 | ✅ **Decided: the binary stays `deno`.** `done` is a POSIX shell reserved word: `done run main.ts` is a syntax error in bash, zsh and sh, in npm scripts, Makefiles and CI `run:` steps, and inside `deno task`. Done is the product name, used in `--version`, the user agent, panics and upgrade messages. Revisit if a shell-safe name is chosen                                                                                                                                 | n/a                                                                                |
-| 2 | ✅ Own version scheme. `cli/lib/done_version.txt` holds Done's version, which `--version` (`done 0.1.0 (deno 2.9.7 base, …)`), `upgrade`, panics and the REPL banner use. `Deno.version.deno` still reports the Deno base so feature detection keeps working                                                                                                                                                                                                                        | `cli/lib/done_version.txt`, `cli/lib/version.rs` (`DONE_VERSION`)                  |
-| 3 | ✅ Point `upgrade` at Done releases. Stable and pre-release builds come from `weeabo-inc/done` GitHub releases, and the canary channel is refused until Done builds canaries. Release jobs must upload `deno-<target>.zip` and `release-latest.txt` as assets                                                                                                                                                                                                                       | `cli/tools/upgrade.rs`, `cli/lib/version.rs` (`DONE_RELEASES_URL`)                 |
-| 4 | ✅ Send panic and bug reports to `weeabo-inc/done`. The `panic.deno.com` trace link is gone, because that service only symbolizes upstream builds                                                                                                                                                                                                                                                                                                                                   | `cli/lib/version.rs` (`DONE_NEW_ISSUE_URL`), `cli/lib.rs`, `cli/rt_desktop/lib.rs` |
-| 5 | ✅ CI and release workflows run on this repo. Packaging, release builds and tests, delta patches (now from Done's own previous release) and the GitHub release upload, including `release-latest.txt`, run on `weeabo-inc/done`. Larger runners, code signing, dl.deno.land, wpt.fyi and benchmark data stay gated to `denoland/deno` because they need upstream secrets. Still open: `tools/release/` bumps only the Deno version, so it must also bump `cli/lib/done_version.txt` | `.github/workflows/ci.ts` (`isReleaseRepo`), `ci.generated.yml`                    |
-| 6 | ✅ Outbound defaults reviewed, see the table below                                                                                                                                                                                                                                                                                                                                                                                                                                  | `cli/lib.rs`, `cli/standalone/binary.rs`, `cli/schemas/`                           |
-| 7 | ✅ The user agent and `navigator.userAgent` are `Done/<ver> Deno/<base>`. The `Deno/` token stays so servers and libraries that detect Deno keep working. `navigator.userAgentData.brands` lists both. `Deno.build`/`Deno.version` are unchanged                                                                                                                                                                                                                                    | `cli/lib/version.rs`, `runtime/js/97_navigator_user_agent_data.js`                 |
+| # | Work item                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Where                                                                               |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 1 | ✅ **Decided: the binary stays `deno`.** `done` is a POSIX shell reserved word: `done run main.ts` is a syntax error in bash, zsh and sh, in npm scripts, Makefiles and CI `run:` steps, and inside `deno task`. Mokou is the product name, used in `--version`, the user agent, panics and upgrade messages. Revisit if a shell-safe name is chosen                                                                                                                                  | n/a                                                                                 |
+| 2 | ✅ Own version scheme. `cli/lib/mokou_version.txt` holds Mokou's version, which `--version` (`mokou 0.1.0 (deno 2.9.7 base, …)`), `upgrade`, panics and the REPL banner use. `Deno.version.deno` still reports the Deno base so feature detection keeps working                                                                                                                                                                                                                       | `cli/lib/mokou_version.txt`, `cli/lib/version.rs` (`MOKOU_VERSION`)                 |
+| 3 | ✅ Point `upgrade` at Mokou releases. Stable and pre-release builds come from `weeabo-inc/done` GitHub releases, and the canary channel is refused until Mokou builds canaries. Release jobs must upload `deno-<target>.zip` and `release-latest.txt` as assets                                                                                                                                                                                                                       | `cli/tools/upgrade.rs`, `cli/lib/version.rs` (`MOKOU_RELEASES_URL`)                 |
+| 4 | ✅ Send panic and bug reports to `weeabo-inc/done`. The `panic.deno.com` trace link is gone, because that service only symbolizes upstream builds                                                                                                                                                                                                                                                                                                                                     | `cli/lib/version.rs` (`MOKOU_NEW_ISSUE_URL`), `cli/lib.rs`, `cli/rt_desktop/lib.rs` |
+| 5 | ✅ CI and release workflows run on this repo. Packaging, release builds and tests, delta patches (now from Mokou's own previous release) and the GitHub release upload, including `release-latest.txt`, run on `weeabo-inc/done`. Larger runners, code signing, dl.deno.land, wpt.fyi and benchmark data stay gated to `denoland/deno` because they need upstream secrets. Still open: `tools/release/` bumps only the Deno version, so it must also bump `cli/lib/mokou_version.txt` | `.github/workflows/ci.ts` (`isReleaseRepo`), `ci.generated.yml`                     |
+| 6 | ✅ Outbound defaults reviewed, see the table below                                                                                                                                                                                                                                                                                                                                                                                                                                    | `cli/lib.rs`, `cli/standalone/binary.rs`, `cli/schemas/`                            |
+| 7 | ✅ The user agent and `navigator.userAgent` are `Mokou/<ver> Deno/<base>`. The `Deno/` token stays so servers and libraries that detect Deno keep working. `navigator.userAgentData.brands` lists both. `Deno.build`/`Deno.version` are unchanged                                                                                                                                                                                                                                     | `cli/lib/version.rs`, `runtime/js/97_navigator_user_agent_data.js`                  |
 
 ### Outbound defaults (M0 #6)
 
 | Default                                                                                                 | Decision                                                                                                                                                                                                                                   |
 | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `deno deploy`, `deno sandbox`, `--tunnel`, `DENO_CONNECTED`                                             | **Disabled.** They download Deno Deploy's CLI and run it with all permissions, or connect to Deno's tunnel servers. `DONE_ENABLE_DENO_DEPLOY=1` opts back in                                                                               |
-| `deno compile` runtime (`denort`) download                                                              | **Renamed** from `dl.deno.land` to Done's GitHub release for the same Done version. `DENORT_DOWNLOAD_URL` sets a mirror, and `DENORT_BIN` still uses a local build. Release jobs must upload `denort-<target>.zip`                         |
+| `deno deploy`, `deno sandbox`, `--tunnel`, `DENO_CONNECTED`                                             | **Disabled.** They download Deno Deploy's CLI and run it with all permissions, or connect to Deno's tunnel servers. `MOKOU_ENABLE_DENO_DEPLOY=1` opts back in                                                                              |
+| `deno compile` runtime (`denort`) download                                                              | **Renamed** from `dl.deno.land` to Mokou's GitHub release for the same Mokou version. `DENORT_DOWNLOAD_URL` sets a mirror, and `DENORT_BIN` still uses a local build. Release jobs must upload `denort-<target>.zip`                       |
 | `panic.deno.com` stack trace link                                                                       | **Removed**                                                                                                                                                                                                                                |
 | `deno.json` schema `$id`s, DevTools favicon, `deno desktop` user agent                                  | **Renamed** to `weeabo-inc/done`                                                                                                                                                                                                           |
 | `deno desktop` backends (`laufey`, built upstream at `github.com/littledivy`)                           | **Mirrored.** Downloaded from the `laufey-v<version>` release on `weeabo-inc/done`, which `.github/workflows/laufey_mirror.ts` publishes from `cli/laufey_sums.lock`. Downloads stay SHA-pinned. `LAUFEY_DOWNLOAD_URL` sets another mirror |
 | `jsr.io`, `registry.npmjs.org`, `npm.jsr.io`, sigstore (`deno publish`), Socket (`deno audit --socket`) | **Kept.** Ecosystem endpoints, and all can be overridden (`JSR_URL`, `NPM_CONFIG_REGISTRY`, `.npmrc`, `JSR_NPM_URL`, `FULCIO_URL`/`REKOR_URL`)                                                                                             |
 | OpenTelemetry                                                                                           | **Kept.** Off unless `OTEL_DENO=1`, and it defaults to localhost                                                                                                                                                                           |
 | LSP import completions (`/.well-known/deno-import-intellisense.json`)                                   | **Kept.** Only probes origins the user types                                                                                                                                                                                               |
-| Links to `docs.deno.com` in help and error text                                                         | **Kept for now.** Cosmetic. Replace them once Done has its own docs                                                                                                                                                                        |
+| Links to `docs.deno.com` in help and error text                                                         | **Kept for now.** Cosmetic. Replace them once Mokou has its own docs                                                                                                                                                                       |
 
 **Done when:** `deno --version`, `deno upgrade`, a forced panic, and a CI run on
-`weeabo-inc/done` all point at Done and never at upstream Deno.
+`weeabo-inc/done` all point at Mokou and never at upstream Deno.
+
+### Rebrand: Done → Mokou
+
+The product is now **Mokou: A Frictionless & Modern TypeScript Runtime**. Done
+was the working name, and nothing was ever released under it, so its identifiers
+were renamed outright. The GitHub repository stays `weeabo-inc/done`.
+
+1. ✅ Product name. `--version` (`mokou 0.1.0 (deno 2.9.7 base, …)`), the user
+   agent (`Mokou/<ver> Deno/<base>`), `navigator.userAgentData.brands`, panic,
+   upgrade and Deno Deploy messages, the REPL banner, `--help`, the logos in
+   `doc/assets/` and the docs. Internal names follow: `MOKOU_VERSION`,
+   `cli/lib/mokou_version.txt`, `ext/mokou` (`deno_mokou`) and
+   `MOKOU_ENABLE_DENO_DEPLOY`.
+2. The binary ships as `mokou`, with `deno` as an alias, and `globalThis.Mokou`
+   is an alias of `Deno`.
+3. `mokou.json` / `mokou.jsonc` and `MOKOU_*` environment variables are read
+   first, with `deno.json` and `DENO_*` as fallbacks.
 
 ### Decision needed: the `Deno` global
 
 Recommendation: **keep `Deno.*` as the canonical namespace**, and optionally add
-`globalThis.Done` as an alias. If we rename it, every Deno program, JSR package
+`globalThis.Mokou` as an alias. If we rename it, every Deno program, JSR package
 and type definition stops working, and we gain nothing in return. The binary and
 branding can change, but the API surface stays.
 
@@ -122,10 +139,10 @@ competitor today. Everything ships as `Deno.*`, typed in
 tests, and `deno init` produces a project with zero dependencies.
 
 **Status:** done. Every P0 and P1 item, plus `Deno.semver`, `Deno.uuid` and
-`Deno.parseArgs` from P2, ships in `ext/done`, each behind its own
+`Deno.parseArgs` from P2, ships in `ext/mokou`, each behind its own
 `--unstable-<name>` flag. They are documented in
-`cli/tsc/dts/lib.deno.unstable.d.ts` and `ext/done/README.md`, with unit tests
-(`tests/unit/done_*_test.ts`) and spec tests (`tests/specs/done_std/`).
+`cli/tsc/dts/lib.deno.unstable.d.ts` and `ext/mokou/README.md`, with unit tests
+(`tests/unit/done_*_test.ts`) and spec tests (`tests/specs/mokou_std/`).
 `Deno.serve` routing is `Deno.router()`, which builds a handler for
 `Deno.serve`. `deno init` (the default, `--lib` and `--serve` templates) now
 writes `"unstable": ["assert"]` (plus `"router"` for `--serve`) instead of
@@ -139,7 +156,7 @@ dependencies. Still open: `Deno.$` (P2) and SQL clients (P3).
 _Goal: numbers we publish and defend._
 
 1. Build a **baseline benchmark suite** (startup, `Deno.serve` req/s, fs
-   read/write, SQLite, JSON, `fetch`) that compares Done against upstream Deno,
+   read/write, SQLite, JSON, `fetch`) that compares Mokou against upstream Deno,
    Node and Bun. Start from `tests/bench`.
 2. Run it in CI on every merge to `main` and fail on regressions.
 3. Go after the targets M1 opens up: snapshot size and startup time without
@@ -152,9 +169,9 @@ _Goal: numbers we publish and defend._
 
 ## M4: Competitive native APIs
 
-_Goal: anything a competing runtime has built-in, Done has built-in._
+_Goal: anything a competing runtime has built-in, Mokou has built-in._
 
-Keep a living parity matrix (feature → Bun / Node / Done status). Each gap
+Keep a living parity matrix (feature → Bun / Node / Mokou status). Each gap
 becomes an M2-style item. Gaps we already know about include password hashing,
 SQLite, a shell API, glob, semver, fast hashing, an S3 client, and a stable
 public bundler API (`Deno.bundle` exists but is unstable).
@@ -163,16 +180,16 @@ public bundler API (`Deno.bundle` exists but is unstable).
 
 ## M5: Products
 
-_Goal: build the products that make Done a platform._
+_Goal: build the products that make Mokou a platform._
 
-- **Done Desktop.** `deno desktop` already exists (`cli/tools/desktop.rs`,
+- **Mokou Desktop.** `deno desktop` already exists (`cli/tools/desktop.rs`,
   `doc/desktop-architecture.md`, `cli/tsc/dts/lib.deno.desktop.d.ts`). It
   downloads pinned `laufey` backends. Decide whether to keep that dependency or
   host the binaries ourselves, then finish and stabilize the API.
 - **First-party web framework.** A Fresh-style framework built on M2 routing and
   `Deno.bundle`, with zero npm dependencies. `deno compile .` already detects
   frameworks (`cli/tools/framework.rs`).
-- **Templates.** `done init --web | --desktop | --cli`, each with zero
+- **Templates.** `mokou init --web | --desktop | --cli`, each with zero
   dependencies.
 
 ---

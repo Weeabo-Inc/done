@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Mokou">
+  <title>Mokou</title>
+  <defs><linearGradient id="g" x1="128.00" y1="160.00" x2="130.00" y2="12.00" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FF6A3D"/><stop offset="1" stop-color="#FFC24B"/></linearGradient></defs>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M174.00 48.33A92 92 0 1 1 82.00 48.33" stroke="#F2F5F8" stroke-width="22"/>
+    <path d="M128 160C96 128 112 96 136 72C156 52 150 30 130 12" stroke="url(#g)" stroke-width="22"/>
+  </g>
+</svg>

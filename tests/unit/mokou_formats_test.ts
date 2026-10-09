@@ -3,7 +3,7 @@ import { assertEquals, assertThrows } from "./test_util.ts";
 
 Deno.test(function doneToml() {
   const value = Deno.toml.parse(`
-title = "Done"
+title = "Mokou"
 [owner]
 name = "Weeabo"
 born = 1979-05-27T07:32:00Z
@@ -13,7 +13,7 @@ port = 8000
 port = 8001
 `);
   assertEquals(value, {
-    title: "Done",
+    title: "Mokou",
     owner: { name: "Weeabo", born: "1979-05-27T07:32:00Z" },
     servers: [{ port: 8000 }, { port: 8001 }],
   });

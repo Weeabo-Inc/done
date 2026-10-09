@@ -498,11 +498,11 @@ impl PublishPreparer {
               concat!(
                 "Failed ensuring public API type output is valid.\n\n",
                 "{:#}\n\n",
-                "You may have discovered a bug in Done. Please open an issue at: ",
+                "You may have discovered a bug in Mokou. Please open an issue at: ",
                 "{}"
               ),
               check_diagnostics,
-              deno_lib::version::DONE_NEW_ISSUE_URL
+              deno_lib::version::MOKOU_NEW_ISSUE_URL
             );
           }
         }

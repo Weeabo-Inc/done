@@ -416,7 +416,7 @@ pub static UNSTABLE_DEPRECATED_ARG: &[ArgDef] = &[
 /// subcommand, so any command that omits them will reject flags the old
 /// parser accepted.
 pub static UNSTABLE_FEATURE_ARGS: &[ArgDef] = &[
-  // Done's built-in standard library (ext/done).
+  // Mokou's built-in standard library (ext/mokou).
   ArgDef::new("unstable-assert")
     .long("unstable-assert")
     .set_true()
@@ -3512,7 +3512,7 @@ pub static SYNC_TYPES_SUBCOMMAND: CommandDef = CommandDef {
 
 pub static DENO_ROOT: CommandDef = CommandDef {
   name: "deno",
-  about: "A modern JavaScript and TypeScript runtime",
+  about: "Mokou - A Frictionless & Modern TypeScript Runtime",
   aliases: &[],
   args: GLOBAL_ARGS,
   arg_groups: &[UNSTABLE_DEPRECATED_ARG, UNSTABLE_FEATURE_ARGS],

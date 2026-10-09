@@ -385,25 +385,25 @@ core.defineGlobalProperties(denoNsUnstableById[unstableIds.webgpu], {
 
 // denoNsUnstableById[unstableIds.workerOptions] = { __proto__: null }
 
-// Done's built-in standard library (ext/done). Each API is loaded on first
+// Mokou's built-in standard library (ext/mokou). Each API is loaded on first
 // access, so programs that don't use it pay nothing at startup.
 function lazyScript(specifier) {
   let mod;
   return () => mod ?? (mod = core.loadExtScript(specifier));
 }
-const loadDoneAssert = lazyScript("ext:deno_done/00_assert.js");
-const loadDoneSqlite = lazyScript("ext:deno_done/01_sqlite.js");
-const loadDonePassword = lazyScript(
-  "ext:deno_done/02_password.js",
+const loadMokouAssert = lazyScript("ext:deno_mokou/00_assert.js");
+const loadMokouSqlite = lazyScript("ext:deno_mokou/01_sqlite.js");
+const loadMokouPassword = lazyScript(
+  "ext:deno_mokou/02_password.js",
 );
-const loadDoneHash = lazyScript("ext:deno_done/03_hash.js");
-const loadDoneFormats = lazyScript("ext:deno_done/04_formats.js");
-const loadDoneGlob = lazyScript("ext:deno_done/05_glob.js");
-const loadDoneRouter = lazyScript("ext:deno_done/06_router.js");
-const loadDoneSemver = lazyScript("ext:deno_done/07_semver.js");
-const loadDoneUuid = lazyScript("ext:deno_done/08_uuid.js");
-const loadDoneParseArgs = lazyScript(
-  "ext:deno_done/09_parse_args.js",
+const loadMokouHash = lazyScript("ext:deno_mokou/03_hash.js");
+const loadMokouFormats = lazyScript("ext:deno_mokou/04_formats.js");
+const loadMokouGlob = lazyScript("ext:deno_mokou/05_glob.js");
+const loadMokouRouter = lazyScript("ext:deno_mokou/06_router.js");
+const loadMokouSemver = lazyScript("ext:deno_mokou/07_semver.js");
+const loadMokouUuid = lazyScript("ext:deno_mokou/08_uuid.js");
+const loadMokouParseArgs = lazyScript(
+  "ext:deno_mokou/09_parse_args.js",
 );
 
 function lazyProps(names, loader) {
@@ -436,30 +436,30 @@ denoNsUnstableById[unstableIds.assert] = lazyProps([
   "expect",
   "fail",
   "unreachable",
-], loadDoneAssert);
+], loadMokouAssert);
 denoNsUnstableById[unstableIds.sqlite] = lazyProps(
   ["openSqlite", "SqliteDatabase"],
-  loadDoneSqlite,
+  loadMokouSqlite,
 );
 denoNsUnstableById[unstableIds.password] = lazyProps(
   ["password"],
-  loadDonePassword,
+  loadMokouPassword,
 );
-denoNsUnstableById[unstableIds.hash] = lazyProps(["hash"], loadDoneHash);
+denoNsUnstableById[unstableIds.hash] = lazyProps(["hash"], loadMokouHash);
 denoNsUnstableById[unstableIds.formats] = lazyProps(
   ["csv", "toml", "yaml"],
-  loadDoneFormats,
+  loadMokouFormats,
 );
 denoNsUnstableById[unstableIds.glob] = lazyProps(
   ["glob", "globSync"],
-  loadDoneGlob,
+  loadMokouGlob,
 );
-denoNsUnstableById[unstableIds.router] = lazyProps(["router"], loadDoneRouter);
-denoNsUnstableById[unstableIds.semver] = lazyProps(["semver"], loadDoneSemver);
-denoNsUnstableById[unstableIds.uuid] = lazyProps(["uuid"], loadDoneUuid);
+denoNsUnstableById[unstableIds.router] = lazyProps(["router"], loadMokouRouter);
+denoNsUnstableById[unstableIds.semver] = lazyProps(["semver"], loadMokouSemver);
+denoNsUnstableById[unstableIds.uuid] = lazyProps(["uuid"], loadMokouUuid);
 denoNsUnstableById[unstableIds.parseArgs] = lazyProps(
   ["parseArgs"],
-  loadDoneParseArgs,
+  loadMokouParseArgs,
 );
 
 export { denoNs, denoNsUnstableById, unstableIds };

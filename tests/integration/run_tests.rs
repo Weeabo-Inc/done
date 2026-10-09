@@ -2649,7 +2649,7 @@ fn broken_stdout_no_panic_banner() {
     .unwrap();
 
   let stderr = std::str::from_utf8(output.stderr.as_ref()).unwrap();
-  assert_not_contains!(stderr, "Done has panicked");
+  assert_not_contains!(stderr, "Mokou has panicked");
   assert_not_contains!(stderr, "panicked at");
 }
 

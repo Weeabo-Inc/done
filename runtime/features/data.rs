@@ -201,7 +201,7 @@ pub static FEATURE_DESCRIPTIONS: &[UnstableFeatureDescription] = &[
     kind: UnstableFeatureKind::Runtime,
     env_var: None,
   },
-  // Done's built-in standard library (ext/done).
+  // Mokou's built-in standard library (ext/mokou).
   UnstableFeatureDescription {
     name: "assert",
     help_text: "Enable the built-in `Deno.assert*()` and `Deno.expect()` test assertions",

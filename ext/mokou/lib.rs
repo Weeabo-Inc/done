@@ -1,6 +1,6 @@
 // Copyright 2018-2026 the Deno authors. MIT license.
 
-//! Done's built-in standard library.
+//! Mokou's built-in standard library.
 //!
 //! Each API here is exposed on the `Deno` namespace behind its own
 //! `--unstable-<name>` flag (see `runtime/features/data.rs`). The JavaScript
@@ -15,7 +15,7 @@ mod semver;
 mod uuid;
 
 deno_core::extension!(
-  deno_done,
+  deno_mokou,
   deps = [deno_web],
   ops = [
     formats::op_done_toml_parse,

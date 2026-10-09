@@ -255,8 +255,8 @@ pub async fn run(
 
     writeln!(
       handle,
-      "Done {} (deno {} base)",
-      DENO_VERSION_INFO.done, DENO_VERSION_INFO.deno
+      "Mokou {} (deno {} base)",
+      DENO_VERSION_INFO.mokou, DENO_VERSION_INFO.deno
     )?;
     writeln!(handle, "exit using ctrl+d, ctrl+c, or close()")?;
 

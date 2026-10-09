@@ -3,14 +3,14 @@
 import { conditions, createWorkflow, step } from "jsr:@david/gagen@0.3.1";
 
 // `deno desktop` downloads its laufey backends from a `laufey-v<version>`
-// release on Done's repository instead of from upstream laufey. This workflow
+// release on Mokou's repository instead of from upstream laufey. This workflow
 // publishes that release: it fetches every archive pinned in
 // `cli/laufey_sums.lock` from upstream, checks each against its pinned
 // SHA-256, and uploads them. It runs whenever the lock file changes on main.
 //
 // The release is marked as a pre-release and never as "Latest", so
 // `releases/latest` (used by `deno upgrade` and the CI delta patches) keeps
-// pointing at Done's own releases. It is created with GITHUB_TOKEN, so its tag
+// pointing at Mokou's own releases. It is created with GITHUB_TOKEN, so its tag
 // does not trigger the `ci` release build.
 const workflow = createWorkflow({
   name: "laufey_mirror",

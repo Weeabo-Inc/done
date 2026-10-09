@@ -39,7 +39,7 @@ use crate::util::archive;
 use crate::util::progress_bar::ProgressBar;
 use crate::util::progress_bar::ProgressBarStyle;
 
-static RELEASE_URL: &str = version::DONE_RELEASES_URL;
+static RELEASE_URL: &str = version::MOKOU_RELEASES_URL;
 
 pub static ARCHIVE_NAME: Lazy<String> =
   Lazy::new(|| format!("deno-{}.zip", env!("TARGET")));
@@ -306,8 +306,8 @@ pub fn check_for_upgrades(
       ReleaseChannel::Stable => {
         log::info!(
           "{} {} → {} {}",
-          colors::green("A new release of Done is available:"),
-          colors::cyan(version::DENO_VERSION_INFO.done),
+          colors::green("A new release of Mokou is available:"),
+          colors::cyan(version::DENO_VERSION_INFO.mokou),
           colors::cyan(&upgrade_version),
           colors::italic_gray("Run `deno upgrade` to install it.")
         );
@@ -315,22 +315,22 @@ pub fn check_for_upgrades(
       ReleaseChannel::Canary => {
         log::info!(
           "{} {}",
-          colors::green("A new canary release of Done is available."),
+          colors::green("A new canary release of Mokou is available."),
           colors::italic_gray("Run `deno upgrade canary` to install it.")
         );
       }
       ReleaseChannel::Rc => {
         log::info!(
           "{} {}",
-          colors::green("A new release candidate of Done is available."),
+          colors::green("A new release candidate of Mokou is available."),
           colors::italic_gray("Run `deno upgrade rc` to install it.")
         );
       }
       ReleaseChannel::Lts => {
         log::info!(
           "{} {} → {} {}",
-          colors::green("A new LTS release of Done is available:"),
-          colors::cyan(version::DENO_VERSION_INFO.done),
+          colors::green("A new LTS release of Mokou is available:"),
+          colors::cyan(version::DENO_VERSION_INFO.mokou),
           colors::cyan(&upgrade_version),
           colors::italic_gray("Run `deno upgrade lts` to install it.")
         );
@@ -338,8 +338,8 @@ pub fn check_for_upgrades(
       ReleaseChannel::Alpha => {
         log::info!(
           "{} {} → {} {}",
-          colors::green("A new alpha release of Done is available:"),
-          colors::cyan(version::DENO_VERSION_INFO.done),
+          colors::green("A new alpha release of Mokou is available:"),
+          colors::cyan(version::DENO_VERSION_INFO.mokou),
           colors::cyan(&upgrade_version),
           colors::italic_gray("Run `deno upgrade alpha` to install it.")
         );
@@ -347,8 +347,8 @@ pub fn check_for_upgrades(
       ReleaseChannel::Beta => {
         log::info!(
           "{} {} → {} {}",
-          colors::green("A new beta release of Done is available:"),
-          colors::cyan(version::DENO_VERSION_INFO.done),
+          colors::green("A new beta release of Mokou is available:"),
+          colors::cyan(version::DENO_VERSION_INFO.mokou),
           colors::cyan(&upgrade_version),
           colors::italic_gray("Run `deno upgrade beta` to install it.")
         );
@@ -566,7 +566,7 @@ fn upgrade_from_pr(
       "view",
       &pr_number.to_string(),
       "--repo",
-      version::DONE_REPO,
+      version::MOKOU_REPO,
       "--json",
       "title,state,headRefName,headRefOid",
       "-q",
@@ -617,7 +617,7 @@ fn upgrade_from_pr(
         "run",
         "list",
         "--repo",
-        version::DONE_REPO,
+        version::MOKOU_REPO,
         "--branch",
         pr_branch,
         "--workflow",
@@ -670,7 +670,7 @@ fn upgrade_from_pr(
           "download",
           run_id,
           "--repo",
-          version::DONE_REPO,
+          version::MOKOU_REPO,
           "--name",
           name,
           "--dir",
@@ -788,7 +788,7 @@ fn upgrade_from_branch(
       "run",
       "list",
       "--repo",
-      version::DONE_REPO,
+      version::MOKOU_REPO,
       "--branch",
       branch,
       "--workflow",
@@ -840,7 +840,7 @@ fn upgrade_from_branch(
           "download",
           run_id,
           "--repo",
-          version::DONE_REPO,
+          version::MOKOU_REPO,
           "--name",
           name,
           "--dir",
@@ -953,7 +953,10 @@ pub async fn upgrade(
     RequestedVersion::from_upgrade_flags(upgrade_flags.clone())?;
   ensure_release_channel_published(requested_version.release_channel())?;
 
-  log::info!("Current Done version: v{}", version::DENO_VERSION_INFO.done);
+  log::info!(
+    "Current Mokou version: v{}",
+    version::DENO_VERSION_INFO.mokou
+  );
 
   let maybe_selected_version_to_upgrade = match &requested_version {
     RequestedVersion::Latest(channel) => {
@@ -1001,7 +1004,7 @@ pub async fn upgrade(
     try_delta_upgrade(
       &client,
       &current_exe_path,
-      version::DENO_VERSION_INFO.done,
+      version::DENO_VERSION_INFO.mokou,
       &selected_version_to_upgrade.version_or_hash,
     )
     .await
@@ -1096,7 +1099,7 @@ pub async fn upgrade(
     log::info!("Upgraded successfully (dry run)");
     if requested_version.release_channel() == ReleaseChannel::Stable {
       print_release_notes(
-        version::DENO_VERSION_INFO.done,
+        version::DENO_VERSION_INFO.mokou,
         &selected_version_to_upgrade.version_or_hash,
       );
     }
@@ -1128,7 +1131,7 @@ pub async fn upgrade(
   );
   if requested_version.release_channel() == ReleaseChannel::Stable {
     print_release_notes(
-      version::DENO_VERSION_INFO.done,
+      version::DENO_VERSION_INFO.mokou,
       &selected_version_to_upgrade.version_or_hash,
     );
   }
@@ -1232,14 +1235,14 @@ impl RequestedVersion {
   }
 }
 
-/// Done publishes stable releases and pre-releases (RC, LTS, alpha, beta) as
+/// Mokou publishes stable releases and pre-releases (RC, LTS, alpha, beta) as
 /// GitHub releases. There is no canary build infrastructure yet.
 fn ensure_release_channel_published(
   release_channel: ReleaseChannel,
 ) -> Result<(), AnyError> {
   if release_channel == ReleaseChannel::Canary {
     bail!(
-      "Canary builds of Done are not published yet. Releases are available at {}",
+      "Canary builds of Mokou are not published yet. Releases are available at {}",
       RELEASE_URL
     );
   }
@@ -1258,7 +1261,7 @@ fn select_specific_version_for_upgrade(
     | ReleaseChannel::Alpha
     | ReleaseChannel::Beta => {
       version::DENO_VERSION_INFO.release_channel == release_channel
-        && version::DENO_VERSION_INFO.done == version
+        && version::DENO_VERSION_INFO.mokou == version
     }
     ReleaseChannel::Canary => version::DENO_VERSION_INFO.git_hash == version,
   };
@@ -1266,7 +1269,7 @@ fn select_specific_version_for_upgrade(
   if !force && current_is_passed {
     log::info!(
       "Version {} is already installed",
-      version::DENO_VERSION_INFO.done
+      version::DENO_VERSION_INFO.mokou
     );
     return Ok(None);
   }
@@ -1315,7 +1318,7 @@ async fn find_latest_version_to_upgrade(
     | ReleaseChannel::Lts
     | ReleaseChannel::Rc
     | ReleaseChannel::Alpha
-    | ReleaseChannel::Beta => version::DENO_VERSION_INFO.done,
+    | ReleaseChannel::Beta => version::DENO_VERSION_INFO.mokou,
   };
   let should_upgrade = force
     || current_version != latest_version_found.version_or_hash
@@ -3001,7 +3004,7 @@ mod test {
       )
     );
 
-    // Done does not publish canary builds yet.
+    // Mokou does not publish canary builds yet.
     assert!(
       get_download_url(
         "bda3850f84f24b71e02512c1ba2d6bf2e3daa2fd",

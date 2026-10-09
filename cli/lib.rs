@@ -626,7 +626,7 @@ fn setup_panic_hook() {
       eprintln!("Platform: {} {}", env::consts::OS, env::consts::ARCH);
       eprintln!(
         "Version: {} (deno {} base)",
-        deno_lib::version::DENO_VERSION_INFO.done,
+        deno_lib::version::DENO_VERSION_INFO.mokou,
         deno_lib::version::DENO_VERSION_INFO.deno
       );
       eprintln!("Args: {:?}", env::args().collect::<Vec<_>>());
@@ -635,8 +635,8 @@ fn setup_panic_hook() {
     }
 
     eprintln!("\n============================================================");
-    eprintln!("Done has panicked. This is a bug in Done. Please report this");
-    eprintln!("at {}.", deno_lib::version::DONE_NEW_ISSUE_URL);
+    eprintln!("Mokou has panicked. This is a bug in Mokou. Please report this");
+    eprintln!("at {}.", deno_lib::version::MOKOU_NEW_ISSUE_URL);
     eprintln!("If you can reliably reproduce this panic, include the");
     eprintln!("reproduction steps and re-run with the RUST_BACKTRACE=1 env");
     eprintln!("var set and include the backtrace in your report.");
@@ -644,14 +644,14 @@ fn setup_panic_hook() {
     eprintln!("Platform: {} {}", env::consts::OS, env::consts::ARCH);
     eprintln!(
       "Version: {} (deno {} base)",
-      deno_lib::version::DENO_VERSION_INFO.done,
+      deno_lib::version::DENO_VERSION_INFO.mokou,
       deno_lib::version::DENO_VERSION_INFO.deno
     );
     eprintln!("Args: {:?}", env::args().collect::<Vec<_>>());
     eprintln!();
 
     // Upstream Deno prints a `panic.deno.com` link here that encodes the
-    // stack trace. That service only symbolizes upstream builds, so Done
+    // stack trace. That service only symbolizes upstream builds, so Mokou
     // relies on RUST_BACKTRACE instead.
 
     orig_hook(panic_info);
@@ -1295,7 +1295,7 @@ struct AuthTunnelOutput {
 /// Set to `1` to use the upstream Deno Deploy integrations (`deno deploy`,
 /// `deno sandbox`, `--tunnel`). They are off by default because they download
 /// and run Deno Deploy's CLI and connect to Deno's servers.
-const DENO_DEPLOY_OPT_IN_ENV_VAR: &str = "DONE_ENABLE_DENO_DEPLOY";
+const DENO_DEPLOY_OPT_IN_ENV_VAR: &str = "MOKOU_ENABLE_DENO_DEPLOY";
 
 fn ensure_deno_deploy_enabled(feature: &str) -> Result<(), AnyError> {
   if deno_lib::args::has_flag_env_var(
@@ -1305,7 +1305,7 @@ fn ensure_deno_deploy_enabled(feature: &str) -> Result<(), AnyError> {
     return Ok(());
   }
   Err(deno_core::anyhow::anyhow!(
-    "{feature} uses Deno Deploy, a service run by the upstream Deno project, and is disabled in Done.
+    "{feature} uses Deno Deploy, a service run by the upstream Deno project, and is disabled in Mokou.
   {}: set {}=1 to use it anyway.",
     colors::cyan("hint"),
     DENO_DEPLOY_OPT_IN_ENV_VAR,

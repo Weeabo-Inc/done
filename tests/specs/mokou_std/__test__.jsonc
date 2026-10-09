@@ -10,7 +10,7 @@
       "output": "gated_config.out"
     },
     "all_apis": {
-      "args": "run --unstable-sqlite --unstable-password --unstable-hash --unstable-formats --unstable-glob --unstable-router --unstable-semver --unstable-uuid --unstable-parse-args --unstable-assert -R=. main.ts --name=Done -v",
+      "args": "run --unstable-sqlite --unstable-password --unstable-hash --unstable-formats --unstable-glob --unstable-router --unstable-semver --unstable-uuid --unstable-parse-args --unstable-assert -R=. main.ts --name=Mokou -v",
       "output": "main.out"
     },
     "test_with_builtin_asserts": {
