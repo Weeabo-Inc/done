@@ -132,6 +132,7 @@ fn run_test(test: &CollectedTest) -> TestResult {
       "password",
       "router",
       "semver",
+      "shell",
       "sqlite",
       "uuid",
     ] {

@@ -24,12 +24,14 @@ deno_error.workspace = true
 deno_fs.workspace = true
 deno_permissions.workspace = true
 deno_semver.workspace = true
+deno_task_shell.workspace = true
 globset.workspace = true
 rand.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml_ng.workspace = true
 thiserror.workspace = true
+tokio.workspace = true
 toml.workspace = true
 uuid = { workspace = true, features = ["v4", "v7"] }
 walkdir.workspace = true

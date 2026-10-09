@@ -12,6 +12,7 @@ mod glob;
 mod hash;
 mod password;
 mod semver;
+mod shell;
 mod uuid;
 
 deno_core::extension!(
@@ -35,6 +36,9 @@ deno_core::extension!(
     semver::op_done_semver_compare,
     semver::op_done_semver_satisfies,
     semver::op_done_semver_max_satisfying,
+    shell::op_done_shell_spawn,
+    shell::op_done_shell_wait,
+    shell::op_done_shell_kill,
     uuid::op_done_uuid_v4,
     uuid::op_done_uuid_v7,
   ],
@@ -49,5 +53,6 @@ deno_core::extension!(
     "07_semver.js",
     "08_uuid.js",
     "09_parse_args.js",
+    "10_shell.js",
   ],
 );

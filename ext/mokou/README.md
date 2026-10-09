@@ -16,6 +16,7 @@ Mokou's built-in standard library: APIs that most apps need, available on the
 | `--unstable-semver`     | `Deno.semver`                                            | `07_semver.js`, `semver.rs`                           |
 | `--unstable-uuid`       | `Deno.uuid.v4()`, `v7()`, `validate()`                   | `08_uuid.js`, `uuid.rs`                               |
 | `--unstable-parse-args` | `Deno.parseArgs()`                                       | `09_parse_args.js`                                    |
+| `--unstable-shell`      | `Deno.$`, `Deno.ShellError`                              | `10_shell.js`, `shell.rs`, on `deno_task_shell`       |
 
 The JavaScript files are lazy-loaded scripts. `runtime/js/90_deno_ns.js` loads
 each one the first time its API is accessed, so a program that doesn't use them

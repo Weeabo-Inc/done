@@ -245,6 +245,13 @@ pub static FEATURE_DESCRIPTIONS: &[UnstableFeatureDescription] = &[
     env_var: None,
   },
   UnstableFeatureDescription {
+    name: "shell",
+    help_text: "Enable unstable `Deno.$` shell API",
+    show_in_help: true,
+    kind: UnstableFeatureKind::Runtime,
+    env_var: None,
+  },
+  UnstableFeatureDescription {
     name: "router",
     help_text: "Enable unstable `Deno.router()` API",
     show_in_help: true,

@@ -151,16 +151,21 @@ competitor today. Everything ships as `Deno.*`, typed in
 **Done when:** every P0 and P1 item has shipped behind a flag with docs and spec
 tests, and `deno init` produces a project with zero dependencies.
 
-**Status:** done. Every P0 and P1 item, plus `Deno.semver`, `Deno.uuid` and
-`Deno.parseArgs` from P2, ships in `ext/mokou`, each behind its own
+**Status:** done. Every P0 and P1 item, plus `Deno.semver`, `Deno.uuid`,
+`Deno.parseArgs` and `Deno.$` from P2, ships in `ext/mokou`, each behind its own
 `--unstable-<name>` flag. They are documented in
 `cli/tsc/dts/lib.deno.unstable.d.ts` and `ext/mokou/README.md`, with unit tests
 (`tests/unit/done_*_test.ts`) and spec tests (`tests/specs/mokou_std/`).
 `Deno.serve` routing is `Deno.router()`, which builds a handler for
-`Deno.serve`. `deno init` (the default, `--lib` and `--serve` templates) now
-writes `"unstable": ["assert"]` (plus `"router"` for `--serve`) instead of
-importing `jsr:@std/assert` and `jsr:@std/http`, so new projects have no
-dependencies. Still open: `Deno.$` (P2) and SQL clients (P3).
+`Deno.serve`. `Deno.$` (P2) runs commands through the `deno task` shell, with
+quoted interpolation and `.text()`, `.json()`, `.lines()`, `.quiet()`,
+`.nothrow()`, `.cwd()`, `.env()`, `.stdin()` and `.signal()`. It needs
+unrestricted `--allow-run`, because the shell's built-ins and any program it
+starts are not limited by the other permissions. `deno init` (the default,
+`--lib` and `--serve` templates) now writes `"unstable": ["assert"]` (plus
+`"router"` for `--serve`) instead of importing `jsr:@std/assert` and
+`jsr:@std/http`, so new projects have no dependencies. Still open: SQL clients
+(P3).
 
 ---
 

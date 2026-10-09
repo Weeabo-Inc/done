@@ -5858,4 +5858,153 @@ declare namespace Deno {
     // deno-lint-ignore no-explicit-any
     [key: string]: any;
   };
+
+  /**
+   * A value that can be interpolated into a {@linkcode Deno.$} command. Each
+   * value is quoted and passed as one argument (an array as one argument per
+   * element), so it is never parsed as shell syntax.
+   *
+   * @category Subprocess
+   * @experimental Requires `--unstable-shell`.
+   */
+  export type ShellValue =
+    | string
+    | number
+    | bigint
+    | boolean
+    | URL
+    | ShellRaw
+    | readonly ShellValue[];
+
+  /**
+   * Text inserted into a {@linkcode Deno.$} command without quoting, created
+   * by `Deno.$.raw()`.
+   *
+   * @category Subprocess
+   * @experimental Requires `--unstable-shell`.
+   */
+  export interface ShellRaw {
+    readonly text: string;
+  }
+
+  /**
+   * The result of a {@linkcode Deno.$} command.
+   *
+   * @category Subprocess
+   * @experimental Requires `--unstable-shell`.
+   */
+  export interface ShellOutput {
+    /** The exit code. */
+    readonly code: number;
+    /** Whether the exit code is 0. */
+    readonly success: boolean;
+    /** Captured stdout. Empty when stdout wasn't captured. */
+    readonly stdout: Uint8Array<ArrayBuffer>;
+    /** Captured stderr. Empty when stderr wasn't captured. */
+    readonly stderr: Uint8Array<ArrayBuffer>;
+    /** Stdout as text, without trailing newlines. */
+    text(): string;
+    /** Stdout parsed as JSON. */
+    // deno-lint-ignore no-explicit-any
+    json(): any;
+    /** Stdout split into lines. */
+    lines(): string[];
+  }
+
+  /**
+   * Thrown by {@linkcode Deno.$} when a command exits with a code other than
+   * 0. Use `.nothrow()` to resolve instead.
+   *
+   * @category Subprocess
+   * @experimental Requires `--unstable-shell`.
+   */
+  export class ShellError extends Error {
+    /** The exit code. */
+    readonly code: number;
+    /** The command's output. */
+    readonly output: ShellOutput;
+    readonly stdout: Uint8Array<ArrayBuffer>;
+    readonly stderr: Uint8Array<ArrayBuffer>;
+  }
+
+  /**
+   * A command created by {@linkcode Deno.$}. It runs when awaited, or when
+   * `text()`, `json()`, `lines()` or `bytes()` is called. The options can only
+   * be changed before it starts.
+   *
+   * By default stdin is empty, and stdout and stderr are both printed and
+   * captured.
+   *
+   * @category Subprocess
+   * @experimental Requires `--unstable-shell`.
+   */
+  export interface ShellCommand extends PromiseLike<ShellOutput> {
+    /** The working directory, relative to the current one. */
+    cwd(path: string | URL): this;
+    /** Sets environment variables on top of the inherited environment. */
+    env(vars: Record<string, string | number | boolean>): this;
+    /** Where stdin comes from: bytes, this program's stdin (`"inherit"`), or
+     * nothing (`"null"`, the default). */
+    stdin(input: Uint8Array | "inherit" | "null"): this;
+    /** Writes `text` to the command's stdin. */
+    stdinText(text: string): this;
+    /** Captures stdout and stderr without printing them. */
+    quiet(): this;
+    /** Resolves instead of throwing {@linkcode Deno.ShellError} when the
+     * exit code isn't 0. */
+    nothrow(): this;
+    /** Kills the command with `SIGTERM` when `signal` aborts, and rejects with
+     * its reason. */
+    signal(signal: AbortSignal): this;
+    /** Sends a signal to the running command. Does nothing if it isn't
+     * running. */
+    kill(
+      signal?: "SIGTERM" | "SIGKILL" | "SIGINT" | "SIGQUIT" | "SIGABRT",
+    ): void;
+    /** Runs the command and resolves with stdout as text, without trailing
+     * newlines. Stdout is captured instead of printed. */
+    text(): Promise<string>;
+    /** Runs the command and resolves with stdout parsed as JSON. */
+    // deno-lint-ignore no-explicit-any
+    json(): Promise<any>;
+    /** Runs the command and resolves with the lines of stdout. */
+    lines(): Promise<string[]>;
+    /** Runs the command and resolves with stdout as bytes. */
+    bytes(): Promise<Uint8Array<ArrayBuffer>>;
+    catch<T = never>(
+      onRejected?: ((reason: unknown) => T | PromiseLike<T>) | null,
+    ): Promise<ShellOutput | T>;
+    finally(onFinally?: (() => void) | null): Promise<ShellOutput>;
+  }
+
+  /**
+   * Runs a command through the cross-platform shell that `deno task` uses,
+   * so the same script works on Linux, macOS and Windows. It supports pipes,
+   * `&&`, `||`, redirects, globs, environment variables and built-ins such as
+   * `cp`, `mv`, `rm`, `mkdir` and `cat`.
+   *
+   * Interpolated values are quoted, so they are always passed as arguments and
+   * never parsed as shell syntax.
+   *
+   * ```ts
+   * const branch = await Deno.$`git branch --show-current`.text();
+   * const files = ["a file.ts", "b.ts"];
+   * await Deno.$`deno fmt ${files}`;
+   * const { code } = await Deno.$`test -f ${path}`.nothrow();
+   * ```
+   *
+   * A shell can run any program, so `Deno.$` requires unrestricted
+   * `--allow-run`.
+   *
+   * @tags allow-run
+   * @category Subprocess
+   * @experimental Requires `--unstable-shell`.
+   */
+  export const $: {
+    (strings: TemplateStringsArray, ...values: ShellValue[]): ShellCommand;
+    /** Inserts `text` without quoting it, so the shell parses it. */
+    raw(text: string): ShellRaw;
+    /** Quotes `value` as a single shell argument. */
+    escape(value: string | number | bigint | boolean): string;
+  };
 }

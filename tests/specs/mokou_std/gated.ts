@@ -8,6 +8,7 @@ const names = [
   "semver",
   "uuid",
   "parseArgs",
+  "$",
   "assertEquals",
   "expect",
 ] as const;

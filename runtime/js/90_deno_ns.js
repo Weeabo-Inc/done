@@ -405,6 +405,7 @@ const loadMokouUuid = lazyScript("ext:deno_mokou/08_uuid.js");
 const loadMokouParseArgs = lazyScript(
   "ext:deno_mokou/09_parse_args.js",
 );
+const loadMokouShell = lazyScript("ext:deno_mokou/10_shell.js");
 
 function lazyProps(names, loader) {
   const props = { __proto__: null };
@@ -460,6 +461,10 @@ denoNsUnstableById[unstableIds.uuid] = lazyProps(["uuid"], loadMokouUuid);
 denoNsUnstableById[unstableIds.parseArgs] = lazyProps(
   ["parseArgs"],
   loadMokouParseArgs,
+);
+denoNsUnstableById[unstableIds.shell] = lazyProps(
+  ["$", "ShellError"],
+  loadMokouShell,
 );
 
 export { denoNs, denoNsUnstableById, unstableIds };

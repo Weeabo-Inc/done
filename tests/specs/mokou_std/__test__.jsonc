@@ -13,6 +13,17 @@
       "args": "run --unstable-sqlite --unstable-password --unstable-hash --unstable-formats --unstable-glob --unstable-router --unstable-semver --unstable-uuid --unstable-parse-args --unstable-assert -R=. main.ts --name=Mokou -v",
       "output": "main.out"
     },
+    "shell": {
+      "args": "run --unstable-shell --allow-run shell.ts",
+      "output": "shell.out",
+      "exitCode": 1
+    },
+    // A shell can run anything, so an allowlist isn't enough.
+    "shell_needs_unrestricted_run": {
+      "args": "run --unstable-shell --allow-run=echo shell.ts",
+      "output": "shell_no_permission.out",
+      "exitCode": 1
+    },
     "test_with_builtin_asserts": {
       "args": "test --unstable-assert assert_test.ts",
       "output": "assert_test.out"

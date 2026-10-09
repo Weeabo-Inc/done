@@ -1,0 +1,6 @@
+a file.txt b.txt
+$HOME; rm -rf /
+exit code 3
+failing
+error: Uncaught (in promise) ShellError: Command failed with exit code 1: echo failing >&2 && exit 1
+[WILDCARD]

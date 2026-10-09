@@ -7,5 +7,6 @@ router false
 semver false
 uuid false
 parseArgs false
+$ false
 assertEquals false
 expect false
