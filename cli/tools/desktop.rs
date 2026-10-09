@@ -26,7 +26,8 @@ use crate::util::progress_bar::ProgressBarStyle;
 
 /// Version of the `laufey` capi crate pinned in the workspace Cargo.lock.
 /// Populated by `cli/build.rs` and used to resolve matching prebuilt backend
-/// binaries from `github.com/littledivy/laufey/releases/tag/v{LAUFEY_VERSION}`.
+/// binaries from the `laufey-v{LAUFEY_VERSION}` release on Done's repository,
+/// which mirrors `github.com/littledivy/laufey/releases/tag/v{LAUFEY_VERSION}`.
 const LAUFEY_VERSION: &str = env!("LAUFEY_VERSION");
 
 /// Rustc target triple the deno binary was built for. Used as the default
@@ -1905,7 +1906,7 @@ async fn package_linux_app_dir(
 const LAUFEY_DEV_DIR_ENV: &str = "LAUFEY_DEV_DIR";
 
 /// Resolves LAUFEY backend binaries and `.app` bundles, falling back to
-/// downloading prebuilt archives from the laufey GitHub releases when
+/// downloading prebuilt archives from Done's laufey mirror release when
 /// `LAUFEY_DEV_DIR` is not set.
 struct LaufeyBackendResolver {
   http_client_provider: Arc<HttpClientProvider>,
@@ -2176,10 +2177,30 @@ fn laufey_archive_name(backend: &str, target: &str) -> String {
   format!("laufey-{archive_backend}-{target}.{ext}")
 }
 
+/// Environment variable that points backend downloads at a mirror. The archive
+/// name is appended to it.
+const LAUFEY_DOWNLOAD_URL_ENV: &str = "LAUFEY_DOWNLOAD_URL";
+
+/// Where a laufey backend archive is downloaded from. Done mirrors the pinned
+/// upstream archives as assets of its `laufey-v{LAUFEY_VERSION}` release (see
+/// `.github/workflows/laufey_mirror.ts`), so `deno desktop` does not depend on
+/// a third-party release page. Set `LAUFEY_DOWNLOAD_URL` to use another
+/// mirror. Every download is still checked against `cli/laufey_sums.lock`.
 fn laufey_release_url(file: &str) -> String {
-  format!(
-    "https://github.com/littledivy/laufey/releases/download/v{LAUFEY_VERSION}/{file}"
+  laufey_release_url_with_base(
+    std::env::var(LAUFEY_DOWNLOAD_URL_ENV).ok().as_deref(),
+    file,
   )
+}
+
+fn laufey_release_url_with_base(base: Option<&str>, file: &str) -> String {
+  match base.filter(|base| !base.is_empty()) {
+    Some(base) => format!("{}/{file}", base.trim_end_matches('/')),
+    None => format!(
+      "{}/download/laufey-v{LAUFEY_VERSION}/{file}",
+      deno_lib::version::DONE_RELEASES_URL
+    ),
+  }
 }
 
 /// Pick out the hex digest for `file` from a GNU `sha256sum`-style file. Each
@@ -5921,17 +5942,34 @@ mod tests {
   }
 
   #[test]
-  fn release_url_uses_v_prefix() {
-    let url = laufey_release_url("laufey-cef-aarch64-apple-darwin.tar.gz");
-    assert!(
-      url.starts_with(
-        "https://github.com/littledivy/laufey/releases/download/v"
-      )
+  fn release_url_uses_done_mirror() {
+    let url = laufey_release_url_with_base(
+      None,
+      "laufey-cef-aarch64-apple-darwin.tar.gz",
     );
+    assert!(url.starts_with(
+      "https://github.com/weeabo-inc/done/releases/download/laufey-v"
+    ));
     assert!(url.ends_with("/laufey-cef-aarch64-apple-darwin.tar.gz"));
     // No spaces, no shell metachars — this string is fed to `curl` and to
     // log messages.
     assert!(!url.contains(' '));
+  }
+
+  #[test]
+  fn release_url_honors_mirror_override() {
+    assert_eq!(
+      laufey_release_url_with_base(
+        Some("https://mirror.example/laufey/"),
+        "laufey-winit-x86_64-unknown-linux-gnu.tar.gz",
+      ),
+      "https://mirror.example/laufey/laufey-winit-x86_64-unknown-linux-gnu.tar.gz"
+    );
+    // An empty override falls back to the Done mirror.
+    assert!(
+      laufey_release_url_with_base(Some(""), "a.zip")
+        .starts_with("https://github.com/weeabo-inc/done/releases/")
+    );
   }
 
   // --- parse_sha256sum ---

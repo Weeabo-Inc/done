@@ -264,8 +264,9 @@ fn compress_sources(out_dir: &Path) {
 
 /// Read the pinned `laufey` capi crate version from the workspace Cargo.lock and
 /// expose it as the `LAUFEY_VERSION` rustc env var. Desktop backend downloads are
-/// resolved against `github.com/littledivy/laufey/releases/tag/v{LAUFEY_VERSION}`, so
-/// tying this to Cargo.lock keeps a single source of truth.
+/// resolved against the `laufey-v{LAUFEY_VERSION}` mirror release (see
+/// `cli/tools/desktop.rs`), so tying this to Cargo.lock keeps a single source
+/// of truth.
 ///
 /// Also asserts that `cli/laufey_sums.lock` (the trust anchor for those downloads)
 /// pins the same version, failing the build if someone bumps the crate without

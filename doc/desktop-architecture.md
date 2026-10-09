@@ -39,7 +39,10 @@ Version safety is two-layered:
   the backend binary version is pinned, and downloads are integrity-checked
   against in-repo SHA-256 digests (`cli/laufey_sums.lock`, `LAUFEY_PINNED_SUMS`)
   — no TOFU on the GitHub releases page. `LaufeyBackendResolver` resolves in
-  order: `LAUFEY_DEV_DIR` checkout → cached download → fresh download.
+  order: `LAUFEY_DEV_DIR` checkout → cached download → fresh download. Fresh
+  downloads come from the `laufey-v<version>` release on `weeabo-inc/done`,
+  which `.github/workflows/laufey_mirror.ts` publishes from the pinned upstream
+  archives. `LAUFEY_DOWNLOAD_URL` points them at another mirror.
 
 The dylib finds _itself_ on disk via `dladdr` on one of its own functions
 (`get_dylib_path`, `lib.rs:986`) — needed for the auto-update sentinel and for

@@ -45,7 +45,7 @@ The native Deno extensions, largest first: `web` 42k, `crypto` 18k, `http` 15k,
 | CI delta builds         | `.github/workflows/ci.ts:945-974`                                                              | Downloads the previous **upstream** release to build deltas from. **Fixed in M0.**                    |
 | `deploy` subcommand     | `cli/tools/deploy.rs`                                                                          | Fetches and runs the Deno Deploy CLI from JSR. **Disabled in M0** unless `DONE_ENABLE_DENO_DEPLOY=1`. |
 | `compile` runtime       | `cli/standalone/binary.rs` (`download_base_binary`)                                            | Embedded upstream's `denort` from `dl.deno.land`. **Fixed in M0** (Done releases).                    |
-| `desktop` backends      | `cli/tools/desktop.rs`, `cli/laufey_sums.lock`                                                 | Downloads pinned third-party `laufey` binaries. Kept, SHA-pinned.                                     |
+| `desktop` backends      | `cli/tools/desktop.rs`, `cli/laufey_sums.lock`                                                 | Downloaded third-party `laufey` binaries. **Fixed in M0** (mirrored on Done releases, SHA-pinned).    |
 | Version and user agent  | `cli/lib/version.rs`, `runtime/js/01_version.ts`, `runtime/js/97_navigator_user_agent_data.js` | Done identifies itself as Deno. **Fixed in M0** (`Done/<ver> Deno/<base>`).                           |
 
 The default registries (`jsr.io` in `libs/resolver/factory.rs:187`, and

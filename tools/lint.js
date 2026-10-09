@@ -527,6 +527,7 @@ async function ensureWorkflowYmlsUpToDate() {
     ".github/workflows/pr.ts",
     ".github/workflows/cargo_publish.ts",
     ".github/workflows/ecosystem_compat_test.ts",
+    ".github/workflows/laufey_mirror.ts",
     ".github/workflows/node_compat_test.ts",
     ".github/workflows/npm_publish.ts",
     ".github/workflows/post_publish.ts",
