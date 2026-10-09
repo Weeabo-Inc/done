@@ -3,6 +3,7 @@
 //!
 //! Walks a `CommandDef` and its `ArgDef` list to produce formatted help text.
 
+use crate::defs::BIN_NAME;
 use crate::types::*;
 
 /// Render help text for a command.
@@ -16,10 +17,10 @@ pub fn render_help(cmd: &CommandDef) -> String {
   }
 
   // Usage line
-  if cmd.name == "deno" {
+  if cmd.name == BIN_NAME {
     out.push_str(&format!("Usage: {} [OPTIONS]", cmd.name));
   } else {
-    out.push_str(&format!("Usage: deno {} [OPTIONS]", cmd.name));
+    out.push_str(&format!("Usage: {BIN_NAME} {} [OPTIONS]", cmd.name));
   }
 
   let positionals: Vec<&ArgDef> =
@@ -129,7 +130,7 @@ pub fn render_help(cmd: &CommandDef) -> String {
   }
 
   // Environment variables (root help only), mirroring clap's after-help.
-  if cmd.name == "deno" {
+  if cmd.name == BIN_NAME {
     out.push_str(&render_env_vars());
   }
 

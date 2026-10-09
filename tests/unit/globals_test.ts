@@ -44,6 +44,12 @@ Deno.test(function DenoNamespaceExists() {
   assert(Deno != null);
 });
 
+Deno.test(function MokouIsAnAliasOfDeno() {
+  assert(Mokou === Deno);
+  const conn: Mokou.Conn | null = null;
+  assert(conn === null);
+});
+
 Deno.test(function DenoNamespaceIsNotFrozen() {
   assert(!Object.isFrozen(Deno));
 });

@@ -435,7 +435,7 @@ fn default_parse(
     if has_run_flags && !has_v8_help {
       return Err(CliError::new(
         CliErrorKind::MissingRequired,
-        "[SCRIPT_ARG] may only be omitted with --v8-flags=--help, else to use the repl with arguments, please use the `deno repl` subcommand\n\nUsage: deno [OPTIONS] [COMMAND] [SCRIPT_ARG]...",
+        "[SCRIPT_ARG] may only be omitted with --v8-flags=--help, else to use the repl with arguments, please use the `mokou repl` subcommand\n\nUsage: mokou [OPTIONS] [COMMAND] [SCRIPT_ARG]...",
       ));
     }
 

@@ -19,9 +19,8 @@ secure-by-default permissions, first-class TypeScript and web-standard APIs. Our
 direction is different from upstream's. Deno has been moving back toward the
 Node.js ecosystem. Mokou moves the other way.
 
-> **Status:** early. The binary is still called `deno` and behaves like Deno
-> 2.9.7. Everything below describes where we are going. See
-> [ROADMAP.md](ROADMAP.md) for the plan and
+> **Status:** early. Mokou behaves like Deno 2.9.7. Everything below describes
+> where we are going. See [ROADMAP.md](ROADMAP.md) for the plan and
 > [doc/mokou-audit.md](doc/mokou-audit.md) for what the fork starts with.
 
 ## Goals
@@ -63,7 +62,11 @@ cargo build --bin deno
 ./target/debug/deno eval 'console.log("Hello from Mokou")'
 ```
 
-`deno upgrade` installs releases from
+Releases ship the executable as `mokou`, with `deno` as an alias (a symlink, or
+`deno.cmd` on Windows), so scripts, shebangs and CI steps that call `deno` keep
+working. Development builds are still `target/debug/deno`.
+
+`mokou upgrade` installs releases from
 [weeabo-inc/done](https://github.com/weeabo-inc/done/releases), never from
 upstream Deno. Until Mokou publishes its first release, it reports that no
 release is available. Canary builds are not published yet.
@@ -71,12 +74,15 @@ release is available. Canary builds are not published yet.
 ## Your first program
 
 ```ts
-Deno.serve((_req: Request) => new Response("Hello, world!"));
+Mokou.serve((_req: Request) => new Response("Hello, world!"));
 ```
 
 ```sh
-./target/debug/deno run --allow-net server.ts
+mokou run --allow-net server.ts
 ```
+
+`Mokou` is an alias of the `Deno` namespace, so `Deno.serve` works too, and
+existing Deno programs, JSR packages and type definitions run unchanged.
 
 ## Contributing
 

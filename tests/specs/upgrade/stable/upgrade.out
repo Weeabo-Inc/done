@@ -3,6 +3,6 @@ Looking up stable version
 
 Found latest stable version v99999.99.99
 
-Downloading http://localhost:4545/deno-upgrade/download/v99999.99.99/deno-[WILDCARD].zip
+Downloading http://localhost:4545/deno-upgrade/download/v99999.99.99/mokou-[WILDCARD].zip
 Deno is upgrading to version 99999.99.99
 [WILDCARD]

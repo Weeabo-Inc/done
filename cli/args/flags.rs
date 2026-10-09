@@ -820,12 +820,24 @@ pub fn handle_dynamic_shell_completion(shell: &str) -> Result<(), AnyError> {
   let completer = std::env::args_os()
     .next()
     .map(|s| s.to_string_lossy().into_owned())
-    .unwrap_or_else(|| "deno".to_string());
+    .unwrap_or_else(|| deno_cli_parser::defs::BIN_NAME.to_string());
+  // Register completions for the name the user invoked: `mokou`, or the
+  // `deno` alias.
+  let command_name = match std::path::Path::new(&completer)
+    .file_stem()
+    .and_then(|stem| stem.to_str())
+  {
+    Some("deno") => "deno",
+    _ => deno_cli_parser::defs::BIN_NAME,
+  };
   let completer = shlex::try_quote(&completer)
     .map(|c| c.into_owned())
     .unwrap_or(completer);
-  let script =
-    deno_cli_parser::completions::generate_dynamic(shell, "deno", &completer);
+  let script = deno_cli_parser::completions::generate_dynamic(
+    shell,
+    command_name,
+    &completer,
+  );
   deno_print::drop_write_stdout(&script);
   Ok(())
 }

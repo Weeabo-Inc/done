@@ -17,9 +17,9 @@ upstream Deno by accident._
 
 | # | Work item                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Where                                                                               |
 | - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| 1 | ✅ **Decided: the binary stays `deno`.** `done` is a POSIX shell reserved word: `done run main.ts` is a syntax error in bash, zsh and sh, in npm scripts, Makefiles and CI `run:` steps, and inside `deno task`. Mokou is the product name, used in `--version`, the user agent, panics and upgrade messages. Revisit if a shell-safe name is chosen                                                                                                                                  | n/a                                                                                 |
+| 1 | ✅ **Decided: the binary is `mokou`, with a `deno` alias.** The working name `done` was rejected because it is a POSIX shell reserved word (`done run main.ts` is a syntax error in bash, zsh and sh). `mokou` is shell-safe. Releases also ship `deno` as an alias so existing scripts keep working                                                                                                                                                                                  | `.github/workflows/ci.ts`, `cli/tools/upgrade.rs`                                   |
 | 2 | ✅ Own version scheme. `cli/lib/mokou_version.txt` holds Mokou's version, which `--version` (`mokou 0.1.0 (deno 2.9.7 base, …)`), `upgrade`, panics and the REPL banner use. `Deno.version.deno` still reports the Deno base so feature detection keeps working                                                                                                                                                                                                                       | `cli/lib/mokou_version.txt`, `cli/lib/version.rs` (`MOKOU_VERSION`)                 |
-| 3 | ✅ Point `upgrade` at Mokou releases. Stable and pre-release builds come from `weeabo-inc/done` GitHub releases, and the canary channel is refused until Mokou builds canaries. Release jobs must upload `deno-<target>.zip` and `release-latest.txt` as assets                                                                                                                                                                                                                       | `cli/tools/upgrade.rs`, `cli/lib/version.rs` (`MOKOU_RELEASES_URL`)                 |
+| 3 | ✅ Point `upgrade` at Mokou releases. Stable and pre-release builds come from `weeabo-inc/done` GitHub releases, and the canary channel is refused until Mokou builds canaries. Release jobs must upload `mokou-<target>.zip` and `release-latest.txt` as assets                                                                                                                                                                                                                      | `cli/tools/upgrade.rs`, `cli/lib/version.rs` (`MOKOU_RELEASES_URL`)                 |
 | 4 | ✅ Send panic and bug reports to `weeabo-inc/done`. The `panic.deno.com` trace link is gone, because that service only symbolizes upstream builds                                                                                                                                                                                                                                                                                                                                     | `cli/lib/version.rs` (`MOKOU_NEW_ISSUE_URL`), `cli/lib.rs`, `cli/rt_desktop/lib.rs` |
 | 5 | ✅ CI and release workflows run on this repo. Packaging, release builds and tests, delta patches (now from Mokou's own previous release) and the GitHub release upload, including `release-latest.txt`, run on `weeabo-inc/done`. Larger runners, code signing, dl.deno.land, wpt.fyi and benchmark data stay gated to `denoland/deno` because they need upstream secrets. Still open: `tools/release/` bumps only the Deno version, so it must also bump `cli/lib/mokou_version.txt` | `.github/workflows/ci.ts` (`isReleaseRepo`), `ci.generated.yml`                     |
 | 6 | ✅ Outbound defaults reviewed, see the table below                                                                                                                                                                                                                                                                                                                                                                                                                                    | `cli/lib.rs`, `cli/standalone/binary.rs`, `cli/schemas/`                            |
@@ -54,17 +54,23 @@ were renamed outright. The GitHub repository stays `weeabo-inc/done`.
    `doc/assets/` and the docs. Internal names follow: `MOKOU_VERSION`,
    `cli/lib/mokou_version.txt`, `ext/mokou` (`deno_mokou`) and
    `MOKOU_ENABLE_DENO_DEPLOY`.
-2. The binary ships as `mokou`, with `deno` as an alias, and `globalThis.Mokou`
-   is an alias of `Deno`.
+2. ✅ Binary and global. Releases ship `mokou-<target>.zip`, which holds the
+   `mokou` executable plus a `deno` alias (a symlink, or `deno.cmd` on Windows),
+   and `upgrade` and the delta patches use the same names. `--help` and usage
+   lines say `mokou`, and shell completions are registered for both names.
+   `globalThis.Mokou` is an alias of `Deno`, with types (`import Mokou = Deno`
+   in `lib.deno.ns.d.ts`). Development builds are still `target/debug/deno`, and
+   messages that suggest a command (for example `` run `deno task` ``) still say
+   `deno`, which the alias keeps correct.
 3. `mokou.json` / `mokou.jsonc` and `MOKOU_*` environment variables are read
    first, with `deno.json` and `DENO_*` as fallbacks.
 
-### Decision needed: the `Deno` global
+### Decided: the `Deno` global
 
-Recommendation: **keep `Deno.*` as the canonical namespace**, and optionally add
-`globalThis.Mokou` as an alias. If we rename it, every Deno program, JSR package
-and type definition stops working, and we gain nothing in return. The binary and
-branding can change, but the API surface stays.
+**`Deno.*` stays the canonical namespace, and `globalThis.Mokou` is an alias of
+it** (`Mokou === Deno`, and `Mokou.Conn` works as a type). Renaming it would
+break every Deno program, JSR package and type definition for no gain. The
+binary and branding change, but the API surface stays.
 
 ---
 

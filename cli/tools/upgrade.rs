@@ -41,11 +41,17 @@ use crate::util::progress_bar::ProgressBarStyle;
 
 static RELEASE_URL: &str = version::MOKOU_RELEASES_URL;
 
+/// Mokou releases ship the `mokou` executable (plus a `deno` alias) in
+/// `mokou-<target>.zip`.
 pub static ARCHIVE_NAME: Lazy<String> =
-  Lazy::new(|| format!("deno-{}.zip", env!("TARGET")));
+  Lazy::new(|| format!("mokou-{}.zip", env!("TARGET")));
 
 static DELTA_TARGET_NAME: Lazy<String> =
-  Lazy::new(|| format!("deno-{}", env!("TARGET")));
+  Lazy::new(|| format!("mokou-{}", env!("TARGET")));
+
+/// The executable inside a release archive.
+const RELEASE_EXE_NAME: &str =
+  if cfg!(windows) { "mokou.exe" } else { "mokou" };
 
 // How often query server for new version. In hours.
 const UPGRADE_CHECK_INTERVAL: i64 = 24;
@@ -1080,7 +1086,7 @@ pub async fn upgrade(
     );
 
     archive::unpack_into_dir(archive::UnpackArgs {
-      exe_name: if cfg!(windows) { "deno.exe" } else { "deno" },
+      exe_name: RELEASE_EXE_NAME,
       archive_name: &ARCHIVE_NAME,
       archive_data: &archive_data,
       dest_path: temp_dir.path(),
@@ -1929,7 +1935,7 @@ fn kill_running_deno_lsp_processes() {
     .args([
       "-Command",
       r#"Get-WmiObject Win32_Process | Where-Object {
-    $_.Name -eq 'deno.exe' -and
+    ($_.Name -eq 'deno.exe' -or $_.Name -eq 'mokou.exe') -and
     $_.CommandLine -match '^(?:\"[^\"]+\"|\S+)\s+lsp\b'
 } | ForEach-Object {
   if ($_.Terminate()) {
@@ -3272,7 +3278,7 @@ mod test {
       "URL should contain source version and bsdiff extension: {url_str}"
     );
     assert!(
-      url_str.contains("deno-"),
+      url_str.contains("mokou-"),
       "URL should contain target name: {url_str}"
     );
   }

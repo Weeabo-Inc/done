@@ -1171,13 +1171,20 @@ console.log("imported", import.meta.url);
         let options = zip::write::SimpleFileOptions::default()
           .compression_method(zip::CompressionMethod::Stored);
 
-        let exe_name = if path.contains("windows") {
-          "deno.exe"
+        // Mokou release archives hold `mokou`; older archives hold `deno`.
+        let file_name = path.rsplit('/').next().unwrap_or("");
+        let base = if file_name.starts_with("mokou-") {
+          "mokou"
         } else {
           "deno"
         };
+        let exe_name = if path.contains("windows") {
+          format!("{base}.exe")
+        } else {
+          base.to_string()
+        };
 
-        zip_writer.start_file(exe_name, options).unwrap();
+        zip_writer.start_file(exe_name.as_str(), options).unwrap();
         let content = format!("DENO_UPGRADE_TEST_BINARY_VERSION_{}", version);
         zip_writer.write_all(content.as_bytes()).unwrap();
         zip_writer.finish().unwrap();

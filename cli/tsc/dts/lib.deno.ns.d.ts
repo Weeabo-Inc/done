@@ -7071,3 +7071,10 @@ declare namespace Deno {
 
   export {}; // only export exports
 }
+
+/** `Mokou` is the same namespace as `Deno`, under the runtime's own name:
+ * `Mokou.serve` is `Deno.serve` and `Mokou.Conn` is `Deno.Conn`.
+ *
+ * @category Runtime
+ */
+import Mokou = Deno;

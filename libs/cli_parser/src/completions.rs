@@ -6,6 +6,16 @@
 
 use crate::types::*;
 
+/// Other names the root command is installed under. Mokou releases ship a
+/// `deno` alias, so its completions are registered for that name too.
+fn root_aliases(name: &str) -> &'static [&'static str] {
+  if name == crate::defs::BIN_NAME {
+    &["deno"]
+  } else {
+    &[]
+  }
+}
+
 /// Generate a completion script for the given shell.
 pub fn generate(shell: &str, cmd: &CommandDef) -> Vec<u8> {
   match shell {
@@ -26,7 +36,7 @@ fn generate_bash(cmd: &CommandDef) -> Vec<u8> {
   let subcmd_list = subcmds.join(" ");
 
   out.push_str(&format!(
-    r#"_deno() {{
+    r#"_{name}() {{
     local i cur prev opts cmds
     COMPREPLY=()
     cur="${{COMP_WORDS[COMP_CWORD]}}"
@@ -99,8 +109,12 @@ fn generate_bash(cmd: &CommandDef) -> Vec<u8> {
   }
 
   out.push_str("    esac\n}\n\n");
+  let names = std::iter::once(name)
+    .chain(root_aliases(name).iter().copied())
+    .collect::<Vec<_>>()
+    .join(" ");
   out.push_str(&format!(
-    "complete -F _{name} -o bashdefault -o default {name}\n"
+    "complete -F _{name} -o bashdefault -o default {names}\n"
   ));
 
   out.into_bytes()
@@ -140,10 +154,16 @@ fn generate_zsh(cmd: &CommandDef) -> Vec<u8> {
   let name = cmd.name;
   let mut out = String::new();
 
-  out.push_str(&format!("#compdef {name}\n\n"));
+  let names = std::iter::once(name)
+    .chain(root_aliases(name).iter().copied())
+    .collect::<Vec<_>>()
+    .join(" ");
+  out.push_str(&format!("#compdef {names}\n\n"));
 
   // Subcommands
-  out.push_str("_deno_commands() {\n    local commands; commands=(\n");
+  out.push_str(&format!(
+    "_{name}_commands() {{\n    local commands; commands=(\n"
+  ));
   for sub in cmd.subcommands {
     if sub.name == "help" {
       continue;
@@ -159,9 +179,9 @@ fn generate_zsh(cmd: &CommandDef) -> Vec<u8> {
       .replace('\'', "'\\''");
     out.push_str(&format!("        '{}:{}'\n", sub.name, about));
   }
-  out.push_str(
-    "    )\n    _describe -t commands 'deno commands' commands\n}\n\n",
-  );
+  out.push_str(&format!(
+    "    )\n    _describe -t commands '{name} commands' commands\n}}\n\n"
+  ));
 
   // Main function
   out.push_str(&format!("_{name}() {{\n"));
@@ -182,7 +202,7 @@ fn generate_zsh(cmd: &CommandDef) -> Vec<u8> {
     }
   }
 
-  out.push_str("        \":: :_deno_commands\" \\\n");
+  out.push_str(&format!("        \":: :_{name}_commands\" \\\n"));
   out.push_str("        \"*::arg:->args\" \\\n");
   out.push_str("        && ret=0\n\n");
 
@@ -276,15 +296,24 @@ fn generate_fish(cmd: &CommandDef) -> Vec<u8> {
     }
   }
 
+  for alias in root_aliases(name) {
+    out.push_str(&format!("complete -c {alias} --wraps {name}\n"));
+  }
+
   out.into_bytes()
 }
 
 fn generate_powershell(cmd: &CommandDef) -> Vec<u8> {
   let name = cmd.name;
   let mut out = String::new();
+  let command_names = std::iter::once(name)
+    .chain(root_aliases(name).iter().copied())
+    .map(|n| format!("'{n}'"))
+    .collect::<Vec<_>>()
+    .join(",");
 
   out.push_str(&format!(
-        r#"Register-ArgumentCompleter -Native -CommandName '{name}' -ScriptBlock {{
+        r#"Register-ArgumentCompleter -Native -CommandName {command_names} -ScriptBlock {{
     param($wordToComplete, $commandAst, $cursorPosition)
     $commandElements = $commandAst.CommandElements
     $command = @(
@@ -750,7 +779,7 @@ mod tests {
   fn generate_bash_uses_real_newlines() {
     let s = String::from_utf8(generate("bash", &DENO_ROOT)).unwrap();
     assert!(
-      s.contains("\"deno,run\")\n                cmd=\"deno__run\""),
+      s.contains("\"mokou,run\")\n                cmd=\"mokou__run\""),
       "{s}"
     );
     assert!(s.contains("            *)\n                ;;"), "{s}");

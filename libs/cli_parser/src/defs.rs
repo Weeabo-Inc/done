@@ -3510,8 +3510,11 @@ pub static SYNC_TYPES_SUBCOMMAND: CommandDef = CommandDef {
   keep_double_dash: false,
 };
 
+/// The name of the Mokou executable. Releases also ship a `deno` alias.
+pub const BIN_NAME: &str = "mokou";
+
 pub static DENO_ROOT: CommandDef = CommandDef {
-  name: "deno",
+  name: BIN_NAME,
   about: "Mokou - A Frictionless & Modern TypeScript Runtime",
   aliases: &[],
   args: GLOBAL_ARGS,

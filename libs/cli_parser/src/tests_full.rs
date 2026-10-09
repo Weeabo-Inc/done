@@ -7335,11 +7335,11 @@ fn bare_with_flag_no_file() {
   let r = flags_from_vec(svec!["deno", "--no-config"]);
 
   let err = r.unwrap_err();
-  assert!(err.to_string().contains("error: [SCRIPT_ARG] may only be omitted with --v8-flags=--help, else to use the repl with arguments, please use the `deno repl` subcommand"));
+  assert!(err.to_string().contains("error: [SCRIPT_ARG] may only be omitted with --v8-flags=--help, else to use the repl with arguments, please use the `mokou repl` subcommand"));
   assert!(
     err
       .to_string()
-      .contains("Usage: deno [OPTIONS] [COMMAND] [SCRIPT_ARG]...")
+      .contains("Usage: mokou [OPTIONS] [COMMAND] [SCRIPT_ARG]...")
   );
 }
 
