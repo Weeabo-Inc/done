@@ -1820,6 +1820,70 @@ const benchJob = job(
           name: "Run benchmarks",
           run: "cargo bench -p bench_tests --bench deno_bench --locked",
         },
+        // Compare Mokou with upstream Deno, Node and Bun, and fail when Mokou
+        // got slower than on the last main run (tests/bench/compare).
+        {
+          name: "Install Bun",
+          uses: "oven-sh/setup-bun@v2",
+        },
+        {
+          name: "Install wrk",
+          run: "sudo apt-get update && sudo apt-get install -y wrk",
+        },
+        {
+          name: "Restore benchmark baseline",
+          uses: "actions/cache/restore@v4",
+          with: {
+            path: "bench_baseline",
+            key: "never_saved",
+            "restore-keys": "bench-compare-",
+          },
+        },
+        {
+          name: "Compare with Deno, Node and Bun",
+          run: [
+            "mkdir -p bench_compare",
+            "args=(--mokou ./target/release/deno --threshold 0.25 \\",
+            "  --json bench_compare/results.json --markdown bench_compare/results.md)",
+            "if [ -f bench_baseline/results.json ]; then",
+            "  args+=(--baseline bench_baseline/results.json)",
+            "fi",
+            "status=0",
+            './target/release/deno run -A tests/bench/compare/run.ts "${args[@]}" || status=$?',
+            'if [ -f bench_compare/results.md ]; then cat bench_compare/results.md >> "$GITHUB_STEP_SUMMARY"; fi',
+            "exit $status",
+          ],
+        },
+        {
+          name: "Upload benchmark comparison",
+          uses: "actions/upload-artifact@v6",
+          if: conditions.status.always(),
+          with: {
+            name: "bench-compare",
+            path: "bench_compare/",
+          },
+        },
+        {
+          // Main always records its results, even after a regression, so a
+          // slowdown fails one run instead of every run after it.
+          name: "Update benchmark baseline",
+          if: isMainBranch.and(conditions.status.cancelled().not()),
+          run: [
+            "if [ -f bench_compare/results.json ]; then",
+            "  mkdir -p bench_baseline",
+            "  cp bench_compare/results.json bench_baseline/results.json",
+            "fi",
+          ],
+        },
+        {
+          name: "Save benchmark baseline",
+          uses: "actions/cache/save@v4",
+          if: isMainBranch.and(conditions.status.cancelled().not()),
+          with: {
+            path: "bench_baseline",
+            key: "bench-compare-${{ github.sha }}",
+          },
+        },
         {
           name: "Post benchmarks",
           if: isDenoland.and(isMainBranch),

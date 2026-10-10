@@ -179,7 +179,13 @@ _Goal: numbers we publish and defend._
    JSON. `--baseline` fails when Mokou is slower than an earlier result, which
    item 2 builds on. No numbers are published yet: they need a release build on
    a fixed machine.
-2. Run it in CI on every merge to `main` and fail on regressions.
+2. ✅ Run it in CI on every merge to `main` and fail on regressions. The `bench`
+   job (on `main`, and on PRs labelled `ci-bench`) builds a release binary, runs
+   the comparison against Deno, Node and Bun, writes the table to the job
+   summary and uploads the JSON. It fails when a Mokou benchmark is more than
+   25% slower than on the last `main` run, whose results are kept in the Actions
+   cache (`bench-compare-<sha>`). The threshold is loose because hosted runners
+   are noisy. Tighten it once the job runs on a dedicated machine.
 3. Go after the targets M1 opens up: snapshot size and startup time without
    `ext/node`.
 4. Profile the `Deno.serve` hot path (`ext/http`, `libs/http_h1`).

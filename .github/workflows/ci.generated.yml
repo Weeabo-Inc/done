@@ -245,6 +245,51 @@ jobs:
       - name: Run benchmarks
         if: '(contains(github.event.pull_request.labels.*.name, ''ci-bench'') || github.ref == ''refs/heads/main'') && !startsWith(github.ref, ''refs/tags/'')'
         run: cargo bench -p bench_tests --bench deno_bench --locked
+      - name: Install Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        if: '(contains(github.event.pull_request.labels.*.name, ''ci-bench'') || github.ref == ''refs/heads/main'') && !startsWith(github.ref, ''refs/tags/'')'
+      - name: Install wrk
+        if: '(contains(github.event.pull_request.labels.*.name, ''ci-bench'') || github.ref == ''refs/heads/main'') && !startsWith(github.ref, ''refs/tags/'')'
+        run: sudo apt-get update && sudo apt-get install -y wrk
+      - name: Restore benchmark baseline
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        if: '(contains(github.event.pull_request.labels.*.name, ''ci-bench'') || github.ref == ''refs/heads/main'') && !startsWith(github.ref, ''refs/tags/'')'
+        with:
+          path: bench_baseline
+          key: never_saved
+          restore-keys: bench-compare-
+      - name: 'Compare with Deno, Node and Bun'
+        if: '(contains(github.event.pull_request.labels.*.name, ''ci-bench'') || github.ref == ''refs/heads/main'') && !startsWith(github.ref, ''refs/tags/'')'
+        run: |-
+          mkdir -p bench_compare
+          args=(--mokou ./target/release/deno --threshold 0.25 \
+            --json bench_compare/results.json --markdown bench_compare/results.md)
+          if [ -f bench_baseline/results.json ]; then
+            args+=(--baseline bench_baseline/results.json)
+          fi
+          status=0
+          ./target/release/deno run -A tests/bench/compare/run.ts "${args[@]}" || status=$?
+          if [ -f bench_compare/results.md ]; then cat bench_compare/results.md >> "$GITHUB_STEP_SUMMARY"; fi
+          exit $status
+      - name: Upload benchmark comparison
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        if: '(contains(github.event.pull_request.labels.*.name, ''ci-bench'') || github.ref == ''refs/heads/main'') && !startsWith(github.ref, ''refs/tags/'') && always()'
+        with:
+          name: bench-compare
+          path: bench_compare/
+      - name: Update benchmark baseline
+        if: '!startsWith(github.ref, ''refs/tags/'') && github.ref == ''refs/heads/main'' && !cancelled()'
+        run: |-
+          if [ -f bench_compare/results.json ]; then
+            mkdir -p bench_baseline
+            cp bench_compare/results.json bench_baseline/results.json
+          fi
+      - name: Save benchmark baseline
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
+        if: '!startsWith(github.ref, ''refs/tags/'') && github.ref == ''refs/heads/main'' && !cancelled()'
+        with:
+          path: bench_baseline
+          key: 'bench-compare-${{ github.sha }}'
       - name: Post benchmarks
         if: '!startsWith(github.ref, ''refs/tags/'') && github.repository == ''denoland/deno'' && github.ref == ''refs/heads/main'''
         env:
@@ -7713,4 +7758,5 @@ jobs:
 # gagen:pin denoland/setup-deno@v2 = 667a34cdef165d8d2b2e98dde39547c9daac7282
 # gagen:pin dsherret/rust-toolchain-file@v1 = 3551321aa44dd44a0393eb3b6bdfbc5d25ecf621
 # gagen:pin dtolnay/rust-toolchain@master = 3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9
+# gagen:pin oven-sh/setup-bun@v2 = 0c5077e51419868618aeaa5fe8019c62421857d6
 # gagen:pin softprops/action-gh-release@v2 = 153bb8e04406b158c6c84fc1615b65b24149a1fe

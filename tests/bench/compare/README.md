@@ -46,5 +46,10 @@ don't need to be installed for a regression check:
   --skip deno --skip node --skip bun --baseline main.json
 ```
 
+CI does exactly this in the `bench` job (`.github/workflows/ci.ts`) on every
+push to `main` and on PRs labelled `ci-bench`: it compares against the last
+`main` result, kept in the Actions cache, with a 25% threshold, and puts the
+table in the job summary.
+
 Benchmarks on shared CI machines are noisy. Compare results from the same
 machine type, and prefer a threshold above the run-to-run variation you see.

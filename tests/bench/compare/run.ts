@@ -494,6 +494,23 @@ async function main() {
       "> **Warning:** Mokou is a debug build, so its numbers are not " +
       "representative. Build it with `cargo build --release`.\n\n" + markdown;
   }
+
+  let found: string[] = [];
+  if (options.baseline) {
+    const baseline: Results = JSON.parse(
+      await Deno.readTextFile(options.baseline),
+    );
+    found = regressions(results, baseline, options.threshold);
+    const against = `the baseline${
+      baseline.commit ? ` (${baseline.commit.slice(0, 12)})` : ""
+    }`;
+    const percent = `${Math.round(options.threshold * 100)}%`;
+    markdown += found.length
+      ? `\nMokou is more than ${percent} slower than ${against}:\n\n` +
+        found.map((line) => `- ${line}`).join("\n") + "\n"
+      : `\nNo benchmark is more than ${percent} slower than ${against}.\n`;
+  }
+
   console.log(markdown);
   if (options.markdown) await Deno.writeTextFile(options.markdown, markdown);
   if (options.json) {
@@ -502,21 +519,7 @@ async function main() {
       JSON.stringify(results, null, 2) + "\n",
     );
   }
-
-  if (options.baseline) {
-    const baseline = JSON.parse(await Deno.readTextFile(options.baseline));
-    const found = regressions(results, baseline, options.threshold);
-    if (found.length) {
-      console.error(
-        `Mokou is more than ${
-          options.threshold * 100
-        }% slower than the baseline:`,
-      );
-      for (const line of found) console.error(`  ${line}`);
-      Deno.exit(1);
-    }
-    console.error("No regressions against the baseline.");
-  }
+  if (found.length) Deno.exit(1);
 }
 
 await main();
