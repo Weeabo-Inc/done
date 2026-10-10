@@ -467,6 +467,11 @@ pub static UNSTABLE_FEATURE_ARGS: &[ArgDef] = &[
     .set_true()
     .hidden()
 .help("Enable unstable `Deno.password` API"),
+  ArgDef::new("unstable-pty")
+    .long("unstable-pty")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.spawnPty()` API"),
   ArgDef::new("unstable-shell")
     .long("unstable-shell")
     .set_true()

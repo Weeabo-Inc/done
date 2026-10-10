@@ -15,6 +15,7 @@ mod glob;
 mod hash;
 mod markdown;
 mod password;
+mod pty;
 mod secrets;
 mod semver;
 mod shell;
@@ -47,6 +48,10 @@ deno_core::extension!(
     markdown::op_done_markdown_html,
     password::op_done_password_hash,
     password::op_done_password_verify,
+    pty::op_done_pty_spawn,
+    pty::op_done_pty_wait,
+    pty::op_done_pty_resize,
+    pty::op_done_pty_kill,
     secrets::op_done_secrets_get,
     secrets::op_done_secrets_set,
     secrets::op_done_secrets_delete,
@@ -82,5 +87,6 @@ deno_core::extension!(
     "17_tar.js",
     "18_transpile.js",
     "19_secrets.js",
+    "20_pty.js",
   ],
 );

@@ -134,6 +134,7 @@ fn run_test(test: &CollectedTest) -> TestResult {
       "html",
       "parse-args",
       "password",
+      "pty",
       "router",
       "s3",
       "secrets",

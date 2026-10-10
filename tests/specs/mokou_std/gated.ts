@@ -19,6 +19,7 @@ const names = [
   "tar",
   "transpile",
   "secrets",
+  "spawnPty",
   "assertEquals",
   "deepEquals",
   "mock",

@@ -6996,4 +6996,68 @@ declare namespace Deno {
     function _delete(key: SecretKey): Promise<boolean>;
     export { _delete as delete };
   }
+
+  /** Options for {@linkcode Deno.spawnPty}.
+   *
+   * @category Subprocess
+   * @experimental Requires `--unstable-pty`. */
+  export interface SpawnPtyOptions {
+    args?: string[];
+    cwd?: string | URL;
+    /** Added to (or, with `clearEnv`, instead of) the inherited environment.
+     * `TERM` defaults to `"xterm-256color"`. */
+    env?: Record<string, string>;
+    clearEnv?: boolean;
+    /** The terminal's width in columns. Defaults to 80. */
+    cols?: number;
+    /** The terminal's height in rows. Defaults to 24. */
+    rows?: number;
+  }
+
+  /** A program running in a pseudo-terminal, from {@linkcode Deno.spawnPty}.
+   *
+   * @category Subprocess
+   * @experimental Requires `--unstable-pty`. */
+  export class PtyProcess {
+    private constructor();
+    readonly pid: number;
+    /** Everything the program writes to the terminal: stdout and stderr
+     * together, with terminal escape codes. Keep reading it, or cancel it:
+     * once the terminal's buffer fills, the program blocks. */
+    readonly readable: ReadableStream<Uint8Array<ArrayBuffer>>;
+    /** Input to the program, as if typed. The terminal echoes it. */
+    readonly writable: WritableStream<Uint8Array>;
+    readonly status: Promise<CommandStatus>;
+    /** Types `data` into the terminal; `"\x03"` is Ctrl+C. */
+    write(data: string | Uint8Array): Promise<void>;
+    /** Changes the terminal's size; the program gets `SIGWINCH`. */
+    resize(cols: number, rows: number): void;
+    /** Defaults to `"SIGTERM"`. */
+    kill(signal?: Signal): void;
+  }
+
+  /**
+   * Runs a program in a pseudo-terminal, so it behaves as in a real
+   * terminal: colors, prompts, line editing and full-screen interfaces work,
+   * and the program can't tell it is being driven. Use it to test or
+   * automate interactive programs, or to build a terminal.
+   *
+   * Needs `--allow-run` for the command, like {@linkcode Deno.Command}.
+   * Not supported on Windows yet.
+   *
+   * ```ts
+   * const pty = Deno.spawnPty("bash", { cols: 100, rows: 30 });
+   * pty.readable.pipeTo(Deno.stdout.writable);
+   * await pty.write("ls --color\n");
+   * await pty.write("exit\n");
+   * await pty.status;
+   * ```
+   *
+   * @category Subprocess
+   * @experimental Requires `--unstable-pty`.
+   */
+  export function spawnPty(
+    command: string | URL,
+    options?: SpawnPtyOptions,
+  ): PtyProcess;
 }

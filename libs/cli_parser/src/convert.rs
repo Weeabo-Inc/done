@@ -973,6 +973,7 @@ fn unstable_args_parse(result: &ParseResult, flags: &mut Flags) {
     ("unstable-html", None),
     ("unstable-parse-args", None),
     ("unstable-password", None),
+    ("unstable-pty", None),
     ("unstable-router", None),
     ("unstable-s3", None),
     ("unstable-secrets", None),

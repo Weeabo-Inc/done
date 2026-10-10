@@ -58,18 +58,18 @@ when you update a row.
 
 ## HTTP, networking and processes
 
-| Feature                     | Bun                        | Node               | Mokou                     | Gap |
-| --------------------------- | -------------------------- | ------------------ | ------------------------- | --- |
-| HTTP server                 | ✅ `Bun.serve`             | ✅ `node:http`     | ✅ `Deno.serve`           |     |
-| Routing                     | ✅ `Bun.serve({ routes })` | ❌                 | ✅ `Deno.router()`        |     |
-| File-system router          | ✅ `FileSystemRouter`      | ❌                 | ❌                        | P3  |
-| WebSocket server and client | ✅                         | ✅ (client global) | ✅                        |     |
-| Shell scripting             | ✅ `Bun.$`                 | ❌                 | ✅ `Deno.$`               |     |
-| Subprocesses                | ✅ `Bun.spawn`             | ✅ `child_process` | ✅ `Deno.Command`         |     |
-| Pseudo-terminals (PTY)      | ✅ `Bun.Terminal`          | ❌                 | ❌                        | P2  |
-| Cron jobs                   | ✅ `Bun.cron`              | ❌                 | 🟡 `Deno.cron` (unstable) |     |
-| Glob                        | ✅ `Bun.Glob`              | ✅ `fs.glob`       | ✅ `Deno.glob()`          |     |
-| FFI                         | ✅ `bun:ffi`               | ❌                 | ✅ `Deno.dlopen()`        |     |
+| Feature                     | Bun                        | Node               | Mokou                             | Gap |
+| --------------------------- | -------------------------- | ------------------ | --------------------------------- | --- |
+| HTTP server                 | ✅ `Bun.serve`             | ✅ `node:http`     | ✅ `Deno.serve`                   |     |
+| Routing                     | ✅ `Bun.serve({ routes })` | ❌                 | ✅ `Deno.router()`                |     |
+| File-system router          | ✅ `FileSystemRouter`      | ❌                 | ❌                                | P3  |
+| WebSocket server and client | ✅                         | ✅ (client global) | ✅                                |     |
+| Shell scripting             | ✅ `Bun.$`                 | ❌                 | ✅ `Deno.$`                       |     |
+| Subprocesses                | ✅ `Bun.spawn`             | ✅ `child_process` | ✅ `Deno.Command`                 |     |
+| Pseudo-terminals (PTY)      | ✅ `Bun.Terminal`          | ❌                 | 🟡 `Deno.spawnPty()`, not Windows |     |
+| Cron jobs                   | ✅ `Bun.cron`              | ❌                 | 🟡 `Deno.cron` (unstable)         |     |
+| Glob                        | ✅ `Bun.Glob`              | ✅ `fs.glob`       | ✅ `Deno.glob()`                  |     |
+| FFI                         | ✅ `bun:ffi`               | ❌                 | ✅ `Deno.dlopen()`                |     |
 
 ## Tooling
 
@@ -119,9 +119,12 @@ were already there and this table missed them: `t.assertSnapshot()` with
 timers are not done. `Deno.secrets` reads and writes the OS credential store
 (Keychain, Credential Manager, Secret Service) and, unlike `Bun.secrets`, needs
 a permission, `--allow-sys=secrets`, because on Linux any process in the session
-can read any Secret Service item.
+can read any Secret Service item. `Deno.spawnPty()` runs a program in a
+pseudo-terminal (resize, signals, web streams), with the same `--allow-run`
+checks as `Deno.Command`; Windows (ConPTY) is still to do.
 
-Still open: pseudo-terminals.
+Every P2 gap has an API now. Follow-ups noted above: import/export scanning for
+`Deno.transpile()`, fake timers for `Deno.mock`, and ConPTY.
 
 **P3: large surfaces**
 

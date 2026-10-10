@@ -1311,6 +1311,34 @@ fn spawn_child_node(
   })
 }
 
+/// Resolves `cmd` and checks the run permission exactly as `Deno.Command`
+/// does, including refusing `LD_*` / `DYLD_*` variables without
+/// `--allow-run`, and returns the command with its arguments, cwd and
+/// environment set. For extensions that spawn processes with their own
+/// stdio, such as Mokou's `Deno.spawnPty()`.
+#[cfg(unix)]
+pub fn prepare_command(
+  state: &mut OpState,
+  cmd: &str,
+  args: &[String],
+  cwd: Option<&str>,
+  envs: &[(String, String)],
+  clear_env: bool,
+  api_name: &str,
+) -> Result<Command, ProcessError> {
+  let (cmd_path, run_env) = compute_run_cmd_and_check_permissions(
+    cmd, cwd, envs, clear_env, state, api_name, false,
+  )?;
+  let mut command = Command::new(cmd_path);
+  command.args(args);
+  if run_env.set_cwd_on_command {
+    command.current_dir(&run_env.cwd);
+  }
+  command.env_clear();
+  command.envs(run_env.envs.into_iter().map(|(k, v)| (k.into_inner(), v)));
+  Ok(command)
+}
+
 fn compute_run_cmd_and_check_permissions(
   arg_cmd: &str,
   arg_cwd: Option<&str>,

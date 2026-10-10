@@ -25,12 +25,15 @@ deno_core.workspace = true
 deno_error.workspace = true
 deno_fs.workspace = true
 deno_permissions.workspace = true
+deno_process.workspace = true
+deno_signals.workspace = true
 deno_semver.workspace = true
 deno_task_shell.workspace = true
 flate2 = { workspace = true, features = ["rust_backend"] }
 globset.workspace = true
 hmac.workspace = true
 keyring.workspace = true
+libc.workspace = true
 md-5.workspace = true
 rand.workspace = true
 serde.workspace = true

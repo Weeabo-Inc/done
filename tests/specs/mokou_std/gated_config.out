@@ -18,6 +18,7 @@ csrf false
 tar false
 transpile false
 secrets false
+spawnPty false
 assertEquals true
 deepEquals true
 mock true
