@@ -173,9 +173,12 @@ starts are not limited by the other permissions. `deno init` (the default,
 
 _Goal: numbers we publish and defend._
 
-1. Build a **baseline benchmark suite** (startup, `Deno.serve` req/s, fs
-   read/write, SQLite, JSON, `fetch`) that compares Mokou against upstream Deno,
-   Node and Bun. Start from `tests/bench`.
+1. ✅ **Baseline benchmark suite.** `tests/bench/compare/run.ts` compares Mokou
+   with upstream Deno, Node and Bun on startup, JSON, fs read/write, SQLite,
+   `fetch` and `Deno.serve` req/s (with `wrk`), and prints a Markdown table or
+   JSON. `--baseline` fails when Mokou is slower than an earlier result, which
+   item 2 builds on. No numbers are published yet: they need a release build on
+   a fixed machine.
 2. Run it in CI on every merge to `main` and fail on regressions.
 3. Go after the targets M1 opens up: snapshot size and startup time without
    `ext/node`.
@@ -202,8 +205,8 @@ _Goal: build the products that make Mokou a platform._
 
 - **Mokou Desktop.** `deno desktop` already exists (`cli/tools/desktop.rs`,
   `doc/desktop-architecture.md`, `cli/tsc/dts/lib.deno.desktop.d.ts`). It
-  downloads pinned `laufey` backends. Decide whether to keep that dependency or
-  host the binaries ourselves, then finish and stabilize the API.
+  downloads pinned `laufey` backends, which we now mirror on our own releases
+  (M0 #6). Next, finish and stabilize the API.
 - **First-party web framework.** A Fresh-style framework built on M2 routing and
   `Deno.bundle`, with zero npm dependencies. `deno compile .` already detects
   frameworks (`cli/tools/framework.rs`).
