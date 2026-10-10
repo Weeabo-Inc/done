@@ -140,6 +140,7 @@ fn run_test(test: &CollectedTest) -> TestResult {
       "shell",
       "sqlite",
       "tar",
+      "transpile",
       "uuid",
     ] {
       deno = deno.arg(format!("--unstable-{feature}"));

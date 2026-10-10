@@ -497,6 +497,11 @@ pub static UNSTABLE_FEATURE_ARGS: &[ArgDef] = &[
     .set_true()
     .hidden()
 .help("Enable unstable `Deno.tar` API"),
+  ArgDef::new("unstable-transpile")
+    .long("unstable-transpile")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.transpile()` API"),
   ArgDef::new("unstable-uuid")
     .long("unstable-uuid")
     .set_true()

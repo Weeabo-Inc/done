@@ -79,7 +79,7 @@ when you update a row.
 | Test runner and assertions    | ✅ `bun test`       | ✅ `node:test`                   | ✅ `Deno.test`, `Deno.assert*`   |     |
 | Test mocks and snapshots      | ✅                  | ✅ `node:test`                   | ❌                               | P2  |
 | Bundler API                   | ✅ `Bun.build`      | ❌                               | 🟡 `Deno.bundle()` (unstable)    |     |
-| Transpiler API                | ✅ `Bun.Transpiler` | 🟡 `module.stripTypeScriptTypes` | ❌                               | P2  |
+| Transpiler API                | ✅ `Bun.Transpiler` | 🟡 `module.stripTypeScriptTypes` | ✅ `Deno.transpile()`            |     |
 | Formatter, linter, doc, bench | ❌                  | ❌                               | ✅ `fmt`, `lint`, `doc`, `bench` |     |
 | Single-file executables       | ✅ `--compile`      | 🟡 SEA                           | ✅ `compile`                     |     |
 | Desktop apps / webview        | ✅ `Bun.WebView`    | ❌                               | 🟡 `deno desktop` (unstable)     |     |
@@ -109,10 +109,12 @@ binary for `deno doc`, with raw HTML dropped unless allowed), the boolean
 `Deno.deepEquals()`, and `Deno.csrf` (stateless HMAC tokens that can be bound to
 a session). `Deno.tar` creates, reads, packs and extracts tar and `.tar.gz`
 archives in memory; extraction refuses anything that would land outside the
-target directory, including through chains of symlinks.
+target directory, including through chains of symlinks. `Deno.transpile()` turns
+TypeScript and JSX into JavaScript with the compiler that runs Mokou's own
+modules (no import/export scanning yet, unlike `Bun.Transpiler.scan`).
 
-Still open: OS keychain secrets (`keyring`), test mocks and snapshots, a
-transpiler API, and pseudo-terminals.
+Still open: OS keychain secrets (`keyring`), test mocks and snapshots, and
+pseudo-terminals.
 
 **P3: large surfaces**
 

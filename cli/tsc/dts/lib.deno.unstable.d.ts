@@ -6742,4 +6742,73 @@ declare namespace Deno {
       options?: ExtractOptions,
     ): Promise<void>;
   }
+
+  /** Options for {@linkcode Deno.transpile}.
+   *
+   * @category Runtime
+   * @experimental Requires `--unstable-transpile`. */
+  export interface TranspileOptions {
+    /** The kind of source. Defaults to what `filename`'s extension says, or
+     * `"ts"`. */
+    loader?: "ts" | "tsx" | "mts" | "cts" | "js" | "jsx" | "mjs" | "cjs";
+    /** A path or URL for the source, used in source maps and to pick the
+     * loader. */
+    filename?: string | URL;
+    /** How JSX is transformed, for the `"tsx"` and `"jsx"` loaders. */
+    jsx?: {
+      /** `"classic"` calls `factory`; `"automatic"` imports `jsx()` from
+       * `${importSource}/jsx-runtime`; `"precompile"` turns static markup
+       * into strings. Defaults to `"classic"`. */
+      runtime?: "classic" | "automatic" | "precompile";
+      /** For the automatic and precompile runtimes. Defaults to `"react"`. */
+      importSource?: string;
+      /** For the classic runtime. Defaults to `"React.createElement"`. */
+      factory?: string;
+      /** For the classic runtime. Defaults to `"React.Fragment"`. */
+      fragmentFactory?: string;
+      /** Uses `jsxDEV()` from `jsx-dev-runtime`, with source locations. */
+      development?: boolean;
+    };
+    /** `"tc39"` (the default) for standard decorators, `"legacy"` for
+     * TypeScript's `experimentalDecorators`. */
+    decorators?: "tc39" | "legacy";
+    /** `"inline"` appends the source map as a comment, `"external"` returns
+     * it as `map`. Defaults to `"none"`. */
+    sourceMap?: "none" | "inline" | "external";
+    /** Removes comments from the output. */
+    removeComments?: boolean;
+    /** Only removes imports and exports marked `type`, like TypeScript's
+     * `verbatimModuleSyntax`. */
+    verbatimModuleSyntax?: boolean;
+  }
+
+  /** The result of {@linkcode Deno.transpile}.
+   *
+   * @category Runtime
+   * @experimental Requires `--unstable-transpile`. */
+  export interface TranspileOutput {
+    code: string;
+    /** The source map, with `sourceMap: "external"`. */
+    map?: string;
+  }
+
+  /**
+   * Transpiles TypeScript, JSX or modern JavaScript to JavaScript, with the
+   * compiler Mokou runs modules with. Types are removed without being
+   * checked. Throws a `SyntaxError` for invalid source.
+   *
+   * ```ts
+   * const { code } = Deno.transpile("const n: number = <b>{1}</b>;", {
+   *   loader: "tsx",
+   *   jsx: { runtime: "automatic", importSource: "preact" },
+   * });
+   * ```
+   *
+   * @category Runtime
+   * @experimental Requires `--unstable-transpile`.
+   */
+  export function transpile(
+    source: string,
+    options?: TranspileOptions,
+  ): TranspileOutput;
 }

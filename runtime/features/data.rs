@@ -315,6 +315,13 @@ pub static FEATURE_DESCRIPTIONS: &[UnstableFeatureDescription] = &[
     env_var: None,
   },
   UnstableFeatureDescription {
+    name: "transpile",
+    help_text: "Enable unstable `Deno.transpile()` API",
+    show_in_help: true,
+    kind: UnstableFeatureKind::Runtime,
+    env_var: None,
+  },
+  UnstableFeatureDescription {
     name: "uuid",
     help_text: "Enable unstable `Deno.uuid` API",
     show_in_help: true,

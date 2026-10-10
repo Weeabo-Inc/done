@@ -2869,6 +2869,7 @@ dependencies = [
  "comrak",
  "crc32fast",
  "csv",
+ "deno_ast",
  "deno_core",
  "deno_error",
  "deno_fs",

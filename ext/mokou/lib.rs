@@ -17,6 +17,7 @@ mod markdown;
 mod password;
 mod semver;
 mod shell;
+mod transpile;
 mod uuid;
 
 deno_core::extension!(
@@ -52,6 +53,7 @@ deno_core::extension!(
     shell::op_done_shell_spawn,
     shell::op_done_shell_wait,
     shell::op_done_shell_kill,
+    transpile::op_done_transpile,
     uuid::op_done_uuid_v4,
     uuid::op_done_uuid_v7,
   ],
@@ -74,5 +76,6 @@ deno_core::extension!(
     "15_html.js",
     "16_csrf.js",
     "17_tar.js",
+    "18_transpile.js",
   ],
 );

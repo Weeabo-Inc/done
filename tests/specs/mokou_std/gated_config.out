@@ -16,6 +16,7 @@ escapeHTML false
 markdown false
 csrf false
 tar false
+transpile false
 assertEquals true
 deepEquals true
 expect true

@@ -413,6 +413,7 @@ const loadMokouS3 = lazyScript("ext:deno_mokou/14_s3.js");
 const loadMokouHtml = lazyScript("ext:deno_mokou/15_html.js");
 const loadMokouCsrf = lazyScript("ext:deno_mokou/16_csrf.js");
 const loadMokouTar = lazyScript("ext:deno_mokou/17_tar.js");
+const loadMokouTranspile = lazyScript("ext:deno_mokou/18_transpile.js");
 
 function lazyProps(names, loader, target = { __proto__: null }) {
   const props = { __proto__: null };
@@ -481,6 +482,10 @@ denoNsUnstableById[unstableIds.html] = lazyProps(
 );
 denoNsUnstableById[unstableIds.csrf] = lazyProps(["csrf"], loadMokouCsrf);
 denoNsUnstableById[unstableIds.tar] = lazyProps(["tar"], loadMokouTar);
+denoNsUnstableById[unstableIds.transpile] = lazyProps(
+  ["transpile"],
+  loadMokouTranspile,
+);
 denoNsUnstableById[unstableIds.s3] = lazyProps(
   ["S3Client", "S3Error"],
   loadMokouS3,
