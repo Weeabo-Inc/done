@@ -26,6 +26,7 @@ deno_fs.workspace = true
 deno_permissions.workspace = true
 deno_semver.workspace = true
 deno_task_shell.workspace = true
+flate2 = { workspace = true, features = ["rust_backend"] }
 globset.workspace = true
 hmac.workspace = true
 md-5.workspace = true
@@ -35,6 +36,7 @@ serde_json.workspace = true
 serde_yaml_ng.workspace = true
 sha1.workspace = true
 sha2.workspace = true
+tar.workspace = true
 thiserror.workspace = true
 tokio.workspace = true
 unicode-width.workspace = true

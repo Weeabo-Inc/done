@@ -978,6 +978,7 @@ fn unstable_args_parse(result: &ParseResult, flags: &mut Flags) {
     ("unstable-semver", None),
     ("unstable-shell", None),
     ("unstable-sqlite", None),
+    ("unstable-tar", None),
     ("unstable-uuid", None),
   ];
 

@@ -24,7 +24,7 @@ when you update a row.
 | Redis client              | ✅ `Bun.redis`      | ❌               | ❌                                    | P3  |
 | S3 client                 | ✅ `Bun.s3`         | ❌               | ✅ `Deno.S3Client`                    |     |
 | OS keychain secrets       | ✅ `Bun.secrets`    | ❌               | ❌                                    | P2  |
-| Archives (tar)            | ✅ `Bun.Archive`    | ❌               | ❌                                    | P2  |
+| Archives (tar)            | ✅ `Bun.Archive`    | ❌               | ✅ `Deno.tar`                         |     |
 | Compression: gzip/deflate | ✅ sync and streams | ✅ `node:zlib`   | 🟡 `CompressionStream` only (no sync) |     |
 | Compression: zstd         | ✅ `Bun.zstd*`      | ✅ `node:zlib`   | ✅ `CompressionStream("zstd")`        |     |
 
@@ -107,10 +107,12 @@ memory.
 Shipped: `Deno.escapeHTML()` and `Deno.markdown.html()` (comrak, already in the
 binary for `deno doc`, with raw HTML dropped unless allowed), the boolean
 `Deno.deepEquals()`, and `Deno.csrf` (stateless HMAC tokens that can be bound to
-a session).
+a session). `Deno.tar` creates, reads, packs and extracts tar and `.tar.gz`
+archives in memory; extraction refuses anything that would land outside the
+target directory, including through chains of symlinks.
 
-Still open: tar archives (`tar`), OS keychain secrets (`keyring`), test mocks
-and snapshots, a transpiler API, and pseudo-terminals.
+Still open: OS keychain secrets (`keyring`), test mocks and snapshots, a
+transpiler API, and pseudo-terminals.
 
 **P3: large surfaces**
 

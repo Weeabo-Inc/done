@@ -296,11 +296,19 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     kind: UnstableFeatureKind::Cli,
   },
   UnstableFeatureDefinition {
+    name: "tar",
+    flag_name: "unstable-tar",
+    help_text: "Enable unstable `Deno.tar` API",
+    show_in_help: true,
+    id: 36,
+    kind: UnstableFeatureKind::Runtime,
+  },
+  UnstableFeatureDefinition {
     name: "temporal",
     flag_name: "unstable-temporal",
     help_text: "Enable unstable Temporal API",
     show_in_help: false,
-    id: 36,
+    id: 37,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -308,7 +316,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-unsafe-proto",
     help_text: "Enable unsafe __proto__ support. This is a security risk.",
     show_in_help: true,
-    id: 37,
+    id: 38,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -316,7 +324,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-uuid",
     help_text: "Enable unstable `Deno.uuid` API",
     show_in_help: true,
-    id: 38,
+    id: 39,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -324,7 +332,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-vsock",
     help_text: "Enable unstable VSOCK APIs",
     show_in_help: false,
-    id: 39,
+    id: 40,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -332,7 +340,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-webgpu",
     help_text: "Enable unstable WebGPU APIs",
     show_in_help: true,
-    id: 40,
+    id: 41,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -340,7 +348,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-worker-options",
     help_text: "Enable unstable Web Worker APIs",
     show_in_help: true,
-    id: 41,
+    id: 42,
     kind: UnstableFeatureKind::Runtime,
   },
 ];

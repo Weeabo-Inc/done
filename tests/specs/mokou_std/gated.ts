@@ -16,6 +16,7 @@ const names = [
   "escapeHTML",
   "markdown",
   "csrf",
+  "tar",
   "assertEquals",
   "deepEquals",
   "expect",

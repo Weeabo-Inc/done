@@ -15,6 +15,7 @@ S3Client false
 escapeHTML false
 markdown false
 csrf false
+tar false
 assertEquals false
 deepEquals false
 expect false

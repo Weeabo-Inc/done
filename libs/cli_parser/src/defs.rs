@@ -492,6 +492,11 @@ pub static UNSTABLE_FEATURE_ARGS: &[ArgDef] = &[
     .set_true()
     .hidden()
 .help("Enable unstable `Deno.openSqlite()` API"),
+  ArgDef::new("unstable-tar")
+    .long("unstable-tar")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.tar` API"),
   ArgDef::new("unstable-uuid")
     .long("unstable-uuid")
     .set_true()

@@ -8,6 +8,7 @@
 //! touches these APIs does not pay for them at startup.
 
 mod ansi;
+mod archive;
 mod csrf;
 mod formats;
 mod glob;
@@ -23,6 +24,8 @@ deno_core::extension!(
   deps = [deno_web],
   ops = [
     ansi::op_done_ansi_width,
+    archive::op_done_tar_create,
+    archive::op_done_tar_read,
     csrf::op_done_csrf_generate,
     csrf::op_done_csrf_verify,
     formats::op_done_toml_parse,
@@ -70,5 +73,6 @@ deno_core::extension!(
     "14_s3.js",
     "15_html.js",
     "16_csrf.js",
+    "17_tar.js",
   ],
 );

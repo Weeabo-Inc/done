@@ -139,6 +139,7 @@ fn run_test(test: &CollectedTest) -> TestResult {
       "semver",
       "shell",
       "sqlite",
+      "tar",
       "uuid",
     ] {
       deno = deno.arg(format!("--unstable-{feature}"));

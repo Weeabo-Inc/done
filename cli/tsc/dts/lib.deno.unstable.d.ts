@@ -6602,4 +6602,144 @@ declare namespace Deno {
      * @experimental Requires `--unstable-csrf`. */
     export function verify(token: unknown, options?: VerifyOptions): boolean;
   }
+
+  /**
+   * Tar archives, optionally gzip-compressed: build them from data or a
+   * directory, list their entries, and extract them.
+   *
+   * ```ts
+   * const archive = await Deno.tar.create({
+   *   "README.md": "# Hello",
+   *   "data/config.json": JSON.stringify({ a: 1 }),
+   * }, { gzip: true });
+   * await Deno.writeFile("out.tar.gz", archive);
+   *
+   * for (const entry of await Deno.tar.read(archive)) {
+   *   console.log(entry.path, entry.size);
+   * }
+   * await Deno.tar.extract(archive, "./out");
+   * ```
+   *
+   * Archives are held in memory, so they suit up to a few hundred megabytes.
+   *
+   * @category File System
+   * @experimental Requires `--unstable-tar`.
+   */
+  export namespace tar {
+    /** The kinds of entry {@linkcode Deno.tar} creates and reads. `"link"`
+     * is a hard link to an earlier entry; `"other"` covers devices, FIFOs and
+     * other special files, which are listed but not extracted.
+     *
+     * @category File System
+     * @experimental Requires `--unstable-tar`. */
+    export type EntryType = "file" | "directory" | "symlink" | "link" | "other";
+    /** An entry to put in an archive.
+     *
+     * @category File System
+     * @experimental Requires `--unstable-tar`. */
+    export interface EntryInit {
+      /** A relative path, with `/` separators. Absolute paths and `..` are
+       * rejected. */
+      path: string;
+      /** Defaults to `"file"`. */
+      type?: Exclude<EntryType, "other">;
+      /** The contents of a file. Strings are UTF-8 encoded. */
+      data?: string | Uint8Array | ArrayBuffer | Blob;
+      /** Defaults to `0o644` for files and `0o755` for directories. */
+      mode?: number;
+      /** Defaults to now. Stored with one-second precision. */
+      mtime?: Date | number;
+      /** What a symlink points to, or the archive path a hard link shares
+       * its contents with. */
+      linkName?: string;
+    }
+    /** An entry read from an archive.
+     *
+     * @category File System
+     * @experimental Requires `--unstable-tar`. */
+    export interface Entry {
+      /** The path, without a trailing slash for directories. */
+      path: string;
+      type: EntryType;
+      size: number;
+      mode: number;
+      mtime: Date;
+      /** The contents, for files. */
+      data?: Uint8Array;
+      /** For symlinks and hard links. */
+      linkName?: string;
+    }
+    /** Options for creating an archive.
+     *
+     * @category File System
+     * @experimental Requires `--unstable-tar`. */
+    export interface CreateOptions {
+      /** Compresses the archive with gzip (a `.tar.gz`). */
+      gzip?: boolean;
+    }
+    /** Options for {@linkcode Deno.tar.pack}.
+     *
+     * @category File System
+     * @experimental Requires `--unstable-tar`. */
+    export interface PackOptions extends CreateOptions {
+      /** Called with each path relative to the directory, with `/`
+       * separators; return `false` to leave it out (and, for a directory,
+       * everything in it). */
+      filter?: (path: string) => boolean;
+    }
+    /** Options for {@linkcode Deno.tar.extract}.
+     *
+     * @category File System
+     * @experimental Requires `--unstable-tar`. */
+    export interface ExtractOptions {
+      /** Leading path segments to remove from each entry, like
+       * `tar --strip-components`. Entries left with no path are skipped. */
+      strip?: number;
+    }
+    /** Builds an archive from a map of paths to file contents, or from a list
+     * of entries.
+     *
+     * @category File System
+     * @experimental Requires `--unstable-tar`. */
+    export function create(
+      entries:
+        | Record<string, string | Uint8Array | ArrayBuffer | Blob>
+        | Iterable<EntryInit>,
+      options?: CreateOptions,
+    ): Promise<Uint8Array<ArrayBuffer>>;
+    /** Lists an archive's entries, with the contents of its files. gzip is
+     * detected automatically.
+     *
+     * @category File System
+     * @experimental Requires `--unstable-tar`. */
+    export function read(
+      archive: Uint8Array | ArrayBuffer | Blob,
+    ): Promise<Entry[]>;
+    /** Builds an archive from a directory's contents, with paths relative to
+     * it. Symlinks are stored as symlinks, not followed. Needs read
+     * permission for the directory.
+     *
+     * @category File System
+     * @experimental Requires `--unstable-tar`. */
+    export function pack(
+      dir: string | URL,
+      options?: PackOptions,
+    ): Promise<Uint8Array<ArrayBuffer>>;
+    /** Extracts an archive into a directory, creating it if needed. gzip is
+     * detected automatically. Needs read and write permission for the
+     * directory.
+     *
+     * Nothing is written outside the directory: absolute paths, `..`, links
+     * pointing outside it and existing symlinks in the way are rejected, and
+     * links are created after every file. Devices and other special files
+     * are skipped, and setuid, setgid and sticky bits are dropped.
+     *
+     * @category File System
+     * @experimental Requires `--unstable-tar`. */
+    export function extract(
+      archive: Uint8Array | ArrayBuffer | Blob,
+      dir: string | URL,
+      options?: ExtractOptions,
+    ): Promise<void>;
+  }
 }
