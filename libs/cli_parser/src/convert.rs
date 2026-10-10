@@ -975,6 +975,7 @@ fn unstable_args_parse(result: &ParseResult, flags: &mut Flags) {
     ("unstable-password", None),
     ("unstable-router", None),
     ("unstable-s3", None),
+    ("unstable-secrets", None),
     ("unstable-semver", None),
     ("unstable-shell", None),
     ("unstable-sqlite", None),

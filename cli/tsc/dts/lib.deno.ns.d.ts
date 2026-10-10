@@ -4618,7 +4618,8 @@ declare namespace Deno {
       | "getPriority"
       | "setPriority"
       | "ca"
-      | "umask";
+      | "umask"
+      | "secrets";
   }
 
   /** The permission descriptor for the `allow-ffi` and `deny-ffi` permissions, which controls

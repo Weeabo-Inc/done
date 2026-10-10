@@ -18,6 +18,7 @@ const names = [
   "csrf",
   "tar",
   "transpile",
+  "secrets",
   "assertEquals",
   "deepEquals",
   "mock",

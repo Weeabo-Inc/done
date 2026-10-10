@@ -23,7 +23,7 @@ when you update a row.
 | Postgres / MySQL client   | ✅ `Bun.sql`        | ❌               | ❌                                    | P3  |
 | Redis client              | ✅ `Bun.redis`      | ❌               | ❌                                    | P3  |
 | S3 client                 | ✅ `Bun.s3`         | ❌               | ✅ `Deno.S3Client`                    |     |
-| OS keychain secrets       | ✅ `Bun.secrets`    | ❌               | ❌                                    | P2  |
+| OS keychain secrets       | ✅ `Bun.secrets`    | ❌               | ✅ `Deno.secrets`                     |     |
 | Archives (tar)            | ✅ `Bun.Archive`    | ❌               | ✅ `Deno.tar`                         |     |
 | Compression: gzip/deflate | ✅ sync and streams | ✅ `node:zlib`   | 🟡 `CompressionStream` only (no sync) |     |
 | Compression: zstd         | ✅ `Bun.zstd*`      | ✅ `node:zlib`   | ✅ `CompressionStream("zstd")`        |     |
@@ -116,9 +116,12 @@ modules (no import/export scanning yet, unlike `Bun.Transpiler.scan`).
 `toHaveBeenCalled*` / `toHaveReturned*` matchers on `Deno.expect`. Snapshots
 were already there and this table missed them: `t.assertSnapshot()` with
 `deno test --update-snapshots`, compatible with `@std/testing/snapshot`. Fake
-timers are not done.
+timers are not done. `Deno.secrets` reads and writes the OS credential store
+(Keychain, Credential Manager, Secret Service) and, unlike `Bun.secrets`, needs
+a permission, `--allow-sys=secrets`, because on Linux any process in the session
+can read any Secret Service item.
 
-Still open: OS keychain secrets (`keyring`) and pseudo-terminals.
+Still open: pseudo-terminals.
 
 **P3: large surfaces**
 

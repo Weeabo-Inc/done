@@ -15,6 +15,7 @@ mod glob;
 mod hash;
 mod markdown;
 mod password;
+mod secrets;
 mod semver;
 mod shell;
 mod transpile;
@@ -46,6 +47,9 @@ deno_core::extension!(
     markdown::op_done_markdown_html,
     password::op_done_password_hash,
     password::op_done_password_verify,
+    secrets::op_done_secrets_get,
+    secrets::op_done_secrets_set,
+    secrets::op_done_secrets_delete,
     semver::op_done_semver_parse,
     semver::op_done_semver_compare,
     semver::op_done_semver_satisfies,
@@ -77,5 +81,6 @@ deno_core::extension!(
     "16_csrf.js",
     "17_tar.js",
     "18_transpile.js",
+    "19_secrets.js",
   ],
 );

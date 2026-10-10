@@ -2879,6 +2879,7 @@ dependencies = [
  "flate2",
  "globset",
  "hmac",
+ "keyring",
  "md-5",
  "rand 0.8.5",
  "serde",

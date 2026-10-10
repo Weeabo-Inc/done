@@ -17,6 +17,7 @@ markdown false
 csrf false
 tar false
 transpile false
+secrets false
 assertEquals true
 deepEquals true
 mock true

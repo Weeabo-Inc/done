@@ -6947,4 +6947,53 @@ declare namespace Deno {
     source: string,
     options?: TranspileOptions,
   ): TranspileOutput;
+
+  /**
+   * Passwords and tokens in the OS credential store: the macOS Keychain, the
+   * Windows Credential Manager, or the Secret Service (GNOME Keyring, KWallet)
+   * on Linux. A secret is identified by a service and a name, such as an app
+   * and an account.
+   *
+   * Needs `--allow-sys=secrets`, since a script with access could read other
+   * applications' credentials.
+   *
+   * ```ts
+   * await Deno.secrets.set({ service: "my-cli", name: "token", value: "s3cr3t" });
+   * const token = await Deno.secrets.get({ service: "my-cli", name: "token" });
+   * await Deno.secrets.delete({ service: "my-cli", name: "token" });
+   * ```
+   *
+   * Set `MOKOU_SECRETS_BACKEND=memory` to use an in-memory store that lasts
+   * as long as the process, for tests and machines without a credential
+   * store.
+   *
+   * @category Runtime
+   * @experimental Requires `--unstable-secrets`.
+   */
+  export namespace secrets {
+    /** Identifies a secret.
+     *
+     * @category Runtime
+     * @experimental Requires `--unstable-secrets`. */
+    export interface SecretKey {
+      service: string;
+      name: string;
+    }
+    /** Reads a secret, or `null` if there is none.
+     *
+     * @category Runtime
+     * @experimental Requires `--unstable-secrets`. */
+    export function get(key: SecretKey): Promise<string | null>;
+    /** Stores a secret, replacing any existing one.
+     *
+     * @category Runtime
+     * @experimental Requires `--unstable-secrets`. */
+    export function set(key: SecretKey & { value: string }): Promise<void>;
+    /** Deletes a secret. Resolves to whether there was one.
+     *
+     * @category Runtime
+     * @experimental Requires `--unstable-secrets`. */
+    function _delete(key: SecretKey): Promise<boolean>;
+    export { _delete as delete };
+  }
 }

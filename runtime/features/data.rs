@@ -294,6 +294,13 @@ pub static FEATURE_DESCRIPTIONS: &[UnstableFeatureDescription] = &[
     env_var: None,
   },
   UnstableFeatureDescription {
+    name: "secrets",
+    help_text: "Enable unstable `Deno.secrets` API",
+    show_in_help: true,
+    kind: UnstableFeatureKind::Runtime,
+    env_var: None,
+  },
+  UnstableFeatureDescription {
     name: "semver",
     help_text: "Enable unstable `Deno.semver` API",
     show_in_help: true,

@@ -136,6 +136,7 @@ fn run_test(test: &CollectedTest) -> TestResult {
       "password",
       "router",
       "s3",
+      "secrets",
       "semver",
       "shell",
       "sqlite",
