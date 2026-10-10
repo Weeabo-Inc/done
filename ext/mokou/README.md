@@ -19,6 +19,7 @@ Mokou's built-in standard library: APIs that most apps need, available on the
 | `--unstable-shell`      | `Deno.$`, `Deno.ShellError`                                                    | `10_shell.js`, `shell.rs`, on `deno_task_shell`       |
 | `--unstable-ansi`       | `Deno.ansi.strip()`, `width()`, `style()`                                      | `11_ansi.js`, `ansi.rs`                               |
 | `--unstable-cookies`    | `Deno.cookies`                                                                 | `12_cookies.js`                                       |
+| `--unstable-s3`         | `Deno.S3Client`, `Deno.S3Error`                                                | `14_s3.js`, HMAC in `hash.rs`                         |
 
 The JavaScript files are lazy-loaded scripts. `runtime/js/90_deno_ns.js` loads
 each one the first time its API is accessed, so a program that doesn't use them

@@ -467,6 +467,11 @@ pub static UNSTABLE_FEATURE_ARGS: &[ArgDef] = &[
     .set_true()
     .hidden()
 .help("Enable unstable `Deno.router()` API"),
+  ArgDef::new("unstable-s3")
+    .long("unstable-s3")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.S3Client` API"),
   ArgDef::new("unstable-semver")
     .long("unstable-semver")
     .set_true()

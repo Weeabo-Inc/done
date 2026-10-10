@@ -22,7 +22,7 @@ when you update a row.
 | Key-value store           | ❌                  | ❌               | ✅ `Deno.openKv()`                    |     |
 | Postgres / MySQL client   | ✅ `Bun.sql`        | ❌               | ❌                                    | P3  |
 | Redis client              | ✅ `Bun.redis`      | ❌               | ❌                                    | P3  |
-| S3 client                 | ✅ `Bun.s3`         | ❌               | ❌                                    | P1  |
+| S3 client                 | ✅ `Bun.s3`         | ❌               | ✅ `Deno.S3Client`                    |     |
 | OS keychain secrets       | ✅ `Bun.secrets`    | ❌               | ❌                                    | P2  |
 | Archives (tar)            | ✅ `Bun.Archive`    | ❌               | ❌                                    | P2  |
 | Compression: gzip/deflate | ✅ sync and streams | ✅ `node:zlib`   | 🟡 `CompressionStream` only (no sync) |     |
@@ -96,10 +96,11 @@ digests (`Deno.hash.digest()`), zstd in `CompressionStream` and
 not behind a flag, like `"brotli"`, because it is only a new format name for an
 existing web API.
 
-Still open:
-
-1. **S3 client.** Get, put, delete, list and presigned URLs over `fetch`, with
-   SigV4 signing.
+`Deno.S3Client` covers get (streaming and ranges), put, delete, exists, stat,
+list (ListObjectsV2) and presigned URLs over `fetch`, with SigV4 signing, for
+AWS and S3-compatible stores. Multipart uploads are not done yet, so one upload
+is limited to what S3 accepts in a single `PUT` (5 GB) and is buffered in
+memory.
 
 **P2: worth having**
 

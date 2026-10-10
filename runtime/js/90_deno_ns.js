@@ -409,6 +409,7 @@ const loadMokouShell = lazyScript("ext:deno_mokou/10_shell.js");
 const loadMokouAnsi = lazyScript("ext:deno_mokou/11_ansi.js");
 const loadMokouCookies = lazyScript("ext:deno_mokou/12_cookies.js");
 const loadMokouJson = lazyScript("ext:deno_mokou/13_json.js");
+const loadMokouS3 = lazyScript("ext:deno_mokou/14_s3.js");
 
 function lazyProps(names, loader, target = { __proto__: null }) {
   const props = { __proto__: null };
@@ -469,6 +470,10 @@ denoNsUnstableById[unstableIds.ansi] = lazyProps(["ansi"], loadMokouAnsi);
 denoNsUnstableById[unstableIds.cookies] = lazyProps(
   ["cookies"],
   loadMokouCookies,
+);
+denoNsUnstableById[unstableIds.s3] = lazyProps(
+  ["S3Client", "S3Error"],
+  loadMokouS3,
 );
 denoNsUnstableById[unstableIds.shell] = lazyProps(
   ["$", "ShellError"],

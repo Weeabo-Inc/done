@@ -34,6 +34,7 @@ deno_core::extension!(
     hash::op_done_hash_crc32,
     hash::op_done_hash_digest,
     hash::op_done_hash_digest_string,
+    hash::op_done_hmac_sha256,
     password::op_done_password_hash,
     password::op_done_password_verify,
     semver::op_done_semver_parse,
@@ -61,5 +62,6 @@ deno_core::extension!(
     "11_ansi.js",
     "12_cookies.js",
     "13_json.js",
+    "14_s3.js",
   ],
 );

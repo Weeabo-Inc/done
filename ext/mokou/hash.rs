@@ -86,6 +86,20 @@ pub fn op_done_hash_digest_string(
   }
 }
 
+/// HMAC-SHA256, used to sign S3 requests (`Deno.S3Client`).
+#[op2]
+#[buffer]
+pub fn op_done_hmac_sha256(
+  #[buffer] key: &[u8],
+  #[buffer] data: &[u8],
+) -> Vec<u8> {
+  use hmac::Mac;
+  let mut mac = hmac::Hmac::<sha2::Sha256>::new_from_slice(key)
+    .expect("HMAC accepts keys of any length");
+  mac.update(data);
+  mac.finalize().into_bytes().to_vec()
+}
+
 #[cfg(test)]
 mod tests {
   use super::digest_bytes;
@@ -109,5 +123,17 @@ mod tests {
       "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
     );
     assert!(digest_bytes("sha3", b"abc").is_err());
+  }
+
+  #[test]
+  fn hmac_sha256() {
+    // RFC 4231, test case 2.
+    use hmac::Mac;
+    let mut mac = hmac::Hmac::<sha2::Sha256>::new_from_slice(b"Jefe").unwrap();
+    mac.update(b"what do ya want for nothing?");
+    assert_eq!(
+      hex(mac.finalize().into_bytes().to_vec()),
+      "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843"
+    );
   }
 }

@@ -133,6 +133,7 @@ fn run_test(test: &CollectedTest) -> TestResult {
       "parse-args",
       "password",
       "router",
+      "s3",
       "semver",
       "shell",
       "sqlite",

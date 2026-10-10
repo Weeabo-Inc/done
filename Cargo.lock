@@ -2875,6 +2875,7 @@ dependencies = [
  "deno_semver",
  "deno_task_shell",
  "globset",
+ "hmac",
  "md-5",
  "rand 0.8.5",
  "serde",

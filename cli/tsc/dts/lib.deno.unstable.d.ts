@@ -6286,4 +6286,192 @@ declare namespace Deno {
      * @experimental Requires `--unstable-formats`. */
     export function stringify(values: Iterable<unknown>): string;
   }
+
+  /**
+   * Options for {@linkcode Deno.S3Client}.
+   *
+   * When `accessKeyId` and `secretAccessKey` are left out, the client is
+   * configured from the environment (which needs `--allow-env`), for every
+   * option not passed: `S3_ACCESS_KEY_ID` / `AWS_ACCESS_KEY_ID`,
+   * `S3_SECRET_ACCESS_KEY` / `AWS_SECRET_ACCESS_KEY`, `S3_SESSION_TOKEN` /
+   * `AWS_SESSION_TOKEN`, `S3_REGION` / `AWS_REGION`, `S3_ENDPOINT` /
+   * `AWS_ENDPOINT_URL` and `S3_BUCKET`. When credentials are passed, the
+   * environment is not read at all.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-s3`.
+   */
+  export interface S3ClientOptions {
+    accessKeyId?: string;
+    secretAccessKey?: string;
+    sessionToken?: string;
+    /** @default {"us-east-1"} */
+    region?: string;
+    /** For S3-compatible stores such as Cloudflare R2 or MinIO, for example
+     * `"https://<account>.r2.cloudflarestorage.com"`. Defaults to AWS. */
+    endpoint?: string;
+    bucket?: string;
+    /** Address the bucket as `https://<bucket>.<endpoint>/<key>` instead of
+     * `https://<endpoint>/<bucket>/<key>`. Defaults to `true` on AWS and
+     * `false` with a custom endpoint. */
+    virtualHostedStyle?: boolean;
+  }
+
+  /**
+   * Metadata from {@linkcode Deno.S3Client.stat}.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-s3`.
+   */
+  export interface S3Stat {
+    size: number;
+    lastModified: Date;
+    etag?: string;
+    type?: string;
+  }
+
+  /**
+   * One page of {@linkcode Deno.S3Client.list}.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-s3`.
+   */
+  export interface S3ListResult {
+    contents: {
+      key: string;
+      size: number;
+      lastModified: Date;
+      etag?: string;
+    }[];
+    /** With a `delimiter`, the "directories" under the prefix. */
+    commonPrefixes: string[];
+    isTruncated: boolean;
+    /** Pass as `continuationToken` to get the next page. */
+    nextContinuationToken?: string;
+  }
+
+  /**
+   * Data {@linkcode Deno.S3Client.write} accepts. It is read into memory
+   * first, because S3 needs the length before the upload starts.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-s3`.
+   */
+  export type S3Data =
+    | string
+    | ArrayBuffer
+    | ArrayBufferView
+    | Blob
+    | ReadableStream<Uint8Array>
+    | Response;
+
+  /**
+   * A client for AWS S3 and S3-compatible stores (Cloudflare R2, MinIO, and
+   * others), over `fetch()` with AWS Signature Version 4.
+   *
+   * ```ts
+   * const s3 = new Deno.S3Client({ bucket: "my-bucket" });
+   * await s3.write("hello.txt", "Hello!", { type: "text/plain" });
+   * console.log(await s3.file("hello.txt").text());
+   * const url = s3.presign("hello.txt", { expiresIn: 3600 });
+   * ```
+   *
+   * @tags allow-net, allow-env
+   * @category Storage
+   * @experimental Requires `--unstable-s3`.
+   */
+  export class S3Client {
+    constructor(options?: S3ClientOptions);
+    readonly bucket: string;
+    readonly region: string;
+    /** Uploads `data`, replacing any existing object. */
+    write(
+      key: string,
+      data: S3Data,
+      options?: { type?: string; cacheControl?: string; signal?: AbortSignal },
+    ): Promise<{ etag?: string }>;
+    /** Downloads an object. The response body can be streamed. Throws
+     * {@linkcode Deno.S3Error} with code `"NoSuchKey"` if it doesn't exist. */
+    get(
+      key: string,
+      options?: {
+        range?: { start?: number; end?: number };
+        signal?: AbortSignal;
+      },
+    ): Promise<Response>;
+    /** Deletes an object. Deleting a missing key succeeds. */
+    delete(key: string, options?: { signal?: AbortSignal }): Promise<void>;
+    exists(key: string, options?: { signal?: AbortSignal }): Promise<boolean>;
+    stat(key: string, options?: { signal?: AbortSignal }): Promise<S3Stat>;
+    /** Lists up to 1000 objects per call. */
+    list(options?: {
+      prefix?: string;
+      delimiter?: string;
+      maxKeys?: number;
+      startAfter?: string;
+      continuationToken?: string;
+      signal?: AbortSignal;
+    }): Promise<S3ListResult>;
+    /** A URL that grants access to one object until it expires, signed
+     * locally. `type` is the content type a `PUT` must send. */
+    presign(
+      key: string,
+      options?: {
+        method?: "GET" | "PUT" | "HEAD" | "DELETE";
+        /** Seconds, up to 7 days. @default {86400} */
+        expiresIn?: number;
+        type?: string;
+        /** When the signature starts. @default {new Date()} */
+        date?: Date;
+      },
+    ): string;
+    /** A handle on one object. */
+    file(key: string): S3File;
+  }
+
+  /**
+   * One object in a bucket, from {@linkcode Deno.S3Client.file}.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-s3`.
+   */
+  export interface S3File {
+    readonly key: string;
+    get(options?: {
+      range?: { start?: number; end?: number };
+      signal?: AbortSignal;
+    }): Promise<Response>;
+    text(): Promise<string>;
+    // deno-lint-ignore no-explicit-any
+    json(): Promise<any>;
+    bytes(): Promise<Uint8Array<ArrayBuffer>>;
+    arrayBuffer(): Promise<ArrayBuffer>;
+    stream(): Promise<ReadableStream<Uint8Array<ArrayBuffer>> | null>;
+    write(
+      data: S3Data,
+      options?: { type?: string; cacheControl?: string; signal?: AbortSignal },
+    ): Promise<{ etag?: string }>;
+    delete(options?: { signal?: AbortSignal }): Promise<void>;
+    exists(options?: { signal?: AbortSignal }): Promise<boolean>;
+    stat(options?: { signal?: AbortSignal }): Promise<S3Stat>;
+    presign(options?: {
+      method?: "GET" | "PUT" | "HEAD" | "DELETE";
+      expiresIn?: number;
+      type?: string;
+      date?: Date;
+    }): string;
+  }
+
+  /**
+   * An error response from S3.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-s3`.
+   */
+  export class S3Error extends Error {
+    /** The S3 error code, such as `"NoSuchKey"` or `"AccessDenied"`. */
+    readonly code: string;
+    /** The HTTP status. */
+    readonly status: number;
+  }
 }

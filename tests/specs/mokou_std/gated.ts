@@ -12,6 +12,7 @@ const names = [
   "ansi",
   "cookies",
   "json5",
+  "S3Client",
   "assertEquals",
   "expect",
 ] as const;
