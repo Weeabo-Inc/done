@@ -112,7 +112,12 @@ because that behavior can no longer be turned off.
    `DENO_UNIT_NO_NODE=1 cargo test
    -p unit_tests --test unit` runs the whole
    unit suite in native mode.
-4. Later, decide whether `deno init` scaffolds should default to native mode.
+4. ✅ **Decided: new projects are Deno-native.** The default, `--empty`,
+   `--serve` and `--lib` templates of `mokou init` write `"node": false`, and
+   `init` says how to turn compatibility back on (`"node": true`). The "not
+   allowed" error for `npm:` and `node:` imports says the same. `init --npm` is
+   unchanged, because npm templates need Node compatibility. Existing projects
+   without a `"node"` setting keep it on.
 
 **Status:** with `--no-node`, 109 of 113 `tests/unit` files pass. Two import
 `node:` modules and are skipped (`serve_test`, `umask_test`). Two need a GPU

@@ -70,7 +70,8 @@ pub async fn init_project(
       &json!({
         "tasks": {
           "dev": "deno run --watch main.ts"
-        }
+        },
+        "node": false
       }),
     )?;
   } else if init_flags.serve {
@@ -112,27 +113,33 @@ export default {
       "main_test.ts",
       r#"import server from "./main.ts";
 
+// What `deno serve` passes to `fetch` along with each request.
+const info: Deno.ServeHandlerInfo = {
+  remoteAddr: { transport: "tcp", hostname: "127.0.0.1", port: 0 },
+  completed: Promise.resolve(),
+};
+
 Deno.test(async function serverFetch() {
   const req = new Request("https://deno.land");
-  const res = await server.fetch(req);
+  const res = await server.fetch(req, info);
   Deno.assertEquals(await res.text(), "Home page");
 });
 
 Deno.test(async function serverFetchNotFound() {
   const req = new Request("https://deno.land/404");
-  const res = await server.fetch(req);
+  const res = await server.fetch(req, info);
   Deno.assertEquals(res.status, 404);
 });
 
 Deno.test(async function serverFetchUsers() {
   const req = new Request("https://deno.land/users/123");
-  const res = await server.fetch(req);
+  const res = await server.fetch(req, info);
   Deno.assertEquals(await res.text(), "123");
 });
 
 Deno.test(async function serverFetchStatic() {
   const req = new Request("https://deno.land/static/hello.js");
-  const res = await server.fetch(req);
+  const res = await server.fetch(req, info);
   Deno.assertEquals(await res.text(), 'console.log("Hello, world!");\n');
   Deno.assertEquals(res.headers.get("content-type"), "text/javascript; charset=UTF-8");
 });
@@ -155,7 +162,8 @@ Deno.test(async function serverFetchStatic() {
         "tasks": {
           "dev": "deno serve --watch -R main.ts",
         },
-        "unstable": ["assert", "router"]
+        "unstable": ["assert", "router"],
+        "node": false
       }),
     )?;
   } else if init_flags.lib {
@@ -197,6 +205,7 @@ Deno.test(function addTest() {
         },
         "license": "MIT",
         "unstable": ["assert"],
+        "node": false,
       }),
     )?;
   } else {
@@ -213,7 +222,7 @@ Deno.test(function addTest() {
     });
   }
 
-  return new Response("<h1>Welcome to Deno!</h1>", {
+  return new Response("<h1>Welcome to Mokou!</h1>", {
     headers: { "content-type": "text/html" },
   });
 }
@@ -232,7 +241,7 @@ Deno.test("returns html on /", async () => {
   const res = handler(new Request("http://localhost/"));
   Deno.assertEquals(res.headers.get("content-type"), "text/html");
   const body = await res.text();
-  Deno.assertEquals(body.includes("Welcome to Deno"), true);
+  Deno.assertEquals(body.includes("Welcome to Mokou"), true);
 });
 
 Deno.test("returns json on /api", async () => {
@@ -251,7 +260,8 @@ Deno.test("returns json on /api", async () => {
         "tasks": {
           "dev": "deno run --watch --allow-net main.ts"
         },
-        "unstable": ["assert"]
+        "unstable": ["assert"],
+        "node": false
       }),
     )?;
   }
@@ -310,6 +320,15 @@ Deno.test("returns json on /api", async () => {
     info!("  {}", colors::gray("# Run the tests"));
     info!("  deno test");
   }
+  // New projects are Deno-native: no `npm:`/`node:` specifiers, no
+  // `package.json` and no Node globals unless the project opts in.
+  info!("");
+  info!(
+    "{}",
+    colors::gray(
+      "Node.js compatibility is off. To use npm: and node: packages, set \"node\": true in mokou.json."
+    )
+  );
   Ok(0)
 }
 

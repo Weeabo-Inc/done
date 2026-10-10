@@ -12,3 +12,5 @@ Run these commands to get started
 
   # Publish to JSR (dry run)
   deno publish --dry-run
+
+Node.js compatibility is off. To use npm: and node: packages, set "node": true in mokou.json.

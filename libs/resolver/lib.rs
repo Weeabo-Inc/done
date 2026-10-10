@@ -143,7 +143,7 @@ pub enum DenoResolveErrorKind {
   CatalogPackageNotFound(String),
   #[class(type)]
   #[error(
-    "Importing '{0}' is not allowed because Node.js compatibility is disabled (--no-node or \"node\": false in deno.json)"
+    "Importing '{0}' is not allowed because Node.js compatibility is off. Set \"node\": true in mokou.json (or deno.json) and drop --no-node to turn it on"
   )]
   NodeCompatDisabled(String),
   #[class(inherit)]

@@ -124,6 +124,8 @@ Run these commands to get started
 
   # Run the tests
   deno test
+
+Node.js compatibility is off. To use npm: and node: packages, set \"node\": true in mokou.json.
 ",
   );
 
