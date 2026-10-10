@@ -5319,6 +5319,29 @@ declare namespace Deno {
         // deno-lint-ignore no-explicit-any
         | (abstract new (...args: any[]) => Error),
     ): ExpectResult<IsAsync>;
+    /** For mocks from {@linkcode Deno.mock}. */
+    toHaveBeenCalled(): ExpectResult<IsAsync>;
+    /** For mocks from {@linkcode Deno.mock}. */
+    toHaveBeenCalledTimes(times: number): ExpectResult<IsAsync>;
+    /** For mocks from {@linkcode Deno.mock}. Passes if any call's arguments
+     * deeply equal `args`. */
+    toHaveBeenCalledWith(...args: unknown[]): ExpectResult<IsAsync>;
+    /** For mocks from {@linkcode Deno.mock}. */
+    toHaveBeenLastCalledWith(...args: unknown[]): ExpectResult<IsAsync>;
+    /** For mocks from {@linkcode Deno.mock}. `n` starts at 1. */
+    toHaveBeenNthCalledWith(
+      n: number,
+      ...args: unknown[]
+    ): ExpectResult<IsAsync>;
+    /** For mocks from {@linkcode Deno.mock}: at least one call returned
+     * without throwing. */
+    toHaveReturned(): ExpectResult<IsAsync>;
+    /** For mocks from {@linkcode Deno.mock}. */
+    toHaveReturnedTimes(times: number): ExpectResult<IsAsync>;
+    /** For mocks from {@linkcode Deno.mock}. */
+    toHaveReturnedWith(value: unknown): ExpectResult<IsAsync>;
+    /** For mocks from {@linkcode Deno.mock}. */
+    toHaveLastReturnedWith(value: unknown): ExpectResult<IsAsync>;
   }
 
   /**
@@ -5335,6 +5358,119 @@ declare namespace Deno {
    * @experimental Requires `--unstable-assert`.
    */
   export function expect(value: unknown): Expected;
+
+  /**
+   * Mock functions and spies, Jest style.
+   *
+   * ```ts
+   * Deno.test("notifies", () => {
+   *   const send = Deno.mock.fn((to: string) => true);
+   *   notify(send, "a@example.com");
+   *   Deno.expect(send).toHaveBeenCalledWith("a@example.com");
+   *
+   *   const log = Deno.mock.spyOn(console, "log").mockImplementation(() => {});
+   *   run();
+   *   Deno.expect(log).toHaveBeenCalledTimes(1);
+   *   Deno.mock.restoreAll();
+   * });
+   * ```
+   *
+   * For snapshots, use `t.assertSnapshot()` on the test context.
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`.
+   */
+  export namespace mock {
+    /** What one call of a mock did.
+     *
+     * @category Testing
+     * @experimental Requires `--unstable-assert`. */
+    export type MockResult<R> =
+      | { type: "return"; value: R }
+      | { type: "throw"; value: unknown }
+      | { type: "incomplete"; value: undefined };
+    /** The calls a mock recorded.
+     *
+     * @category Testing
+     * @experimental Requires `--unstable-assert`. */
+    export interface MockRecord<A extends unknown[], R> {
+      /** The arguments of each call. */
+      calls: A[];
+      /** What each call returned or threw; `"incomplete"` while it runs. */
+      results: MockResult<R>[];
+      /** The `this` value of each call. */
+      contexts: unknown[];
+      /** The objects created by calls with `new`. */
+      instances: unknown[];
+      /** The arguments of the latest call. */
+      readonly lastCall: A | undefined;
+    }
+    /** A function that records its calls.
+     *
+     * @category Testing
+     * @experimental Requires `--unstable-assert`. */
+    // deno-lint-ignore no-explicit-any
+    export interface Mock<
+      T extends (...args: any[]) => any = (...args: any[]) => any,
+    > {
+      (...args: Parameters<T>): ReturnType<T>;
+      new (...args: Parameters<T>): ReturnType<T>;
+      readonly mock: MockRecord<Parameters<T>, ReturnType<T>>;
+      mockImplementation(fn: T): this;
+      mockImplementationOnce(fn: T): this;
+      mockReturnValue(value: ReturnType<T>): this;
+      mockReturnValueOnce(value: ReturnType<T>): this;
+      mockResolvedValue(value: Awaited<ReturnType<T>>): this;
+      mockResolvedValueOnce(value: Awaited<ReturnType<T>>): this;
+      mockRejectedValue(reason: unknown): this;
+      mockRejectedValueOnce(reason: unknown): this;
+      /** Forgets the recorded calls. */
+      mockClear(): this;
+      /** Forgets the calls and the implementations set since, going back to
+       * the one the mock was created with. */
+      mockReset(): this;
+      /** Resets the mock and, for a spy, puts the original method back. */
+      mockRestore(): void;
+    }
+    /** Creates a mock that calls `implementation`, or returns `undefined`
+     * without one.
+     *
+     * @category Testing
+     * @experimental Requires `--unstable-assert`. */
+    // deno-lint-ignore no-explicit-any
+    export function fn<
+      T extends (...args: any[]) => any = (...args: any[]) => any,
+    >(
+      implementation?: T,
+    ): Mock<T>;
+    /** Replaces `object[method]` with a mock that calls the original, until
+     * `mockRestore()` or {@linkcode Deno.mock.restoreAll}. Spying on a method
+     * that is already a mock returns that mock.
+     *
+     * @category Testing
+     * @experimental Requires `--unstable-assert`. */
+    export function spyOn<
+      O extends object,
+      // deno-lint-ignore no-explicit-any
+      K extends {
+        [P in keyof O]: O[P] extends (...args: any[]) => any ? P : never;
+      }[keyof O],
+    >(
+      object: O,
+      method: K,
+      // deno-lint-ignore no-explicit-any
+    ): Mock<O[K] extends (...args: any[]) => any ? O[K] : never>;
+    /** Puts back every method replaced by {@linkcode Deno.mock.spyOn}.
+     *
+     * @category Testing
+     * @experimental Requires `--unstable-assert`. */
+    export function restoreAll(): void;
+    /** Whether `value` is a mock from this namespace.
+     *
+     * @category Testing
+     * @experimental Requires `--unstable-assert`. */
+    export function isMock(value: unknown): value is Mock;
+  }
 
   /**
    * Options for {@linkcode Deno.openSqlite}.

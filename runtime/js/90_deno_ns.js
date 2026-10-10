@@ -444,6 +444,7 @@ denoNsUnstableById[unstableIds.assert] = lazyProps([
   "deepEquals",
   "expect",
   "fail",
+  "mock",
   "unreachable",
 ], loadMokouAssert);
 denoNsUnstableById[unstableIds.sqlite] = lazyProps(

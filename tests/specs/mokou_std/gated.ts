@@ -20,6 +20,7 @@ const names = [
   "transpile",
   "assertEquals",
   "deepEquals",
+  "mock",
   "expect",
 ] as const;
 for (const name of names) {

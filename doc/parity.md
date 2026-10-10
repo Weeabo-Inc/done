@@ -73,16 +73,16 @@ when you update a row.
 
 ## Tooling
 
-| Feature                       | Bun                 | Node                             | Mokou                            | Gap |
-| ----------------------------- | ------------------- | -------------------------------- | -------------------------------- | --- |
-| TypeScript execution          | ✅                  | 🟡 type stripping                | ✅ with type checking            |     |
-| Test runner and assertions    | ✅ `bun test`       | ✅ `node:test`                   | ✅ `Deno.test`, `Deno.assert*`   |     |
-| Test mocks and snapshots      | ✅                  | ✅ `node:test`                   | ❌                               | P2  |
-| Bundler API                   | ✅ `Bun.build`      | ❌                               | 🟡 `Deno.bundle()` (unstable)    |     |
-| Transpiler API                | ✅ `Bun.Transpiler` | 🟡 `module.stripTypeScriptTypes` | ✅ `Deno.transpile()`            |     |
-| Formatter, linter, doc, bench | ❌                  | ❌                               | ✅ `fmt`, `lint`, `doc`, `bench` |     |
-| Single-file executables       | ✅ `--compile`      | 🟡 SEA                           | ✅ `compile`                     |     |
-| Desktop apps / webview        | ✅ `Bun.WebView`    | ❌                               | 🟡 `deno desktop` (unstable)     |     |
+| Feature                       | Bun                 | Node                             | Mokou                                | Gap |
+| ----------------------------- | ------------------- | -------------------------------- | ------------------------------------ | --- |
+| TypeScript execution          | ✅                  | 🟡 type stripping                | ✅ with type checking                |     |
+| Test runner and assertions    | ✅ `bun test`       | ✅ `node:test`                   | ✅ `Deno.test`, `Deno.assert*`       |     |
+| Test mocks and snapshots      | ✅                  | ✅ `node:test`                   | ✅ `Deno.mock`, `t.assertSnapshot()` |     |
+| Bundler API                   | ✅ `Bun.build`      | ❌                               | 🟡 `Deno.bundle()` (unstable)        |     |
+| Transpiler API                | ✅ `Bun.Transpiler` | 🟡 `module.stripTypeScriptTypes` | ✅ `Deno.transpile()`                |     |
+| Formatter, linter, doc, bench | ❌                  | ❌                               | ✅ `fmt`, `lint`, `doc`, `bench`     |     |
+| Single-file executables       | ✅ `--compile`      | 🟡 SEA                           | ✅ `compile`                         |     |
+| Desktop apps / webview        | ✅ `Bun.WebView`    | ❌                               | 🟡 `deno desktop` (unstable)         |     |
 
 ## Gaps, by priority
 
@@ -112,9 +112,13 @@ archives in memory; extraction refuses anything that would land outside the
 target directory, including through chains of symlinks. `Deno.transpile()` turns
 TypeScript and JSX into JavaScript with the compiler that runs Mokou's own
 modules (no import/export scanning yet, unlike `Bun.Transpiler.scan`).
+`Deno.mock` adds Jest-style mock functions and spies with the
+`toHaveBeenCalled*` / `toHaveReturned*` matchers on `Deno.expect`. Snapshots
+were already there and this table missed them: `t.assertSnapshot()` with
+`deno test --update-snapshots`, compatible with `@std/testing/snapshot`. Fake
+timers are not done.
 
-Still open: OS keychain secrets (`keyring`), test mocks and snapshots, and
-pseudo-terminals.
+Still open: OS keychain secrets (`keyring`) and pseudo-terminals.
 
 **P3: large surfaces**
 

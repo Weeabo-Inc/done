@@ -19,4 +19,5 @@ tar false
 transpile false
 assertEquals false
 deepEquals false
+mock false
 expect false

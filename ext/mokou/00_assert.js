@@ -45,7 +45,23 @@ const {
   PromisePrototype,
   Proxy,
   ReflectApply,
+  ReflectConstruct,
   ReflectHas,
+  ArrayPrototypeFilter,
+  ArrayPrototypeShift,
+  ObjectAssign,
+  ObjectDefineProperty,
+  ObjectFreeze,
+  ObjectGetOwnPropertyDescriptor,
+  PromiseReject,
+  PromiseResolve,
+  SafeSet,
+  SafeWeakMap,
+  SetPrototypeAdd,
+  SetPrototypeDelete,
+  WeakMapPrototypeGet,
+  WeakMapPrototypeHas,
+  WeakMapPrototypeSet,
 } = primordials;
 
 const console = core.loadExtScript("ext:deno_web/01_console.js");
@@ -382,6 +398,197 @@ function unreachable(msg) {
   fail(msg ?? "Unreachable code was reached", unreachable);
 }
 
+// --- mocks -------------------------------------------------------------------
+
+const mockStates = new SafeWeakMap();
+const activeSpies = new SafeSet();
+
+function isMock(value) {
+  return typeof value === "function" && WeakMapPrototypeHas(mockStates, value);
+}
+
+function mockStateOf(value, matcher) {
+  const state = typeof value === "function"
+    ? WeakMapPrototypeGet(mockStates, value)
+    : undefined;
+  if (state === undefined) {
+    throw new TypeError(
+      `${matcher}() expects a mock function from Deno.mock.fn() or Deno.mock.spyOn(), got ${
+        format(value)
+      }`,
+    );
+  }
+  return state;
+}
+
+function settledValue(settle, value) {
+  return () =>
+    settle === "resolve" ? PromiseResolve(value) : PromiseReject(value);
+}
+
+/** A function that records its calls. Without an implementation it returns
+ * `undefined`. */
+function fn(implementation) {
+  if (implementation !== undefined && typeof implementation !== "function") {
+    throw new TypeError("Deno.mock.fn() expects a function or nothing");
+  }
+  const state = {
+    implementation,
+    once: [],
+    restore: undefined,
+    record: {
+      calls: [],
+      results: [],
+      contexts: [],
+      instances: [],
+      get lastCall() {
+        return this.calls[this.calls.length - 1];
+      },
+    },
+  };
+  const mock = function (...args) {
+    const { record } = state;
+    ArrayPrototypePush(record.calls, args);
+    ArrayPrototypePush(record.contexts, this);
+    const impl = state.once.length > 0
+      ? ArrayPrototypeShift(state.once)
+      : state.implementation;
+    const result = { type: "incomplete", value: undefined };
+    ArrayPrototypePush(record.results, result);
+    try {
+      let value;
+      if (new.target !== undefined) {
+        // Constructing through the implementation keeps `instanceof` working
+        // for both the mock and the class it stands in for.
+        value = impl === undefined ? this : ReflectConstruct(
+          impl,
+          args,
+          new.target === mock ? impl : new.target,
+        );
+        ArrayPrototypePush(record.instances, value);
+      } else {
+        value = impl === undefined ? undefined : ReflectApply(impl, this, args);
+      }
+      result.type = "return";
+      result.value = value;
+      return value;
+    } catch (error) {
+      result.type = "throw";
+      result.value = error;
+      throw error;
+    }
+  };
+  ObjectDefineProperty(mock, "name", {
+    __proto__: null,
+    value: implementation?.name || "mock",
+    configurable: true,
+  });
+  if (implementation?.prototype !== undefined) {
+    mock.prototype = implementation.prototype;
+  }
+  ObjectDefineProperty(mock, "mock", {
+    __proto__: null,
+    get: () => state.record,
+    configurable: true,
+  });
+  const chain = (update) =>
+    function (value) {
+      update(value);
+      return mock;
+    };
+  ObjectAssign(mock, {
+    mockImplementation: chain((impl) => state.implementation = impl),
+    mockImplementationOnce: chain((impl) =>
+      ArrayPrototypePush(state.once, impl)
+    ),
+    mockReturnValue: chain((value) => state.implementation = () => value),
+    mockReturnValueOnce: chain((value) =>
+      ArrayPrototypePush(state.once, () => value)
+    ),
+    mockResolvedValue: chain((value) =>
+      state.implementation = settledValue("resolve", value)
+    ),
+    mockResolvedValueOnce: chain((value) =>
+      ArrayPrototypePush(state.once, settledValue("resolve", value))
+    ),
+    mockRejectedValue: chain((value) =>
+      state.implementation = settledValue("reject", value)
+    ),
+    mockRejectedValueOnce: chain((value) =>
+      ArrayPrototypePush(state.once, settledValue("reject", value))
+    ),
+    mockClear() {
+      state.record.calls = [];
+      state.record.results = [];
+      state.record.contexts = [];
+      state.record.instances = [];
+      return mock;
+    },
+    mockReset() {
+      mock.mockClear();
+      state.once = [];
+      state.implementation = state.original;
+      return mock;
+    },
+    mockRestore() {
+      mock.mockReset();
+      state.restore?.();
+    },
+  });
+  state.original = implementation;
+  WeakMapPrototypeSet(mockStates, mock, state);
+  return mock;
+}
+
+/** Replaces `object[method]` with a mock that calls the original, until
+ * `mockRestore()` or `Deno.mock.restoreAll()`. */
+function spyOn(object, method) {
+  if (
+    object === null ||
+    (typeof object !== "object" && typeof object !== "function")
+  ) {
+    throw new TypeError("Deno.mock.spyOn() expects an object");
+  }
+  const original = object[method];
+  if (typeof original !== "function") {
+    throw new TypeError(
+      `Cannot spy on ${String(method)}: it is ${
+        format(original)
+      }, not a function`,
+    );
+  }
+  if (isMock(original)) return original;
+  const own = ObjectGetOwnPropertyDescriptor(object, method);
+  const mock = fn(original);
+  const state = WeakMapPrototypeGet(mockStates, mock);
+  const restore = () => {
+    if (!SetPrototypeHas(activeSpies, restore)) return;
+    SetPrototypeDelete(activeSpies, restore);
+    if (own === undefined) {
+      delete object[method];
+    } else {
+      ObjectDefineProperty(object, method, own);
+    }
+  };
+  state.restore = restore;
+  ObjectDefineProperty(object, method, {
+    __proto__: null,
+    value: mock,
+    writable: true,
+    enumerable: own?.enumerable ?? false,
+    configurable: true,
+  });
+  SetPrototypeAdd(activeSpies, restore);
+  return mock;
+}
+
+/** Restores every method replaced by `spyOn()`. */
+function restoreAll() {
+  for (const restore of new SafeSetIterator(activeSpies)) restore();
+}
+
+const mock = ObjectFreeze({ fn, spyOn, restoreAll, isMock });
+
 // --- expect ------------------------------------------------------------------
 
 class Expectation {
@@ -605,6 +812,104 @@ class Expectation {
       this.toThrow,
     );
   }
+  #calls(matcher) {
+    return mockStateOf(this.#value, matcher).record;
+  }
+
+  toHaveBeenCalled() {
+    const { calls } = this.#calls("toHaveBeenCalled");
+    this.#check(
+      calls.length > 0,
+      `mock to have been called, but it was called ${calls.length} times`,
+      this.toHaveBeenCalled,
+    );
+  }
+
+  toHaveBeenCalledTimes(times) {
+    const { calls } = this.#calls("toHaveBeenCalledTimes");
+    this.#check(
+      calls.length === times,
+      `mock to have been called ${times} times, but it was called ${calls.length} times`,
+      this.toHaveBeenCalledTimes,
+    );
+  }
+
+  toHaveBeenCalledWith(...args) {
+    const { calls } = this.#calls("toHaveBeenCalledWith");
+    this.#check(
+      ArrayPrototypeSome(calls, (call) => equal(call, args)),
+      `mock to have been called with ${format(args)}; calls: ${format(calls)}`,
+      this.toHaveBeenCalledWith,
+    );
+  }
+
+  toHaveBeenLastCalledWith(...args) {
+    const { calls } = this.#calls("toHaveBeenLastCalledWith");
+    const last = calls[calls.length - 1];
+    this.#check(
+      last !== undefined && equal(last, args),
+      `mock to have been last called with ${
+        format(args)
+      }, but it was last called with ${format(last)}`,
+      this.toHaveBeenLastCalledWith,
+    );
+  }
+
+  toHaveBeenNthCalledWith(n, ...args) {
+    const { calls } = this.#calls("toHaveBeenNthCalledWith");
+    const call = calls[n - 1];
+    this.#check(
+      call !== undefined && equal(call, args),
+      `call ${n} of the mock to have been with ${
+        format(args)
+      }, but it was with ${format(call)}`,
+      this.toHaveBeenNthCalledWith,
+    );
+  }
+
+  toHaveReturned() {
+    const { results } = this.#calls("toHaveReturned");
+    this.#check(
+      ArrayPrototypeSome(results, (result) => result.type === "return"),
+      "mock to have returned without throwing",
+      this.toHaveReturned,
+    );
+  }
+
+  toHaveReturnedTimes(times) {
+    const { results } = this.#calls("toHaveReturnedTimes");
+    const returned = ArrayPrototypeFilter(
+      results,
+      (result) => result.type === "return",
+    ).length;
+    this.#check(
+      returned === times,
+      `mock to have returned ${times} times, but it returned ${returned} times`,
+      this.toHaveReturnedTimes,
+    );
+  }
+
+  toHaveReturnedWith(value) {
+    const { results } = this.#calls("toHaveReturnedWith");
+    this.#check(
+      ArrayPrototypeSome(
+        results,
+        (result) => result.type === "return" && equal(result.value, value),
+      ),
+      `mock to have returned ${format(value)}`,
+      this.toHaveReturnedWith,
+    );
+  }
+
+  toHaveLastReturnedWith(value) {
+    const { results } = this.#calls("toHaveLastReturnedWith");
+    const last = results[results.length - 1];
+    this.#check(
+      last?.type === "return" && equal(last.value, value),
+      `mock to have last returned ${format(value)}`,
+      this.toHaveLastReturnedWith,
+    );
+  }
 }
 
 function errorMatches(error, expected) {
@@ -695,6 +1000,7 @@ return {
   equal,
   expect,
   fail,
+  mock,
   unreachable,
 };
 })();
