@@ -8,5 +8,8 @@ semver false
 uuid false
 parseArgs false
 $ false
+ansi false
+cookies false
+json5 false
 assertEquals true
 expect true

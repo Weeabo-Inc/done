@@ -1556,7 +1556,12 @@ interface CompressionStream extends GenericTransformStream {
 }
 
 /** @category Streams */
-type CompressionFormat = "deflate" | "deflate-raw" | "gzip" | "brotli";
+type CompressionFormat =
+  | "deflate"
+  | "deflate-raw"
+  | "gzip"
+  | "brotli"
+  | "zstd";
 
 /**
  * An API for compressing a stream of data.

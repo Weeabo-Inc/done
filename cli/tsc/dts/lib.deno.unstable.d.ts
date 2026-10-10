@@ -5493,8 +5493,9 @@ declare namespace Deno {
   }
 
   /**
-   * Fast, synchronous, non-cryptographic hashes. Don't use these for
-   * passwords or signatures.
+   * Synchronous hashes: fast non-cryptographic ones (xxHash, CRC-32) and
+   * cryptographic digests (`digest()`). Don't use any of these for passwords;
+   * use {@linkcode Deno.password} instead.
    *
    * @category Crypto
    * @experimental Requires `--unstable-hash`.
@@ -5524,6 +5525,42 @@ declare namespace Deno {
      * @category Crypto
      * @experimental Requires `--unstable-hash`. */
     export function crc32(data: Data, initial?: number): number;
+    /** A digest algorithm for {@linkcode Deno.hash.digest}. Case-insensitive,
+     * and `"SHA-256"` works as well as `"sha256"`.
+     *
+     * @category Crypto
+     * @experimental Requires `--unstable-hash`. */
+    export type DigestAlgorithm =
+      | "md5"
+      | "sha1"
+      | "sha256"
+      | "sha384"
+      | "sha512"
+      | "SHA-1"
+      | "SHA-256"
+      | "SHA-384"
+      | "SHA-512"
+      | "MD5";
+    /** A cryptographic digest, computed synchronously, for cache keys, ETags
+     * and checksums. `crypto.subtle.digest()` is the async equivalent.
+     *
+     * ```ts
+     * const etag = Deno.hash.digest("sha256", body, "base64");
+     * ```
+     *
+     * @category Crypto
+     * @experimental Requires `--unstable-hash`. */
+    export function digest(
+      algorithm: DigestAlgorithm,
+      data: Data,
+    ): Uint8Array<ArrayBuffer>;
+    /** @category Crypto
+     * @experimental Requires `--unstable-hash`. */
+    export function digest(
+      algorithm: DigestAlgorithm,
+      data: Data,
+      encoding: "hex" | "base64",
+    ): string;
   }
 
   /**
@@ -6007,4 +6044,246 @@ declare namespace Deno {
     /** Quotes `value` as a single shell argument. */
     escape(value: string | number | bigint | boolean): string;
   };
+
+  /**
+   * Terminal text utilities: strip ANSI escape codes, measure how many
+   * columns text takes, and add colors that respect `NO_COLOR`.
+   *
+   * ```ts
+   * console.log(Deno.ansi.style(["bold", "green"], "done"));
+   * Deno.ansi.width("日本"); // 4
+   * ```
+   *
+   * @category Runtime
+   * @experimental Requires `--unstable-ansi`.
+   */
+  export namespace ansi {
+    /** A style name for {@linkcode Deno.ansi.style}, the same names as
+     * `util.styleText()` in Node.
+     *
+     * @category Runtime
+     * @experimental Requires `--unstable-ansi`. */
+    export type Style =
+      | "reset"
+      | "bold"
+      | "dim"
+      | "italic"
+      | "underline"
+      | "inverse"
+      | "hidden"
+      | "strikethrough"
+      | "black"
+      | "red"
+      | "green"
+      | "yellow"
+      | "blue"
+      | "magenta"
+      | "cyan"
+      | "white"
+      | "gray"
+      | "grey"
+      | "brightRed"
+      | "brightGreen"
+      | "brightYellow"
+      | "brightBlue"
+      | "brightMagenta"
+      | "brightCyan"
+      | "brightWhite"
+      | "bgBlack"
+      | "bgRed"
+      | "bgGreen"
+      | "bgYellow"
+      | "bgBlue"
+      | "bgMagenta"
+      | "bgCyan"
+      | "bgWhite"
+      | "bgGray"
+      | "bgBrightRed"
+      | "bgBrightGreen"
+      | "bgBrightYellow"
+      | "bgBrightBlue"
+      | "bgBrightMagenta"
+      | "bgBrightCyan"
+      | "bgBrightWhite";
+    /** Every {@linkcode Style} name.
+     *
+     * @category Runtime
+     * @experimental Requires `--unstable-ansi`. */
+    export const styles: readonly Style[];
+    /** Removes ANSI escape codes (colors, cursor movement, hyperlinks).
+     *
+     * @category Runtime
+     * @experimental Requires `--unstable-ansi`. */
+    export function strip(text: string): string;
+    /** How many columns `text` takes in a terminal, ignoring escape codes.
+     * Wide East Asian characters and emoji count as two.
+     *
+     * @category Runtime
+     * @experimental Requires `--unstable-ansi`. */
+    export function width(text: string): number;
+    /** Wraps `text` in the escape codes for `format`. Returns `text`
+     * unchanged when colors are off for `stream` (default `"stdout"`):
+     * because `NO_COLOR` is set or it isn't a terminal. `force` styles it
+     * anyway.
+     *
+     * @category Runtime
+     * @experimental Requires `--unstable-ansi`. */
+    export function style(
+      format: Style | readonly Style[],
+      text: string,
+      options?: { stream?: "stdout" | "stderr"; force?: boolean },
+    ): string;
+  }
+
+  /**
+   * Read `Cookie` headers and write `Set-Cookie` headers, validated the way
+   * RFC 6265 and browsers require.
+   *
+   * ```ts
+   * Deno.serve((req) => {
+   *   const { session } = Deno.cookies.get(req);
+   *   const res = new Response(session ? "welcome back" : "hello");
+   *   Deno.cookies.set(res, {
+   *     name: "session",
+   *     value: crypto.randomUUID(),
+   *     httpOnly: true,
+   *     secure: true,
+   *     sameSite: "Lax",
+   *   });
+   *   return res;
+   * });
+   * ```
+   *
+   * @category HTTP Server
+   * @experimental Requires `--unstable-cookies`.
+   */
+  export namespace cookies {
+    /** A cookie to set, or one read from a `Set-Cookie` header.
+     *
+     * @category HTTP Server
+     * @experimental Requires `--unstable-cookies`. */
+    export interface Cookie {
+      name: string;
+      /** Must be cookie-safe; encode other text, for example with
+       * `encodeURIComponent()`. */
+      value: string;
+      /** A `Date` or a timestamp in milliseconds. */
+      expires?: Date | number;
+      /** Seconds until it expires. */
+      maxAge?: number;
+      domain?: string;
+      path?: string;
+      secure?: boolean;
+      httpOnly?: boolean;
+      /** Needs `secure`. */
+      partitioned?: boolean;
+      /** `"None"` needs `secure`. */
+      sameSite?: "Strict" | "Lax" | "None";
+      /** Attributes kept as written, such as `Priority=High`. */
+      unparsed?: string[];
+    }
+    /** Parses a `Cookie` header value. When a name repeats, the first value
+     * wins.
+     *
+     * @category HTTP Server
+     * @experimental Requires `--unstable-cookies`. */
+    export function parse(header: string): Record<string, string>;
+    /** Serializes a cookie into a `Set-Cookie` header value. Throws a
+     * `TypeError` for invalid names, values or attributes, and when the
+     * `__Secure-` or `__Host-` prefix rules aren't met.
+     *
+     * @category HTTP Server
+     * @experimental Requires `--unstable-cookies`. */
+    export function serialize(cookie: Cookie): string;
+    /** The cookies a request sent.
+     *
+     * @category HTTP Server
+     * @experimental Requires `--unstable-cookies`. */
+    export function get(
+      source: Headers | Request,
+    ): Record<string, string>;
+    /** Adds a `Set-Cookie` header.
+     *
+     * @category HTTP Server
+     * @experimental Requires `--unstable-cookies`. */
+    export function set(target: Headers | Response, cookie: Cookie): void;
+    /** Tells the client to delete a cookie. Pass the `path` and `domain` it
+     * was set with.
+     *
+     * @category HTTP Server
+     * @experimental Requires `--unstable-cookies`. */
+    function deleteCookie(
+      target: Headers | Response,
+      name: string,
+      attributes?: Pick<
+        Cookie,
+        "path" | "domain" | "secure" | "httpOnly" | "partitioned" | "sameSite"
+      >,
+    ): void;
+    export { deleteCookie as delete };
+    /** The cookies a response sets.
+     *
+     * @category HTTP Server
+     * @experimental Requires `--unstable-cookies`. */
+    export function getSetCookies(source: Headers | Response): Cookie[];
+  }
+
+  /**
+   * [JSON5](https://json5.org): JSON with comments, trailing commas,
+   * unquoted keys, single-quoted strings, hex numbers, `Infinity` and `NaN`.
+   *
+   * @category Data Formats
+   * @experimental Requires `--unstable-formats`.
+   */
+  export namespace json5 {
+    /** Throws a `SyntaxError` with the line and column of the problem.
+     *
+     * @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    // deno-lint-ignore no-explicit-any
+    export function parse(text: string): any;
+    /** Like `JSON.stringify()`, but keeps `NaN` and `Infinity` and leaves
+     * identifier keys unquoted.
+     *
+     * @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    export function stringify(
+      value: unknown,
+      space?: string | number,
+    ): string | undefined;
+  }
+
+  /**
+   * JSONC: JSON with comments and trailing commas, as in `tsconfig.json` and
+   * `mokou.json`.
+   *
+   * @category Data Formats
+   * @experimental Requires `--unstable-formats`.
+   */
+  export namespace jsonc {
+    /** @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    // deno-lint-ignore no-explicit-any
+    export function parse(text: string): any;
+  }
+
+  /**
+   * JSON Lines: one JSON value per line, as in logs and datasets.
+   *
+   * @category Data Formats
+   * @experimental Requires `--unstable-formats`.
+   */
+  export namespace jsonl {
+    /** Parses every non-empty line. Errors name the line.
+     *
+     * @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    // deno-lint-ignore no-explicit-any
+    export function parse(text: string): any[];
+    /** One line per value, each ending in `\n`.
+     *
+     * @category Data Formats
+     * @experimental Requires `--unstable-formats`. */
+    export function stringify(values: Iterable<unknown>): string;
+  }
 }

@@ -203,6 +203,13 @@ pub static FEATURE_DESCRIPTIONS: &[UnstableFeatureDescription] = &[
   },
   // Mokou's built-in standard library (ext/mokou).
   UnstableFeatureDescription {
+    name: "ansi",
+    help_text: "Enable unstable `Deno.ansi` text utilities",
+    show_in_help: true,
+    kind: UnstableFeatureKind::Runtime,
+    env_var: None,
+  },
+  UnstableFeatureDescription {
     name: "assert",
     help_text: "Enable the built-in `Deno.assert*()` and `Deno.expect()` test assertions",
     show_in_help: true,
@@ -210,8 +217,15 @@ pub static FEATURE_DESCRIPTIONS: &[UnstableFeatureDescription] = &[
     env_var: None,
   },
   UnstableFeatureDescription {
+    name: "cookies",
+    help_text: "Enable unstable `Deno.cookies` API",
+    show_in_help: true,
+    kind: UnstableFeatureKind::Runtime,
+    env_var: None,
+  },
+  UnstableFeatureDescription {
     name: "formats",
-    help_text: "Enable unstable `Deno.toml`, `Deno.yaml` and `Deno.csv` APIs",
+    help_text: "Enable unstable `Deno.toml`, `Deno.yaml`, `Deno.csv`, `Deno.json5`, `Deno.jsonc` and `Deno.jsonl` APIs",
     show_in_help: true,
     kind: UnstableFeatureKind::Runtime,
     env_var: None,

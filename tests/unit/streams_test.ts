@@ -624,7 +624,30 @@ const compressionFormats: CompressionFormat[] = [
   "deflate-raw",
   "gzip",
   "brotli",
+  "zstd",
 ];
+
+Deno.test(async function zstdRoundTripAndTruncation() {
+  const text = "hello zstd ".repeat(10_000);
+  const compressed = await compressChunks("zstd", [text]);
+  assert(compressed.length < text.length / 10);
+  assertEquals(
+    new TextDecoder().decode(await decompress("zstd", compressed)),
+    text,
+  );
+  // A frame cut short is an error, like a truncated gzip stream.
+  const truncated = compressed.slice(0, compressed.length - 4);
+  await assertRejects(
+    () =>
+      new Response(
+        new Blob([truncated]).stream().pipeThrough(
+          new DecompressionStream("zstd"),
+        ),
+      ).bytes(),
+    TypeError,
+    "incomplete frame",
+  );
+});
 
 Deno.test(async function compressionStreamOutputIsIndependentOfChunking() {
   const text = "hello world hello world";

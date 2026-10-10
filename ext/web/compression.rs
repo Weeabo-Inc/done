@@ -17,6 +17,9 @@ use flate2::write::GzDecoder;
 use flate2::write::GzEncoder;
 use flate2::write::ZlibDecoder;
 use flate2::write::ZlibEncoder;
+use zstd::stream::raw::InBuffer;
+use zstd::stream::raw::Operation;
+use zstd::stream::raw::OutBuffer;
 
 #[derive(Debug, thiserror::Error, deno_error::JsError)]
 pub enum CompressionError {
@@ -35,6 +38,67 @@ pub enum CompressionError {
 }
 
 const BROTLI_COMPRESSION_QUALITY: u32 = 6;
+// zstd's own default level.
+const ZSTD_COMPRESSION_LEVEL: i32 = 3;
+const ZSTD_BUFFER_SIZE: usize = 64 * 1024;
+
+/// A zstd encoder or decoder driven chunk by chunk. A decoder only finishes
+/// cleanly at the end of a frame, so truncated input is an error, like it is
+/// for gzip.
+struct ZstdStream<O: Operation> {
+  operation: O,
+  /// Whether the last call ended exactly at the end of a frame.
+  frame_done: bool,
+}
+
+impl<O: Operation> ZstdStream<O> {
+  fn new(operation: O) -> Self {
+    Self {
+      operation,
+      frame_done: false,
+    }
+  }
+
+  fn write(&mut self, input: &[u8]) -> Result<Vec<u8>, CompressionError> {
+    let mut output = Vec::new();
+    let mut buffer = vec![0; ZSTD_BUFFER_SIZE];
+    let mut input = InBuffer::around(input);
+    loop {
+      let mut out = OutBuffer::around(&mut buffer[..]);
+      let hint = self
+        .operation
+        .run(&mut input, &mut out)
+        .map_err(CompressionError::IoTypeError)?;
+      let written = out.pos();
+      output.extend_from_slice(&buffer[..written]);
+      self.frame_done = hint == 0;
+      // Done once all input is consumed and the output buffer wasn't filled,
+      // which would mean more output is pending.
+      if input.pos() == input.src.len() && written < buffer.len() {
+        break;
+      }
+    }
+    Ok(output)
+  }
+
+  fn finish(mut self) -> Result<Vec<u8>, CompressionError> {
+    let mut output = Vec::new();
+    let mut buffer = vec![0; ZSTD_BUFFER_SIZE];
+    loop {
+      let mut out = OutBuffer::around(&mut buffer[..]);
+      let remaining = self
+        .operation
+        .finish(&mut out, self.frame_done)
+        .map_err(CompressionError::IoTypeError)?;
+      let written = out.pos();
+      output.extend_from_slice(&buffer[..written]);
+      if remaining == 0 {
+        break;
+      }
+    }
+    Ok(output)
+  }
+}
 const BROTLI_COMPRESSION_LGWIN: u32 = 22;
 
 // Quality level 6 is based on google's nginx default value for on-the-fly
@@ -162,6 +226,8 @@ enum Inner {
   GzEncoder(GzEncoder<Vec<u8>>),
   BrotliDecoder(Box<BrotliDecoder<Vec<u8>>>),
   BrotliEncoder(Box<RawBrotliEncoder>),
+  ZstdDecoder(Box<ZstdStream<zstd::stream::raw::Decoder<'static>>>),
+  ZstdEncoder(Box<ZstdStream<zstd::stream::raw::Encoder<'static>>>),
 }
 
 impl std::fmt::Debug for Inner {
@@ -175,6 +241,8 @@ impl std::fmt::Debug for Inner {
       Inner::GzEncoder(_) => write!(f, "GzEncoder"),
       Inner::BrotliDecoder(_) => write!(f, "BrotliDecoder"),
       Inner::BrotliEncoder(_) => write!(f, "BrotliEncoder"),
+      Inner::ZstdDecoder(_) => write!(f, "ZstdDecoder"),
+      Inner::ZstdEncoder(_) => write!(f, "ZstdEncoder"),
     }
   }
 }
@@ -207,6 +275,13 @@ pub fn op_compression_new(
       drop(w);
       Inner::BrotliEncoder(Box::new(RawBrotliEncoder::new()))
     }
+    ("zstd", true) => Inner::ZstdDecoder(Box::new(ZstdStream::new(
+      zstd::stream::raw::Decoder::new().map_err(CompressionError::Io)?,
+    ))),
+    ("zstd", false) => Inner::ZstdEncoder(Box::new(ZstdStream::new(
+      zstd::stream::raw::Encoder::new(ZSTD_COMPRESSION_LEVEL)
+        .map_err(CompressionError::Io)?,
+    ))),
     _ => return Err(CompressionError::UnsupportedFormat),
   };
   Ok(CompressionResource(RefCell::new(Some(inner))))
@@ -255,6 +330,12 @@ pub fn op_compression_write(
     Inner::BrotliEncoder(d) => {
       return d.write(input).map(Into::into);
     }
+    Inner::ZstdDecoder(d) => {
+      return d.write(input).map(Into::into);
+    }
+    Inner::ZstdEncoder(d) => {
+      return d.write(input).map(Into::into);
+    }
   }
   .collect();
   Ok(out.into())
@@ -292,6 +373,8 @@ pub fn op_compression_finish(
       ))
     }),
     Inner::BrotliEncoder(d) => d.finish(),
+    Inner::ZstdDecoder(d) => d.finish(),
+    Inner::ZstdEncoder(d) => d.finish(),
   };
   match out {
     Err(err) => {

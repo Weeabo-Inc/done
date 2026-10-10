@@ -6,6 +6,8 @@
 const { core, primordials } = __bootstrap;
 const {
   op_done_hash_crc32,
+  op_done_hash_digest,
+  op_done_hash_digest_string,
   op_done_hash_xxh3,
   op_done_hash_xxh32,
   op_done_hash_xxh64,
@@ -25,6 +27,8 @@ const {
   DataViewPrototypeGetByteOffset,
   DataViewPrototypeGetByteLength,
   DataViewPrototype,
+  StringPrototypeReplaceAll,
+  StringPrototypeToLowerCase,
 } = primordials;
 
 function toBytes(data) {
@@ -76,7 +80,28 @@ function crc32(data, initial = 0) {
   return op_done_hash_crc32(toBytes(data), initial >>> 0);
 }
 
-const hash = ObjectFreeze({ crc32, xxhash3, xxhash32, xxhash64 });
+/**
+ * A cryptographic digest (MD5, SHA-1, SHA-256, SHA-384 or SHA-512), computed
+ * synchronously. Returns bytes, or a string when `encoding` is `"hex"` or
+ * `"base64"`. Algorithm names are case-insensitive, and `"SHA-256"` works as
+ * well as `"sha256"`.
+ */
+function digest(algorithm, data, encoding) {
+  if (typeof algorithm !== "string") {
+    throw new TypeError("Digest algorithm must be a string");
+  }
+  const name = StringPrototypeReplaceAll(
+    StringPrototypeToLowerCase(algorithm),
+    "-",
+    "",
+  );
+  const bytes = toBytes(data);
+  return encoding === undefined
+    ? op_done_hash_digest(name, bytes)
+    : op_done_hash_digest_string(name, bytes, encoding);
+}
+
+const hash = ObjectFreeze({ crc32, digest, xxhash3, xxhash32, xxhash64 });
 
 return { hash };
 })();

@@ -422,11 +422,21 @@ pub static UNSTABLE_FEATURE_ARGS: &[ArgDef] = &[
     .set_true()
     .hidden()
 .help("Enable the built-in `Deno.assert*()` and `Deno.expect()` test assertions"),
+  ArgDef::new("unstable-ansi")
+    .long("unstable-ansi")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.ansi` text utilities"),
+  ArgDef::new("unstable-cookies")
+    .long("unstable-cookies")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.cookies` API"),
   ArgDef::new("unstable-formats")
     .long("unstable-formats")
     .set_true()
     .hidden()
-.help("Enable unstable `Deno.toml`, `Deno.yaml` and `Deno.csv` APIs"),
+.help("Enable unstable `Deno.toml`, `Deno.yaml`, `Deno.csv`, `Deno.json5`, `Deno.jsonc` and `Deno.jsonl` APIs"),
   ArgDef::new("unstable-glob")
     .long("unstable-glob")
     .set_true()

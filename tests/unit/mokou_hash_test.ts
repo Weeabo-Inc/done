@@ -38,3 +38,36 @@ Deno.test(function doneHashRejectsBadInput() {
   // @ts-expect-error invalid input
   assertThrows(() => Deno.hash.crc32(42), TypeError);
 });
+
+Deno.test(async function doneHashDigestMatchesWebCrypto() {
+  const data = new TextEncoder().encode("The quick brown fox");
+  for (
+    const [name, webName] of [
+      ["sha1", "SHA-1"],
+      ["sha256", "SHA-256"],
+      ["sha384", "SHA-384"],
+      ["sha512", "SHA-512"],
+    ] as const
+  ) {
+    const expected = new Uint8Array(
+      await crypto.subtle.digest(webName, data),
+    );
+    assertEquals(Deno.hash.digest(name, data), expected);
+    assertEquals(Deno.hash.digest(webName, data), expected);
+  }
+  assertEquals(
+    Deno.hash.digest("md5", "abc", "hex"),
+    "900150983cd24fb0d6963f7d28e17f72",
+  );
+  assertEquals(
+    Deno.hash.digest("sha256", "abc", "base64"),
+    "ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0=",
+  );
+});
+
+Deno.test(function doneHashDigestRejectsUnknownNames() {
+  // @ts-expect-error unsupported algorithm
+  assertThrows(() => Deno.hash.digest("sha3-256", "x"), TypeError);
+  // @ts-expect-error unsupported encoding
+  assertThrows(() => Deno.hash.digest("sha256", "x", "utf8"), TypeError);
+});

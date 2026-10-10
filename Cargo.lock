@@ -2875,13 +2875,17 @@ dependencies = [
  "deno_semver",
  "deno_task_shell",
  "globset",
+ "md-5",
  "rand 0.8.5",
  "serde",
  "serde_json",
  "serde_yaml_ng",
+ "sha1",
+ "sha2",
  "thiserror 2.0.12",
  "tokio",
  "toml 0.9.6",
+ "unicode-width 0.1.13",
  "uuid",
  "walkdir",
  "xxhash-rust",
@@ -3682,6 +3686,7 @@ dependencies = [
  "unicode-normalization",
  "urlpattern",
  "uuid",
+ "zstd",
 ]
 
 [[package]]

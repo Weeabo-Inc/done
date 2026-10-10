@@ -68,3 +68,93 @@ Deno.test(function doneCsv() {
     TypeError,
   );
 });
+
+Deno.test(function doneJson5Parse() {
+  const value = Deno.json5.parse(`// A comment
+{
+  unquoted: 'single',
+  "double": "x",
+  hex: 0xFF,
+  numbers: [+1, -2, .5, 5., 1e3, Infinity, -Infinity],
+  /* block */ trailing: [1, 2,],
+  escapes: 'a\\x41\\u0042\\'\\
+c',
+  $id_1: null,
+}`);
+  assertEquals(value, {
+    unquoted: "single",
+    double: "x",
+    hex: 255,
+    numbers: [1, -2, 0.5, 5, 1000, Infinity, -Infinity],
+    trailing: [1, 2],
+    escapes: "aAB'c",
+    $id_1: null,
+  });
+  assertEquals(Number.isNaN(Deno.json5.parse("NaN")), true);
+  // "__proto__" is an own key, not the prototype.
+  const proto = Deno.json5.parse('{"__proto__": {"polluted": true}}');
+  assertEquals(Object.hasOwn(proto, "__proto__"), true);
+  assertEquals(({} as Record<string, unknown>).polluted, undefined);
+});
+
+Deno.test(function doneJson5Errors() {
+  assertThrows(
+    () => Deno.json5.parse("{a: 1,\n  b: }"),
+    SyntaxError,
+    "line 2, column 6",
+  );
+  assertThrows(() => Deno.json5.parse("01"), SyntaxError);
+  assertThrows(() => Deno.json5.parse("'unterminated"), SyntaxError);
+  assertThrows(() => Deno.json5.parse("[1] 2"), SyntaxError);
+  assertThrows(() => Deno.json5.parse("/* open"), SyntaxError);
+});
+
+Deno.test(function doneJson5Stringify() {
+  assertEquals(
+    Deno.json5.stringify({ a: 1, "b-c": [NaN, -Infinity, "s"], d: undefined }),
+    '{a:1,"b-c":[NaN,-Infinity,"s"]}',
+  );
+  assertEquals(
+    Deno.json5.stringify({ a: [1, { b: 2 }], e: {} }, 2),
+    "{\n  a: [\n    1,\n    {\n      b: 2,\n    },\n  ],\n  e: {},\n}",
+  );
+  const value = { list: [1, "two", { three: 3 }], date: new Date(0) };
+  assertEquals(
+    Deno.json5.parse(Deno.json5.stringify(value)!),
+    JSON.parse(JSON.stringify(value)),
+  );
+  const cycle: Record<string, unknown> = {};
+  cycle.self = cycle;
+  assertThrows(() => Deno.json5.stringify(cycle), TypeError);
+});
+
+Deno.test(function doneJsonc() {
+  assertEquals(
+    Deno.jsonc.parse(`{
+  // line comment
+  "url": "http://example.com // not a comment",
+  /* block */ "list": [1, 2, /* x */],
+  "quote": "a \\" // still a string",
+}`),
+    {
+      url: "http://example.com // not a comment",
+      list: [1, 2],
+      quote: 'a " // still a string',
+    },
+  );
+  // Only comments and trailing commas: other JSON5 syntax is still an error.
+  assertThrows(() => Deno.jsonc.parse("{a: 1}"), SyntaxError);
+  assertThrows(() => Deno.jsonc.parse('{"a": 1 /* open'), SyntaxError);
+});
+
+Deno.test(function doneJsonl() {
+  assertEquals(Deno.jsonl.parse('{"a":1}\n\n[2]\r\n"x"\n'), [
+    { a: 1 },
+    [2],
+    "x",
+  ]);
+  assertThrows(() => Deno.jsonl.parse("1\n{bad"), SyntaxError, "line 2");
+  assertEquals(Deno.jsonl.stringify([{ a: 1 }, 2, "s"]), '{"a":1}\n2\n"s"\n');
+  assertEquals(Deno.jsonl.stringify(new Set([1, 2])), "1\n2\n");
+  assertThrows(() => Deno.jsonl.stringify([undefined]), TypeError);
+});

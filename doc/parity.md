@@ -26,7 +26,7 @@ when you update a row.
 | OS keychain secrets       | ✅ `Bun.secrets`    | ❌               | ❌                                    | P2  |
 | Archives (tar)            | ✅ `Bun.Archive`    | ❌               | ❌                                    | P2  |
 | Compression: gzip/deflate | ✅ sync and streams | ✅ `node:zlib`   | 🟡 `CompressionStream` only (no sync) |     |
-| Compression: zstd         | ✅ `Bun.zstd*`      | ✅ `node:zlib`   | ❌                                    | P1  |
+| Compression: zstd         | ✅ `Bun.zstd*`      | ✅ `node:zlib`   | ✅ `CompressionStream("zstd")`        |     |
 
 ## Formats and text
 
@@ -35,11 +35,11 @@ when you update a row.
 | TOML                        | ✅ `Bun.TOML`                  | ❌                              | ✅ `Deno.toml`                 |     |
 | YAML                        | ✅ `Bun.YAML`                  | ❌                              | ✅ `Deno.yaml`                 |     |
 | CSV                         | ❌                             | ❌                              | ✅ `Deno.csv`                  |     |
-| JSON5 / JSONC / JSONL       | ✅ `Bun.JSON5/JSONC/JSONL`     | ❌                              | ❌                             | P1  |
+| JSON5 / JSONC / JSONL       | ✅ `Bun.JSON5/JSONC/JSONL`     | ❌                              | ✅ `Deno.json5/jsonc/jsonl`    |     |
 | XML                         | ✅ `Bun.XML`                   | ❌                              | ❌                             | P3  |
 | Markdown to HTML            | ✅ `Bun.markdown`              | ❌                              | ❌                             | P2  |
 | HTML escaping               | ✅ `Bun.escapeHTML`            | ❌                              | ❌                             | P2  |
-| ANSI strip / width / colors | ✅ `stripANSI`, `stringWidth`… | ✅ `util.styleText`, `stripVT…` | ❌                             | P1  |
+| ANSI strip / width / colors | ✅ `stripANSI`, `stringWidth`… | ✅ `util.styleText`, `stripVT…` | ✅ `Deno.ansi`                 |     |
 | Deep equality (boolean)     | ✅ `Bun.deepEquals`            | ✅ `util.isDeepStrictEqual`     | 🟡 only as `Deno.assertEquals` | P2  |
 | Argument parsing            | ❌                             | ✅ `util.parseArgs`             | ✅ `Deno.parseArgs()`          |     |
 | Semver                      | ✅ `Bun.semver`                | ❌                              | ✅ `Deno.semver`               |     |
@@ -47,14 +47,14 @@ when you update a row.
 
 ## Security and hashing
 
-| Feature                          | Bun                       | Node              | Mokou                                | Gap |
-| -------------------------------- | ------------------------- | ----------------- | ------------------------------------ | --- |
-| Password hashing (Argon2/bcrypt) | ✅ `Bun.password`         | ❌                | ✅ `Deno.password`                   |     |
-| Fast non-crypto hashes           | ✅ `Bun.hash`             | ❌                | ✅ `Deno.hash`                       |     |
-| Sync SHA / MD5 digests           | ✅ `Bun.CryptoHasher`     | ✅ `crypto.hash`  | 🟡 async `crypto.subtle.digest` only | P1  |
-| Cookies                          | ✅ `Bun.Cookie/CookieMap` | ❌                | ❌                                   | P1  |
-| CSRF tokens                      | ✅ `Bun.CSRF`             | ❌                | ❌                                   | P2  |
-| Permission sandbox               | ❌                        | 🟡 `--permission` | ✅ `--allow-*`                       |     |
+| Feature                          | Bun                       | Node              | Mokou                   | Gap |
+| -------------------------------- | ------------------------- | ----------------- | ----------------------- | --- |
+| Password hashing (Argon2/bcrypt) | ✅ `Bun.password`         | ❌                | ✅ `Deno.password`      |     |
+| Fast non-crypto hashes           | ✅ `Bun.hash`             | ❌                | ✅ `Deno.hash`          |     |
+| Sync SHA / MD5 digests           | ✅ `Bun.CryptoHasher`     | ✅ `crypto.hash`  | ✅ `Deno.hash.digest()` |     |
+| Cookies                          | ✅ `Bun.Cookie/CookieMap` | ❌                | ✅ `Deno.cookies`       |     |
+| CSRF tokens                      | ✅ `Bun.CSRF`             | ❌                | ❌                      | P2  |
+| Permission sandbox               | ❌                        | 🟡 `--permission` | ✅ `--allow-*`          |     |
 
 ## HTTP, networking and processes
 
@@ -90,17 +90,15 @@ Each becomes an `ext/mokou` API, in order:
 
 **P1: common needs, small and well specified**
 
-1. **Cookies.** Parse and serialize `Cookie` / `Set-Cookie`, and a cookie map
-   for a request and response.
-2. **ANSI text utilities.** Strip escape codes, terminal width of a string, and
-   styling that respects `NO_COLOR`.
-3. **Sync digests.** SHA-1/256/384/512 and MD5 without `await`, for cache keys
-   and ETags (`unicode-width`, `sha1`, `sha2` and `md-5` are already
-   dependencies).
-4. **zstd.** `"zstd"` in `CompressionStream` / `DecompressionStream` (`zstd` is
-   already a dependency).
-5. **JSON5, JSONC and JSONL** in `Deno.json5` / `Deno.jsonc` / `Deno.jsonl`.
-6. **S3 client.** Get, put, delete, list and presigned URLs over `fetch`, with
+Shipped: cookies (`Deno.cookies`), ANSI text utilities (`Deno.ansi`), sync
+digests (`Deno.hash.digest()`), zstd in `CompressionStream` and
+`DecompressionStream`, and `Deno.json5` / `Deno.jsonc` / `Deno.jsonl`. zstd is
+not behind a flag, like `"brotli"`, because it is only a new format name for an
+existing web API.
+
+Still open:
+
+1. **S3 client.** Get, put, delete, list and presigned URLs over `fetch`, with
    SigV4 signing.
 
 **P2: worth having**

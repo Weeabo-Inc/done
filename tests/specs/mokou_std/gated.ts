@@ -9,6 +9,9 @@ const names = [
   "uuid",
   "parseArgs",
   "$",
+  "ansi",
+  "cookies",
+  "json5",
   "assertEquals",
   "expect",
 ] as const;

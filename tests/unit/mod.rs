@@ -124,7 +124,9 @@ fn run_test(test: &CollectedTest) -> TestResult {
   // Mokou's built-in standard library (ext/mokou).
   if test.name.contains("::mokou_") {
     for feature in [
+      "ansi",
       "assert",
+      "cookies",
       "formats",
       "glob",
       "hash",
