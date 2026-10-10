@@ -30,20 +30,20 @@ when you update a row.
 
 ## Formats and text
 
-| Feature                     | Bun                            | Node                            | Mokou                          | Gap |
-| --------------------------- | ------------------------------ | ------------------------------- | ------------------------------ | --- |
-| TOML                        | ✅ `Bun.TOML`                  | ❌                              | ✅ `Deno.toml`                 |     |
-| YAML                        | ✅ `Bun.YAML`                  | ❌                              | ✅ `Deno.yaml`                 |     |
-| CSV                         | ❌                             | ❌                              | ✅ `Deno.csv`                  |     |
-| JSON5 / JSONC / JSONL       | ✅ `Bun.JSON5/JSONC/JSONL`     | ❌                              | ✅ `Deno.json5/jsonc/jsonl`    |     |
-| XML                         | ✅ `Bun.XML`                   | ❌                              | ❌                             | P3  |
-| Markdown to HTML            | ✅ `Bun.markdown`              | ❌                              | ❌                             | P2  |
-| HTML escaping               | ✅ `Bun.escapeHTML`            | ❌                              | ❌                             | P2  |
-| ANSI strip / width / colors | ✅ `stripANSI`, `stringWidth`… | ✅ `util.styleText`, `stripVT…` | ✅ `Deno.ansi`                 |     |
-| Deep equality (boolean)     | ✅ `Bun.deepEquals`            | ✅ `util.isDeepStrictEqual`     | 🟡 only as `Deno.assertEquals` | P2  |
-| Argument parsing            | ❌                             | ✅ `util.parseArgs`             | ✅ `Deno.parseArgs()`          |     |
-| Semver                      | ✅ `Bun.semver`                | ❌                              | ✅ `Deno.semver`               |     |
-| UUID v4 / v7                | ✅ `crypto`, `randomUUIDv7`    | 🟡 v4 only                      | ✅ `Deno.uuid`                 |     |
+| Feature                     | Bun                            | Node                            | Mokou                       | Gap |
+| --------------------------- | ------------------------------ | ------------------------------- | --------------------------- | --- |
+| TOML                        | ✅ `Bun.TOML`                  | ❌                              | ✅ `Deno.toml`              |     |
+| YAML                        | ✅ `Bun.YAML`                  | ❌                              | ✅ `Deno.yaml`              |     |
+| CSV                         | ❌                             | ❌                              | ✅ `Deno.csv`               |     |
+| JSON5 / JSONC / JSONL       | ✅ `Bun.JSON5/JSONC/JSONL`     | ❌                              | ✅ `Deno.json5/jsonc/jsonl` |     |
+| XML                         | ✅ `Bun.XML`                   | ❌                              | ❌                          | P3  |
+| Markdown to HTML            | ✅ `Bun.markdown`              | ❌                              | ✅ `Deno.markdown`          |     |
+| HTML escaping               | ✅ `Bun.escapeHTML`            | ❌                              | ✅ `Deno.escapeHTML`        |     |
+| ANSI strip / width / colors | ✅ `stripANSI`, `stringWidth`… | ✅ `util.styleText`, `stripVT…` | ✅ `Deno.ansi`              |     |
+| Deep equality (boolean)     | ✅ `Bun.deepEquals`            | ✅ `util.isDeepStrictEqual`     | ✅ `Deno.deepEquals`        |     |
+| Argument parsing            | ❌                             | ✅ `util.parseArgs`             | ✅ `Deno.parseArgs()`       |     |
+| Semver                      | ✅ `Bun.semver`                | ❌                              | ✅ `Deno.semver`            |     |
+| UUID v4 / v7                | ✅ `crypto`, `randomUUIDv7`    | 🟡 v4 only                      | ✅ `Deno.uuid`              |     |
 
 ## Security and hashing
 
@@ -53,7 +53,7 @@ when you update a row.
 | Fast non-crypto hashes           | ✅ `Bun.hash`             | ❌                | ✅ `Deno.hash`          |     |
 | Sync SHA / MD5 digests           | ✅ `Bun.CryptoHasher`     | ✅ `crypto.hash`  | ✅ `Deno.hash.digest()` |     |
 | Cookies                          | ✅ `Bun.Cookie/CookieMap` | ❌                | ✅ `Deno.cookies`       |     |
-| CSRF tokens                      | ✅ `Bun.CSRF`             | ❌                | ❌                      | P2  |
+| CSRF tokens                      | ✅ `Bun.CSRF`             | ❌                | ✅ `Deno.csrf`          |     |
 | Permission sandbox               | ❌                        | 🟡 `--permission` | ✅ `--allow-*`          |     |
 
 ## HTTP, networking and processes
@@ -104,8 +104,12 @@ memory.
 
 **P2: worth having**
 
-Markdown to HTML (`pulldown-cmark`), HTML escaping, a boolean deep equality,
-CSRF tokens, tar archives (`tar`), OS keychain secrets (`keyring`), test mocks
+Shipped: `Deno.escapeHTML()` and `Deno.markdown.html()` (comrak, already in the
+binary for `deno doc`, with raw HTML dropped unless allowed), the boolean
+`Deno.deepEquals()`, and `Deno.csrf` (stateless HMAC tokens that can be bound to
+a session).
+
+Still open: tar archives (`tar`), OS keychain secrets (`keyring`), test mocks
 and snapshots, a transpiler API, and pseudo-terminals.
 
 **P3: large surfaces**

@@ -12,5 +12,9 @@ ansi false
 cookies false
 json5 false
 S3Client false
+escapeHTML false
+markdown false
+csrf false
 assertEquals false
+deepEquals false
 expect false

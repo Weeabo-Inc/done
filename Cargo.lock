@@ -2866,6 +2866,7 @@ dependencies = [
  "argon2",
  "base64 0.22.1",
  "bcrypt",
+ "comrak",
  "crc32fast",
  "csv",
  "deno_core",

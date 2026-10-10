@@ -5122,6 +5122,18 @@ declare namespace Deno {
    * @category Testing
    * @experimental Requires `--unstable-assert`. */
   export function assertFalse(expr: unknown, msg?: string): void;
+  /** Whether `a` and `b` are deeply equal, with the comparison
+   * {@linkcode Deno.assertEquals} uses. With `strict`, prototypes, symbol
+   * keys and keys set to `undefined` also count, as in `toStrictEqual`.
+   *
+   * ```ts
+   * Deno.deepEquals({ a: [1, 2] }, { a: [1, 2] }); // true
+   * Deno.deepEquals({ a: undefined }, {}, true); // false
+   * ```
+   *
+   * @category Testing
+   * @experimental Requires `--unstable-assert`. */
+  export function deepEquals(a: unknown, b: unknown, strict?: boolean): boolean;
   /** Asserts that `actual` and `expected` are deeply equal.
    *
    * @category Testing
@@ -6473,5 +6485,121 @@ declare namespace Deno {
     readonly code: string;
     /** The HTTP status. */
     readonly status: number;
+  }
+
+  /**
+   * Escapes `&`, `<`, `>`, `"` and `'`, so text is safe to put in element
+   * content and in quoted attribute values. Other values are converted to
+   * strings first.
+   *
+   * ```ts
+   * const name = '<img src=x onerror="alert(1)">';
+   * const html = `<p title="${Deno.escapeHTML(name)}">${Deno.escapeHTML(name)}</p>`;
+   * ```
+   *
+   * @category Web
+   * @experimental Requires `--unstable-html`.
+   */
+  export function escapeHTML(value: unknown): string;
+
+  /**
+   * Markdown rendering, with CommonMark and GitHub Flavored Markdown.
+   *
+   * @category Web
+   * @experimental Requires `--unstable-html`.
+   */
+  export namespace markdown {
+    /** Options for {@linkcode Deno.markdown.html}.
+     *
+     * @category Web
+     * @experimental Requires `--unstable-html`. */
+    export interface HtmlOptions {
+      /** GitHub Flavored Markdown: tables, strikethrough, autolinks and task
+       * lists. Defaults to `true`. */
+      gfm?: boolean;
+      /** Footnotes (`[^1]`). Defaults to `false`. */
+      footnotes?: boolean;
+      /** Adds an `id` made from the text to each heading. Defaults to
+       * `false`. */
+      headingIds?: boolean;
+      /** Renders single line breaks as `<br>`. Defaults to `false`. */
+      hardBreaks?: boolean;
+      /** Curly quotes, dashes and ellipses. Defaults to `false`. */
+      smartPunctuation?: boolean;
+      /** Keeps raw HTML and links with any URL scheme. Defaults to `false`,
+       * which drops raw HTML and `javascript:`-style links so untrusted
+       * Markdown can't inject scripts. Even when `true`, GFM removes
+       * `<script>`, `<iframe>`, `<style>` and a few other tags. */
+      allowHtml?: boolean;
+    }
+    /** Renders Markdown to HTML.
+     *
+     * ```ts
+     * Deno.markdown.html("# Hello *world*"); // "<h1>Hello <em>world</em></h1>\n"
+     * ```
+     *
+     * @category Web
+     * @experimental Requires `--unstable-html`. */
+    export function html(source: string, options?: HtmlOptions): string;
+  }
+
+  /**
+   * Stateless CSRF tokens, signed with HMAC-SHA256.
+   *
+   * A token carries its own expiry and signature, so nothing is stored on the
+   * server. Pass the session ID as `context` so a token is only valid for the
+   * session it was issued to.
+   *
+   * ```ts
+   * const secret = Deno.env.get("CSRF_SECRET")!;
+   * // When rendering the form:
+   * const token = Deno.csrf.generate({ secret, context: sessionId });
+   * // When handling the submission:
+   * if (!Deno.csrf.verify(form.get("csrf"), { secret, context: sessionId })) {
+   *   return new Response("Forbidden", { status: 403 });
+   * }
+   * ```
+   *
+   * @category HTTP Server
+   * @experimental Requires `--unstable-csrf`.
+   */
+  export namespace csrf {
+    /** Options for {@linkcode Deno.csrf.generate}.
+     *
+     * @category HTTP Server
+     * @experimental Requires `--unstable-csrf`. */
+    export interface GenerateOptions {
+      /** The signing key; use at least 32 random bytes. Without one, a key
+       * random to this process is used, so tokens don't survive a restart
+       * and aren't valid on other instances. */
+      secret?: string | Uint8Array;
+      /** What the token is bound to, usually the session ID. */
+      context?: string | Uint8Array;
+      /** Milliseconds until the token expires. Defaults to 24 hours. */
+      expiresIn?: number;
+    }
+    /** Options for {@linkcode Deno.csrf.verify}.
+     *
+     * @category HTTP Server
+     * @experimental Requires `--unstable-csrf`. */
+    export interface VerifyOptions {
+      /** The key the token was generated with. */
+      secret?: string | Uint8Array;
+      /** The context the token was generated with. */
+      context?: string | Uint8Array;
+      /** Also rejects tokens issued more than this many milliseconds ago. */
+      maxAge?: number;
+    }
+    /** Generates a token.
+     *
+     * @category HTTP Server
+     * @experimental Requires `--unstable-csrf`. */
+    export function generate(options?: GenerateOptions): string;
+    /** Checks a token's signature, context and expiry. Returns `false` for
+     * anything invalid, including values that aren't strings.
+     *
+     * @category HTTP Server
+     * @experimental Requires `--unstable-csrf`. */
+    export function verify(token: unknown, options?: VerifyOptions): boolean;
   }
 }

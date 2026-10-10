@@ -8,9 +8,11 @@
 //! touches these APIs does not pay for them at startup.
 
 mod ansi;
+mod csrf;
 mod formats;
 mod glob;
 mod hash;
+mod markdown;
 mod password;
 mod semver;
 mod shell;
@@ -21,6 +23,8 @@ deno_core::extension!(
   deps = [deno_web],
   ops = [
     ansi::op_done_ansi_width,
+    csrf::op_done_csrf_generate,
+    csrf::op_done_csrf_verify,
     formats::op_done_toml_parse,
     formats::op_done_toml_stringify,
     formats::op_done_yaml_parse,
@@ -35,6 +39,7 @@ deno_core::extension!(
     hash::op_done_hash_digest,
     hash::op_done_hash_digest_string,
     hash::op_done_hmac_sha256,
+    markdown::op_done_markdown_html,
     password::op_done_password_hash,
     password::op_done_password_verify,
     semver::op_done_semver_parse,
@@ -63,5 +68,7 @@ deno_core::extension!(
     "12_cookies.js",
     "13_json.js",
     "14_s3.js",
+    "15_html.js",
+    "16_csrf.js",
   ],
 );

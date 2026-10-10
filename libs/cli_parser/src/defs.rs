@@ -432,6 +432,11 @@ pub static UNSTABLE_FEATURE_ARGS: &[ArgDef] = &[
     .set_true()
     .hidden()
 .help("Enable unstable `Deno.cookies` API"),
+  ArgDef::new("unstable-csrf")
+    .long("unstable-csrf")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.csrf` API"),
   ArgDef::new("unstable-formats")
     .long("unstable-formats")
     .set_true()
@@ -447,6 +452,11 @@ pub static UNSTABLE_FEATURE_ARGS: &[ArgDef] = &[
     .set_true()
     .hidden()
 .help("Enable unstable `Deno.hash` API"),
+  ArgDef::new("unstable-html")
+    .long("unstable-html")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.escapeHTML()` and `Deno.markdown` APIs"),
   ArgDef::new("unstable-parse-args")
     .long("unstable-parse-args")
     .set_true()

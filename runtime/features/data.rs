@@ -224,6 +224,13 @@ pub static FEATURE_DESCRIPTIONS: &[UnstableFeatureDescription] = &[
     env_var: None,
   },
   UnstableFeatureDescription {
+    name: "csrf",
+    help_text: "Enable unstable `Deno.csrf` API",
+    show_in_help: true,
+    kind: UnstableFeatureKind::Runtime,
+    env_var: None,
+  },
+  UnstableFeatureDescription {
     name: "formats",
     help_text: "Enable unstable `Deno.toml`, `Deno.yaml`, `Deno.csv`, `Deno.json5`, `Deno.jsonc` and `Deno.jsonl` APIs",
     show_in_help: true,
@@ -240,6 +247,13 @@ pub static FEATURE_DESCRIPTIONS: &[UnstableFeatureDescription] = &[
   UnstableFeatureDescription {
     name: "hash",
     help_text: "Enable unstable `Deno.hash` API",
+    show_in_help: true,
+    kind: UnstableFeatureKind::Runtime,
+    env_var: None,
+  },
+  UnstableFeatureDescription {
+    name: "html",
+    help_text: "Enable unstable `Deno.escapeHTML()` and `Deno.markdown` APIs",
     show_in_help: true,
     kind: UnstableFeatureKind::Runtime,
     env_var: None,

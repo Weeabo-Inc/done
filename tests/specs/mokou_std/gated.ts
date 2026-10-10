@@ -13,7 +13,11 @@ const names = [
   "cookies",
   "json5",
   "S3Client",
+  "escapeHTML",
+  "markdown",
+  "csrf",
   "assertEquals",
+  "deepEquals",
   "expect",
 ] as const;
 for (const name of names) {

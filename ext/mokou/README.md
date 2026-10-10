@@ -6,7 +6,7 @@ Mokou's built-in standard library: APIs that most apps need, available on the
 
 | Flag                    | API                                                                            | Implementation                                        |
 | ----------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------- |
-| `--unstable-assert`     | `Deno.assert*()`, `Deno.expect()`, `Deno.AssertionError`                       | `00_assert.js`                                        |
+| `--unstable-assert`     | `Deno.assert*()`, `Deno.expect()`, `Deno.deepEquals()`, `Deno.AssertionError`  | `00_assert.js`                                        |
 | `--unstable-sqlite`     | `Deno.openSqlite()`, `Deno.SqliteDatabase`                                     | `01_sqlite.js`, on the Rust code in `ext/node_sqlite` |
 | `--unstable-password`   | `Deno.password.hash()` / `verify()` (Argon2id, bcrypt)                         | `02_password.js`, `password.rs`                       |
 | `--unstable-hash`       | `Deno.hash.xxhash32/64()`, `xxhash3()`, `crc32()`, `digest()`                  | `03_hash.js`, `hash.rs`                               |
@@ -19,7 +19,9 @@ Mokou's built-in standard library: APIs that most apps need, available on the
 | `--unstable-shell`      | `Deno.$`, `Deno.ShellError`                                                    | `10_shell.js`, `shell.rs`, on `deno_task_shell`       |
 | `--unstable-ansi`       | `Deno.ansi.strip()`, `width()`, `style()`                                      | `11_ansi.js`, `ansi.rs`                               |
 | `--unstable-cookies`    | `Deno.cookies`                                                                 | `12_cookies.js`                                       |
+| `--unstable-csrf`       | `Deno.csrf`                                                                    | `16_csrf.js`, `csrf.rs`                               |
 | `--unstable-s3`         | `Deno.S3Client`, `Deno.S3Error`                                                | `14_s3.js`, HMAC in `hash.rs`                         |
+| `--unstable-html`       | `Deno.escapeHTML()`, `Deno.markdown`                                           | `15_html.js`, `markdown.rs` (comrak)                  |
 
 The JavaScript files are lazy-loaded scripts. `runtime/js/90_deno_ns.js` loads
 each one the first time its API is accessed, so a program that doesn't use them

@@ -109,3 +109,37 @@ Deno.test(async function doneExpect() {
     Deno.AssertionError,
   );
 });
+
+Deno.test(function deepEqualsMatchesAssertEquals() {
+  const { assertEquals } = std;
+  assertEquals(
+    Deno.deepEquals({ a: [1, { b: 2 }] }, { a: [1, { b: 2 }] }),
+    true,
+  );
+  assertEquals(Deno.deepEquals([1, 2], [2, 1]), false);
+  assertEquals(Deno.deepEquals(NaN, NaN), true);
+  assertEquals(
+    Deno.deepEquals(new Map([[1, { a: 1 }]]), new Map([[1, { a: 1 }]])),
+    true,
+  );
+  assertEquals(
+    Deno.deepEquals(new Set([{ a: 1 }]), new Set([{ a: 2 }])),
+    false,
+  );
+  assertEquals(Deno.deepEquals(new Date(1), new Date(1)), true);
+  assertEquals(Deno.deepEquals(new Uint8Array([1]), new Uint8Array([1])), true);
+  const cyclic: Record<string, unknown> = {};
+  cyclic.self = cyclic;
+  const cyclic2: Record<string, unknown> = {};
+  cyclic2.self = cyclic2;
+  assertEquals(Deno.deepEquals(cyclic, cyclic2), true);
+
+  // Loose by default, like `assertEquals`; `strict` is like `toStrictEqual`.
+  assertEquals(Deno.deepEquals({ a: undefined }, {}), true);
+  assertEquals(Deno.deepEquals({ a: undefined }, {}, true), false);
+  class A {
+    x = 1;
+  }
+  assertEquals(Deno.deepEquals(new A(), { x: 1 }), true);
+  assertEquals(Deno.deepEquals(new A(), { x: 1 }, true), false);
+});

@@ -669,6 +669,12 @@ function expect(value) {
   return new Expectation(value);
 }
 
+/** `Deno.deepEquals()`: the equality `assertEquals` uses, or with `strict`
+ * the one `toStrictEqual` uses. */
+function deepEquals(a, b, strict = false) {
+  return equal(a, b, !!strict);
+}
+
 return {
   AssertionError,
   assert,
@@ -685,6 +691,7 @@ return {
   assertStrictEquals,
   assertStringIncludes,
   assertThrows,
+  deepEquals,
   equal,
   expect,
   fail,
