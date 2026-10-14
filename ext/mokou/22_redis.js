@@ -295,6 +295,8 @@ class RedisClient {
         caCerts: config.caCerts,
       })
       : await connect({ hostname: config.hostname, port: config.port });
+    // Small writes shouldn't wait for the peer's delayed acknowledgement.
+    connection.setNoDelay?.(true);
     const client = new RedisClient(constructorKey, connection);
     client.#onPush = onPush;
     try {

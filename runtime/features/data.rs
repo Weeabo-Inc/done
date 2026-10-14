@@ -266,6 +266,13 @@ pub static FEATURE_DESCRIPTIONS: &[UnstableFeatureDescription] = &[
     env_var: None,
   },
   UnstableFeatureDescription {
+    name: "mysql",
+    help_text: "Enable unstable `Deno.mysql` API",
+    show_in_help: true,
+    kind: UnstableFeatureKind::Runtime,
+    env_var: None,
+  },
+  UnstableFeatureDescription {
     name: "password",
     help_text: "Enable unstable `Deno.password` API",
     show_in_help: true,

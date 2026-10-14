@@ -972,6 +972,7 @@ fn unstable_args_parse(result: &ParseResult, flags: &mut Flags) {
     ("unstable-hash", None),
     ("unstable-html", None),
     ("unstable-parse-args", None),
+    ("unstable-mysql", None),
     ("unstable-password", None),
     ("unstable-postgres", None),
     ("unstable-pty", None),

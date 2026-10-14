@@ -133,6 +133,7 @@ fn run_test(test: &CollectedTest) -> TestResult {
       "hash",
       "html",
       "parse-args",
+      "mysql",
       "password",
       "postgres",
       "pty",

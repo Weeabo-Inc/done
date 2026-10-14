@@ -20,7 +20,7 @@ when you update a row.
 | ------------------------- | ------------------- | ---------------- | ------------------------------------- | --- |
 | SQLite                    | ✅ `bun:sqlite`     | ✅ `node:sqlite` | ✅ `Deno.openSqlite()`                |     |
 | Key-value store           | ❌                  | ❌               | ✅ `Deno.openKv()`                    |     |
-| Postgres / MySQL client   | ✅ `Bun.sql`        | ❌               | 🟡 `Deno.postgres`, no MySQL          |     |
+| Postgres / MySQL client   | ✅ `Bun.sql`        | ❌               | ✅ `Deno.postgres`, `Deno.mysql`      |     |
 | Redis client              | ✅ `Bun.redis`      | ❌               | ✅ `Deno.redis`                       |     |
 | S3 client                 | ✅ `Bun.s3`         | ❌               | ✅ `Deno.S3Client`                    |     |
 | OS keychain secrets       | ✅ `Bun.secrets`    | ❌               | ✅ `Deno.secrets`                     |     |
@@ -136,10 +136,19 @@ up, and limits nesting to 256 levels.
 pub/sub, over TCP or TLS. `Deno.postgres` is a PostgreSQL client with
 SCRAM-SHA-256, MD5 and cleartext logins, TLS, parameterized queries and tagged
 templates, transactions and `LISTEN`/`NOTIFY`, with results converted by column
-type. Both were tested against real servers (Redis 7.0, PostgreSQL 16, including
-a Unix socket and a TLS connection); the Postgres tests against a real server
-run when `MOKOU_TEST_POSTGRES` holds a superuser URL, and the Redis ones when
-`redis-server` is installed.
+type. `Deno.mysql` is a MySQL and MariaDB client with `mysql_native_password`
+and `caching_sha2_password` logins, TLS, server-side prepared statements,
+transactions and multi-statement scripts, and values over 16 MB.
 
-Still open: a MySQL client, a connection pool for Postgres, and a file-system
-router, which belongs with the M5 web framework.
+All three were tested against real servers: Redis 7.0, PostgreSQL 16 (including
+a Unix socket and TLS), MySQL 8.0 and MariaDB 10.11 (including TLS and both
+login plugins). Each suite has a scripted mock server for wire-level checks that
+runs everywhere. The real-server tests run when `redis-server` is installed (the
+Redis ones start it themselves) or when `MOKOU_TEST_POSTGRES` or
+`MOKOU_TEST_MYSQL` hold a URL.
+
+Known limits: one connection per client (calls queue), no connection pool, no
+automatic reconnect, and `caching_sha2_password` needs TLS the first time a user
+connects (the RSA key exchange is not implemented).
+
+Still open: a file-system router, which belongs with the M5 web framework.

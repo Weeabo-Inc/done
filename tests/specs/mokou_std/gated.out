@@ -22,6 +22,7 @@ spawnPty false
 xml false
 redis false
 postgres false
+mysql false
 assertEquals false
 deepEquals false
 mock false

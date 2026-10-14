@@ -687,6 +687,8 @@ class PostgresClient {
       });
     } else {
       conn = await connect({ hostname: config.hostname, port: config.port });
+      // Small writes shouldn't wait for the peer's delayed acknowledgement.
+      conn.setNoDelay(true);
       if (config.ssl !== false) conn = await negotiateTls(conn, config);
     }
     const client = new PostgresClient(constructorKey, conn, config);

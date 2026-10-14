@@ -23,6 +23,7 @@ const names = [
   "xml",
   "redis",
   "postgres",
+  "mysql",
   "assertEquals",
   "deepEquals",
   "mock",

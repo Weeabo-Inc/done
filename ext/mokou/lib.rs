@@ -93,5 +93,6 @@ deno_core::extension!(
     "21_xml.js",
     "22_redis.js",
     "23_postgres.js",
+    "24_mysql.js",
   ],
 );

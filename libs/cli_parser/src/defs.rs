@@ -462,6 +462,11 @@ pub static UNSTABLE_FEATURE_ARGS: &[ArgDef] = &[
     .set_true()
     .hidden()
 .help("Enable unstable `Deno.parseArgs()` API"),
+  ArgDef::new("unstable-mysql")
+    .long("unstable-mysql")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.mysql` API"),
   ArgDef::new("unstable-password")
     .long("unstable-password")
     .set_true()

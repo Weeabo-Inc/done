@@ -168,11 +168,19 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     kind: UnstableFeatureKind::Cli,
   },
   UnstableFeatureDefinition {
+    name: "mysql",
+    flag_name: "unstable-mysql",
+    help_text: "Enable unstable `Deno.mysql` API",
+    show_in_help: true,
+    id: 20,
+    kind: UnstableFeatureKind::Runtime,
+  },
+  UnstableFeatureDefinition {
     name: "net",
     flag_name: "unstable-net",
     help_text: "enable unstable net APIs",
     show_in_help: true,
-    id: 20,
+    id: 21,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -180,7 +188,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-no-legacy-abort",
     help_text: "Enable abort signal in Deno.serve without legacy behavior. This will not abort the server when the request is handled successfully.",
     show_in_help: true,
-    id: 21,
+    id: 22,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -188,7 +196,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-node-globals",
     help_text: "Deprecated. Node.js `setTimeout` and `setInterval` globals are now always enabled, so this flag has no effect.",
     show_in_help: false,
-    id: 22,
+    id: 23,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -196,7 +204,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-npm-lazy-caching",
     help_text: "Enable unstable lazy caching of npm dependencies, downloading them only as needed (disabled: all npm packages in package.json are installed on startup; enabled: only npm packages that are actually referenced in an import are installed",
     show_in_help: true,
-    id: 23,
+    id: 24,
     kind: UnstableFeatureKind::Cli,
   },
   UnstableFeatureDefinition {
@@ -204,7 +212,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-otel",
     help_text: "Enable unstable OpenTelemetry features",
     show_in_help: false,
-    id: 24,
+    id: 25,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -212,7 +220,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-parse-args",
     help_text: "Enable unstable `Deno.parseArgs()` API",
     show_in_help: true,
-    id: 25,
+    id: 26,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -220,7 +228,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-password",
     help_text: "Enable unstable `Deno.password` API",
     show_in_help: true,
-    id: 26,
+    id: 27,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -228,7 +236,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-postgres",
     help_text: "Enable unstable `Deno.postgres` API",
     show_in_help: true,
-    id: 27,
+    id: 28,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -236,7 +244,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-process",
     help_text: "Enable unstable process APIs",
     show_in_help: false,
-    id: 28,
+    id: 29,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -244,7 +252,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-pty",
     help_text: "Enable unstable `Deno.spawnPty()` API",
     show_in_help: true,
-    id: 29,
+    id: 30,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -252,7 +260,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-raw-imports",
     help_text: "Enable unstable 'bytes' imports.",
     show_in_help: true,
-    id: 30,
+    id: 31,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -260,7 +268,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-redis",
     help_text: "Enable unstable `Deno.redis` API",
     show_in_help: true,
-    id: 31,
+    id: 32,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -268,7 +276,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-router",
     help_text: "Enable unstable `Deno.router()` API",
     show_in_help: true,
-    id: 32,
+    id: 33,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -276,7 +284,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-s3",
     help_text: "Enable unstable `Deno.S3Client` API",
     show_in_help: true,
-    id: 33,
+    id: 34,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -284,7 +292,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-secrets",
     help_text: "Enable unstable `Deno.secrets` API",
     show_in_help: true,
-    id: 34,
+    id: 35,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -292,7 +300,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-semver",
     help_text: "Enable unstable `Deno.semver` API",
     show_in_help: true,
-    id: 35,
+    id: 36,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -300,7 +308,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-shell",
     help_text: "Enable unstable `Deno.$` shell API",
     show_in_help: true,
-    id: 36,
+    id: 37,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -308,7 +316,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-sloppy-imports",
     help_text: "Enable unstable resolving of specifiers by extension probing, .js to .ts, and directory probing",
     show_in_help: true,
-    id: 37,
+    id: 38,
     kind: UnstableFeatureKind::Cli,
   },
   UnstableFeatureDefinition {
@@ -316,7 +324,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-sqlite",
     help_text: "Enable unstable `Deno.openSqlite()` API",
     show_in_help: true,
-    id: 38,
+    id: 39,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -324,7 +332,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-subdomain-wildcards",
     help_text: "Enable subdomain wildcards support for the `--allow-net` flag",
     show_in_help: false,
-    id: 39,
+    id: 40,
     kind: UnstableFeatureKind::Cli,
   },
   UnstableFeatureDefinition {
@@ -332,7 +340,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-tar",
     help_text: "Enable unstable `Deno.tar` API",
     show_in_help: true,
-    id: 40,
+    id: 41,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -340,7 +348,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-temporal",
     help_text: "Enable unstable Temporal API",
     show_in_help: false,
-    id: 41,
+    id: 42,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -348,7 +356,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-transpile",
     help_text: "Enable unstable `Deno.transpile()` API",
     show_in_help: true,
-    id: 42,
+    id: 43,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -356,7 +364,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-unsafe-proto",
     help_text: "Enable unsafe __proto__ support. This is a security risk.",
     show_in_help: true,
-    id: 43,
+    id: 44,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -364,7 +372,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-uuid",
     help_text: "Enable unstable `Deno.uuid` API",
     show_in_help: true,
-    id: 44,
+    id: 45,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -372,7 +380,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-vsock",
     help_text: "Enable unstable VSOCK APIs",
     show_in_help: false,
-    id: 45,
+    id: 46,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -380,7 +388,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-webgpu",
     help_text: "Enable unstable WebGPU APIs",
     show_in_help: true,
-    id: 46,
+    id: 47,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -388,7 +396,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-worker-options",
     help_text: "Enable unstable Web Worker APIs",
     show_in_help: true,
-    id: 47,
+    id: 48,
     kind: UnstableFeatureKind::Runtime,
   },
   UnstableFeatureDefinition {
@@ -396,7 +404,7 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     flag_name: "unstable-xml",
     help_text: "Enable unstable `Deno.xml` API",
     show_in_help: true,
-    id: 48,
+    id: 49,
     kind: UnstableFeatureKind::Runtime,
   },
 ];

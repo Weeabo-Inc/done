@@ -7489,4 +7489,144 @@ declare namespace Deno {
       options?: PostgresConnectOptions,
     ): Promise<PostgresClient>;
   }
+
+  /** An error reported by a MySQL or MariaDB server.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-mysql`. */
+  export class MysqlError extends Error {
+    /** The MySQL error number, such as 1062 for a duplicate key or 1146 for
+     * a missing table. */
+    readonly errno: number;
+    /** The five-character SQLSTATE, such as `"23000"`. */
+    readonly sqlState: string;
+  }
+
+  /** A column of a result.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-mysql`. */
+  export interface MysqlField {
+    name: string;
+    /** The MySQL column type code, such as 3 for `INT` and 253 for
+     * `VARCHAR`. */
+    type: number;
+  }
+
+  /** The result of one statement.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-mysql`. */
+  export interface MysqlResult<T = Record<string, unknown>> {
+    rows: T[];
+    fields: MysqlField[];
+    /** Rows changed by `INSERT`, `UPDATE` or `DELETE`. */
+    affectedRows: number | bigint;
+    /** The `AUTO_INCREMENT` value the statement generated, or 0. */
+    insertId: number | bigint;
+  }
+
+  /** The connection inside {@linkcode Deno.MysqlClient.transaction}.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-mysql`. */
+  export interface MysqlTransaction {
+    query<T = Record<string, unknown>>(
+      text: string,
+      params?: unknown[],
+    ): Promise<MysqlResult<T>>;
+    exec(text: string): Promise<MysqlResult[]>;
+    sql<T = Record<string, unknown>>(
+      strings: TemplateStringsArray,
+      ...values: unknown[]
+    ): Promise<T[]>;
+  }
+
+  /**
+   * A MySQL or MariaDB connection. Calls run one at a time, in order.
+   *
+   * Parameters go to the server as a prepared statement, never into the SQL
+   * text. Values come back converted by column type: integers as numbers (or
+   * `bigint` beyond 2^53), `FLOAT` and `DOUBLE` as numbers, `DECIMAL` as a
+   * string so no precision is lost, `DATE`, `DATETIME` and `TIMESTAMP` as
+   * `Date` (read as UTC: the session time zone is set to `+00:00`), `TIME` as
+   * a string, `JSON` parsed, binary columns as `Uint8Array`, and text,
+   * `ENUM` and `SET` as strings. Zero dates read as `null`. Parameters accept
+   * strings, numbers, `bigint`, booleans, `Date`, `Uint8Array` and objects
+   * (sent as JSON).
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-mysql`.
+   */
+  export class MysqlClient implements Disposable {
+    private constructor();
+    /** Settles when the connection has closed. */
+    readonly closed: Promise<void>;
+    /** Runs one statement; `?` marks a parameter. */
+    query<T = Record<string, unknown>>(
+      text: string,
+      params?: unknown[],
+    ): Promise<MysqlResult<T>>;
+    /** Runs a script of statements, without parameters, and resolves to a
+     * result for each. */
+    exec(text: string): Promise<MysqlResult[]>;
+    /** A tagged template whose values become parameters, resolving to the
+     * rows. */
+    sql<T = Record<string, unknown>>(
+      strings: TemplateStringsArray,
+      ...values: unknown[]
+    ): Promise<T[]>;
+    /** Runs `fn` in a transaction: `COMMIT` when it returns, `ROLLBACK` when
+     * it throws. Other calls on the client wait for it to finish, so use the
+     * `tx` argument inside, never the client itself. */
+    transaction<T>(fn: (tx: MysqlTransaction) => Promise<T>): Promise<T>;
+    close(): void;
+    [Symbol.dispose](): void;
+  }
+
+  /** Connection settings for {@linkcode Deno.mysql.connect}.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-mysql`. */
+  export interface MysqlConnectOptions {
+    /** Defaults to `"127.0.0.1"`. */
+    hostname?: string;
+    /** Defaults to 3306. */
+    port?: number;
+    username?: string;
+    password?: string;
+    database?: string;
+    /** `"prefer"` (the default) uses TLS when the server offers it, and
+     * `"require"` (or `true`) fails without it. Certificates are verified,
+     * so a private CA needs `caCerts`. `false` never uses TLS. */
+    ssl?: boolean | "prefer" | "require";
+    /** Extra PEM certificates to trust, for TLS. */
+    caCerts?: string[];
+  }
+
+  /**
+   * MySQL and MariaDB. Needs `--allow-net` for the server. Supports the
+   * `mysql_native_password` and `caching_sha2_password` logins.
+   *
+   * ```ts
+   * using db = await Deno.mysql.connect("mysql://app:secret@localhost/app");
+   * await db.sql`INSERT INTO visits (at) VALUES (${new Date()})`;
+   * console.log(await db.sql`SELECT COUNT(*) AS n FROM visits`);
+   * ```
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-mysql`.
+   */
+  export namespace mysql {
+    /** Connects and logs in, from a
+     * `mysql://user:password@host:port/database?ssl=require` URL or from
+     * options.
+     *
+     * @category Storage
+     * @experimental Requires `--unstable-mysql`. */
+    export function connect(
+      target: string | URL | MysqlConnectOptions,
+      options?: MysqlConnectOptions,
+    ): Promise<MysqlClient>;
+  }
 }

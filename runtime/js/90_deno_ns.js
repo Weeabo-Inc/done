@@ -419,6 +419,7 @@ const loadMokouPty = lazyScript("ext:deno_mokou/20_pty.js");
 const loadMokouXml = lazyScript("ext:deno_mokou/21_xml.js");
 const loadMokouRedis = lazyScript("ext:deno_mokou/22_redis.js");
 const loadMokouPostgres = lazyScript("ext:deno_mokou/23_postgres.js");
+const loadMokouMysql = lazyScript("ext:deno_mokou/24_mysql.js");
 
 function lazyProps(names, loader, target = { __proto__: null }) {
   const props = { __proto__: null };
@@ -489,6 +490,10 @@ denoNsUnstableById[unstableIds.html] = lazyProps(
 denoNsUnstableById[unstableIds.csrf] = lazyProps(["csrf"], loadMokouCsrf);
 denoNsUnstableById[unstableIds.tar] = lazyProps(["tar"], loadMokouTar);
 denoNsUnstableById[unstableIds.xml] = lazyProps(["xml"], loadMokouXml);
+denoNsUnstableById[unstableIds.mysql] = lazyProps(
+  ["mysql", "MysqlClient", "MysqlError"],
+  loadMokouMysql,
+);
 denoNsUnstableById[unstableIds.postgres] = lazyProps(
   ["postgres", "PostgresClient", "PostgresError"],
   loadMokouPostgres,

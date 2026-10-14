@@ -29,6 +29,7 @@ Mokou's built-in standard library: APIs that most apps need, available on the
 | `--unstable-xml`        | `Deno.xml`                                                                                 | `21_xml.js`, `xml.rs` (quick-xml)                     |
 | `--unstable-redis`      | `Deno.redis`, `Deno.RedisClient`, `Deno.RedisError`                                        | `22_redis.js`                                         |
 | `--unstable-postgres`   | `Deno.postgres`, `Deno.PostgresClient`, `Deno.PostgresError`                               | `23_postgres.js`                                      |
+| `--unstable-mysql`      | `Deno.mysql`, `Deno.MysqlClient`, `Deno.MysqlError`                                        | `24_mysql.js`                                         |
 
 The JavaScript files are lazy-loaded scripts. `runtime/js/90_deno_ns.js` loads
 each one the first time its API is accessed, so a program that doesn't use them
