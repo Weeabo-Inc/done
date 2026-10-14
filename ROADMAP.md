@@ -205,13 +205,16 @@ _Goal: anything a competing runtime has built-in, Mokou has built-in._
 
 ✅ The living parity matrix is [doc/parity.md](doc/parity.md) (feature → Bun /
 Node / Mokou status, checked against Bun 1.4.2 and Node 22.22). Each gap becomes
-an M2-style item, prioritized there. Every P1 and P2 gap has shipped. P1:
+an M2-style item, prioritized there. Every gap in the matrix has shipped. P1:
 cookies, ANSI text utilities, sync digests, zstd compression, JSON5/JSONC/JSONL
 and an S3 client. P2: HTML escaping, Markdown, deep equality, CSRF tokens, tar
 archives, a transpiler API, mocks, OS keychain secrets and pseudo-terminals
-(Unix only so far). P3 is next. The gaps first listed here (password hashing,
-SQLite, a shell API, glob, semver and fast hashing) shipped in M2. A stable
-public bundler API is still open (`Deno.bundle` exists but is unstable).
+(Unix only so far). P3: XML and Redis, Postgres and MySQL clients. What remains
+is a file-system router (with the M5 web framework), connection pools and
+reconnects for the network clients, and ConPTY on Windows. The gaps first listed
+here (password hashing, SQLite, a shell API, glob, semver and fast hashing)
+shipped in M2. A stable public bundler API is still open (`Deno.bundle` exists
+but is unstable).
 
 ---
 
