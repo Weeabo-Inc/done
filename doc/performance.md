@@ -48,10 +48,10 @@ With that build (median of three interleaved rounds, noisy):
   significant) and runs 2.6 million more instructions (56.8 against 54.2
   million). Registering Mokou's own ops is a small part of that:
   `create_op_ctxs` is 0.2 million instructions in total. Most of startup is V8
-  deserializing the snapshot (about 35% of instructions to create the isolate,
-  over half including the extensions), so the likely cause is a bigger snapshot,
-  not slower code. Finding it needs a symbolized upstream build to compare
-  against.
+  deserializing the snapshot (creating the isolate is about 35% of the
+  instructions, creating the whole runtime about 70%), so the likely cause is a
+  bigger snapshot, not slower code. Finding it needs a symbolized upstream build
+  to compare against.
 - Every other benchmark is within noise of upstream Deno: JSON, file reads and
   writes, `fetch`, SQLite and `Deno.serve` (86,000 against 88,000 requests per
   second).
@@ -81,9 +81,9 @@ Decision: don't build a second snapshot. The remaining win is below what can be
 measured and the binary would need both. Revisit if Node compatibility becomes a
 build-time option, where the size would drop as well.
 
-A caution that cost an afternoon: the first `--no-node` run on a build without
-the startup order showed 8% faster, which was page faults from a different
-function layout, not Node.
+A caution: the first `--no-node` run, on a build without the startup order,
+showed 8% faster. That was the function layout, not Node, and it disappeared
+once both runs used the same build process.
 
 ## ROADMAP M3 item 4: the `Deno.serve` hot path
 
