@@ -156,7 +156,34 @@ fewer per call.
 | prepared `run()` inserts          | 11.08 ms | 7.78 ms | -29.8%    |
 | `all()`                           | 5.25 ms  | 5.05 ms | no change |
 
-`Deno.openSqlite` uses the same code, so it gets the same gain.
+`Deno.openSqlite` uses the same code. The M3 `sqlite` case (10,000 prepared
+inserts plus a 10,000-row `all()`, through `Deno.openSqlite`) went from 16.65 ms
+to 14.27 ms (-14.3%, 11 interleaved rounds).
+
+### Tried, no gain
+
+- **Allocator tuning for large reads.** `strace` showed a `brk` growing by 1 MiB
+  before every `readFileSync`, which suggested page faults from trimming and
+  regrowing the heap. Raising glibc's `MALLOC_TRIM_THRESHOLD_`,
+  `MALLOC_MMAP_THRESHOLD_` and `MALLOC_TOP_PAD_`, or turning on transparent huge
+  pages for malloc (`glibc.malloc.hugetlb=1`), changed the 1 MiB read by less
+  than the noise (0.620 / 0.634 / 0.646 ms). The remaining time is the `read`
+  syscall (about 0.15 to 0.2 ms) plus the kernel copy into fresh pages.
+- **The startup cache databases.** `deno run` opens three SQLite files at
+  startup (`dep_analysis_cache_v2`, `node_analysis_cache_v2`,
+  `v8_code_cache_v2`) and does about 670 `pread64` calls on them. They run on
+  their own threads, and `--no-code-cache` moved the median by -0.4 ms (-2.1%),
+  within noise (150 interleaved runs), so there is nothing to gain by making
+  them lazy.
+- **`get()` and `iterate()` row objects.** `read_row` builds each row with
+  `Object::New(proto, names, values)`, which V8 makes a dictionary-mode object.
+  A fast-mode row needs a per-statement shape and a different construction path;
+  that is a larger change and was not attempted.
+
+Caveat: all numbers in this section are from `release-lite` builds (thin LTO),
+because each A/B needs two builds of the same profile. None of the changes
+depend on inlining or layout, but they have not been re-measured on the fat-LTO,
+startup-ordered release build.
 
 ## Reproducing
 
