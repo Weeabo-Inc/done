@@ -1455,7 +1455,7 @@ pub fn op_fs_write_file_sync(
   append: bool,
   create: bool,
   create_new: bool,
-  data: Uint8Array,
+  #[buffer] data: &[u8],
 ) -> Result<(), FsOpsError> {
   let path = Path::new(path);
 
@@ -1469,7 +1469,7 @@ pub fn op_fs_write_file_sync(
       Some("Deno.writeFileSync()"),
     )?;
 
-  fs.write_file_sync(&path, options, &data)
+  fs.write_file_sync(&path, options, data)
     .context_path("writefile", &path)?;
 
   Ok(())
@@ -1550,8 +1550,9 @@ pub fn op_fs_read_file_sync(
     .read_file_sync(&path, options)
     .context_path("readfile", &path)?;
 
-  // todo(https://github.com/denoland/deno/issues/27107): do not clone here
-  Ok(buf.into_owned().to_vec().into())
+  // `into_owned` moves the buffer out when it is already owned (std fs), and
+  // `Vec -> Uint8Array` hands it to V8 as the backing store without copying.
+  Ok(buf.into_owned().into())
 }
 
 #[op2(stack_trace)]
@@ -1598,8 +1599,9 @@ pub async fn op_fs_read_file_async(
     fut.await.context_path("readfile", &path)?
   };
 
-  // todo(https://github.com/denoland/deno/issues/27107): do not clone here
-  Ok(buf.into_owned().to_vec().into())
+  // `into_owned` moves the buffer out when it is already owned (std fs), and
+  // `Vec -> Uint8Array` hands it to V8 as the backing store without copying.
+  Ok(buf.into_owned().into())
 }
 
 #[op2(stack_trace)]

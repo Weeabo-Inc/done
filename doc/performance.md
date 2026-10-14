@@ -122,6 +122,26 @@ machine with `wrk -t4`, and use `perf` with the symbols from
 `target/release/deno` (this machine has no `perf`; `valgrind` was what was
 available).
 
+## Optimizations
+
+Each entry was measured as an interleaved A/B of two `release-lite` builds that
+differ only in that change (15 rounds, median). On this shared 4-vCPU VM, gaps
+under about 5% are noise.
+
+### File reads copied the whole file once more than needed
+
+`Deno.readFile` and `Deno.readFileSync` read into a `Vec`, then cloned it
+(`into_owned().to_vec()`) before handing it to V8. The `Vec` can be given to V8
+as the backing store directly, so the clone is gone. `Deno.writeFileSync` also
+copied its argument out of V8; it now borrows it.
+
+| Case                   | Before   | After    | Change        |
+| ---------------------- | -------- | -------- | ------------- |
+| `readFileSync`, 1 MiB  | 0.753 ms | 0.633 ms | -15.9%        |
+| `readFile`, 1 MiB      | 1.082 ms | 0.872 ms | -19.4%        |
+| `writeFileSync`, 1 MiB | 1.095 ms | 1.063 ms | -2.9% (noise) |
+| `readFileSync`, 1 KiB  | 5.70 us  | 5.77 us  | no change     |
+
 ## Reproducing
 
 ```sh
