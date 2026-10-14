@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Mokou is a fast, secure runtime for JavaScript and TypeScript with SQLite, S3, Markdown, tar archives and a terminal built in.">
+<title>Mokou</title>
+</head>
+<body>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&family=Lobster&family=Open+Sans:wght@400;600;700&family=Yanone+Kaffeesatz:wght@400;600;700&display=swap">
+<style>
+/* Layout: a classic centered 960px column. Utility bar, glossy nav, hero with
+   a terminal screenshot, feature columns, a tabbed tour, then a footer. A
+   deliberate single look (2010), so there is no dark variant. */
+:root {
+  --sky: #cfdbe8;        /* page ground, light steel blue */
+  --paper: #ffffff;
+  --ink: #2b3138;        /* body text */
+  --ink-soft: #5d6772;
+  --link: #1b6db3;
+  --flame: #f0651a;      /* from the Mokou logo gradient */
+  --flame-hi: #ffa02e;
+  --flame-lo: #c9420e;
+  --navy: #1d2630;
+  --navy-hi: #3a4859;
+  --rule: #c3ced9;
+  --code-bg: #141a21;
+  --code-fg: #d6e2ee;
+  --display: "Yanone Kaffeesatz", "Trebuchet MS", "Lucida Grande", sans-serif;
+  --script: "Lobster", "Brush Script MT", cursive;
+  --body: "Open Sans", "Lucida Grande", "Lucida Sans Unicode", Verdana, sans-serif;
+  --mono: "Inconsolata", Consolas, "Lucida Console", monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { background: var(--sky); }
+body {
+  margin: 0;
+  background: var(--sky) repeating-linear-gradient(45deg, rgba(255,255,255,.18) 0 2px, transparent 2px 6px);
+  color: var(--ink);
+  font: 15px/1.6 var(--body);
+  padding-inline: 16px;
+  padding-block: 0 32px;
+}
+a { color: var(--link); }
+a:hover { color: var(--flame-lo); }
+:focus-visible { outline: 3px solid var(--flame-hi); outline-offset: 2px; }
+.wrap { max-width: 960px; margin-inline: auto; }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1.08; margin: 0; text-wrap: balance; }
+
+/* utility bar */
+.util { background: linear-gradient(#e9eef4, #d3dce6); border-bottom: 1px solid #aebbc9; font-size: 12px; margin-inline: -16px; padding-inline: 16px; }
+.util .wrap { display: flex; flex-wrap: wrap; gap: 4px 18px; justify-content: space-between; padding-block: 5px; color: var(--ink-soft); }
+.util a { color: var(--ink-soft); text-decoration: none; }
+.util a:hover { color: var(--flame-lo); text-decoration: underline; }
+.rss { display: inline-flex; align-items: center; gap: 6px; }
+.rss i { width: 14px; height: 14px; border-radius: 3px; background: linear-gradient(var(--flame-hi), var(--flame-lo)); position: relative; box-shadow: 0 1px 0 rgba(255,255,255,.7); }
+.rss i::before, .rss i::after { content: ""; position: absolute; border: 2px solid #fff; border-radius: 50%; border-color: #fff transparent transparent #fff; }
+.rss i::before { width: 6px; height: 6px; left: 2px; bottom: 1px; transform: rotate(0); border-width: 2px 0 0 2px; }
+.rss i::after { width: 11px; height: 11px; left: 1px; bottom: 0; border-width: 2px 0 0 2px; }
+
+/* header + nav */
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 24px; padding-block: 22px 14px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
+.brand .word { font-family: var(--script); font-size: 46px; line-height: 1; color: var(--navy); text-shadow: 0 1px 0 #fff, 0 2px 3px rgba(0,0,0,.18); }
+.brand svg { width: 40px; height: 52px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.3)); }
+.tag { font-family: var(--display); font-size: 20px; color: var(--ink-soft); text-shadow: 0 1px 0 #fff; }
+nav.main { background: linear-gradient(var(--navy-hi) 0, var(--navy) 50%, #151c24 50%, #1b232d 100%); border-radius: 6px; border: 1px solid #0f1419; box-shadow: 0 2px 4px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.25); display: flex; flex-wrap: wrap; padding: 0 6px; }
+nav.main a { color: #e8eef5; text-decoration: none; font-family: var(--display); font-size: 21px; letter-spacing: .03em; padding: 9px 18px; text-shadow: 0 -1px 0 rgba(0,0,0,.6); border-right: 1px solid rgba(255,255,255,.07); border-left: 1px solid rgba(0,0,0,.4); }
+nav.main a:first-child { border-left: 0; }
+nav.main a:hover, nav.main a.on { color: #fff; background: linear-gradient(var(--flame-hi), var(--flame) 50%, var(--flame-lo) 50%, var(--flame)); text-shadow: 0 -1px 0 rgba(120,30,0,.7); }
+
+/* hero */
+.hero { position: relative; margin-top: 18px; background: var(--paper) linear-gradient(#fff, #eef3f8); border: 1px solid var(--rule); border-radius: 10px; box-shadow: 0 3px 10px rgba(30,50,70,.25), inset 0 1px 0 #fff; padding: 56px 32px 40px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 28px 36px; align-items: center; overflow: hidden; }
+.ribbon { position: absolute; top: 18px; left: -44px; width: 160px; text-align: center; transform: rotate(-45deg); background: linear-gradient(var(--flame-hi), var(--flame-lo)); color: #fff; font-family: var(--display); font-size: 20px; letter-spacing: .12em; padding: 3px 0; box-shadow: 0 2px 4px rgba(0,0,0,.4); text-shadow: 0 -1px 0 rgba(120,30,0,.6); border-block: 1px dashed rgba(255,255,255,.6); }
+.hero h1 { font-size: 58px; color: var(--navy); text-shadow: 0 1px 0 #fff, 0 2px 0 rgba(0,0,0,.08); }
+.hero h1 em { font-style: normal; color: var(--flame); }
+.hero p.lead { font-size: 17px; margin: 16px 0 0; color: var(--ink); max-width: 46ch; }
+.cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 24px; }
+.btn { display: inline-block; text-decoration: none; color: #fff; font-family: var(--display); font-size: 30px; letter-spacing: .02em; padding: 10px 30px 11px; border-radius: 8px; border: 1px solid var(--flame-lo); background: linear-gradient(var(--flame-hi) 0, var(--flame) 50%, var(--flame-lo) 50%, var(--flame) 100%); text-shadow: 0 -1px 0 rgba(120,30,0,.8); box-shadow: 0 3px 0 #9e3208, 0 6px 10px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.55); }
+.btn:hover { color: #fff; filter: brightness(1.08); }
+.btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #9e3208, 0 2px 4px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.4); }
+.btn small { display: block; font: 600 11px/1.2 var(--body); letter-spacing: .04em; text-transform: uppercase; opacity: .92; text-shadow: 0 -1px 0 rgba(120,30,0,.7); }
+.btn.alt { background: linear-gradient(#fdfdfd, #e3e9ef 50%, #d4dce5 50%, #e6ecf1); border-color: #a9b6c3; color: var(--navy); text-shadow: 0 1px 0 #fff; box-shadow: 0 3px 0 #9fadbb, 0 6px 8px rgba(0,0,0,.18), inset 0 1px 0 #fff; font-size: 24px; padding: 11px 22px 12px; }
+.fine { font-size: 12px; color: var(--ink-soft); margin-top: 14px; }
+
+/* terminal "screenshot" with a reflection */
+.shot { min-width: 0; }
+.window { background: var(--code-bg); border-radius: 8px; border: 1px solid #05080b; box-shadow: 0 8px 18px rgba(0,0,0,.45), 0 0 0 4px rgba(255,255,255,.65); overflow: hidden; }
+.chrome { background: linear-gradient(#5b6b7c, #36424f 50%, #2c3742 50%, #323e4a); padding: 7px 10px; display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #000; }
+.chrome b { width: 11px; height: 11px; border-radius: 50%; display: block; background: radial-gradient(circle at 35% 30%, #fff8, transparent 50%), #888; border: 1px solid rgba(0,0,0,.5); }
+.chrome b:nth-child(1) { background-color: #e5493a; } .chrome b:nth-child(2) { background-color: #f1b52f; } .chrome b:nth-child(3) { background-color: #5cc04b; }
+.chrome span { margin-inline: auto; font: 12px var(--body); color: #dbe5ef; text-shadow: 0 -1px 0 #000; padding-right: 40px; }
+pre.code { margin: 0; padding: 14px 16px; font: 15px/1.5 var(--mono); color: var(--code-fg); overflow-x: auto; tab-size: 2; }
+.c-k { color: #ffa02e; } .c-s { color: #9fd67c; } .c-c { color: #6f8396; } .c-f { color: #7cc4f5; } .c-p { color: #8d9eae; }
+.reflect { height: 34px; margin-top: 6px; border-radius: 8px; background: linear-gradient(rgba(20,26,33,.28), transparent); transform: scaleY(-1); opacity: .5; mask-image: linear-gradient(#000, transparent); -webkit-mask-image: linear-gradient(#000, transparent); }
+
+/* badge strip */
+.badges { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 18px; }
+.badge { font-family: var(--display); font-size: 19px; letter-spacing: .03em; color: var(--navy); padding: 3px 14px 4px; border-radius: 14px; border: 1px solid #9eb0c2; background: linear-gradient(#fff, #dde6ef); box-shadow: 0 1px 2px rgba(0,0,0,.2), inset 0 1px 0 #fff; text-shadow: 0 1px 0 #fff; }
+.badge b { color: var(--flame-lo); }
+
+/* sections */
+.panel { margin-top: 22px; background: var(--paper); border: 1px solid var(--rule); border-radius: 10px; box-shadow: 0 2px 6px rgba(30,50,70,.18); padding: 26px 28px 30px; }
+.panel > h2, .sec-title { font-size: 38px; color: var(--navy); text-shadow: 0 1px 0 #fff; padding-bottom: 8px; margin-bottom: 18px; border-bottom: 1px solid var(--rule); background: linear-gradient(transparent, transparent); }
+.sec-title span { color: var(--flame); }
+.cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.col { min-width: 0; }
+.col h3 { font-size: 27px; color: var(--navy); margin-top: 12px; }
+.col p { margin: 6px 0 0; color: var(--ink); }
+.disc { width: 62px; height: 62px; border-radius: 50%; display: grid; place-items: center; position: relative; border: 1px solid rgba(0,0,0,.35); box-shadow: 0 3px 5px rgba(0,0,0,.35), inset 0 -3px 6px rgba(0,0,0,.25); }
+.disc::after { content: ""; position: absolute; left: 7%; right: 7%; top: 3%; height: 48%; border-radius: 50% 50% 46% 46% / 80% 80% 30% 30%; background: linear-gradient(rgba(255,255,255,.7), rgba(255,255,255,.05)); }
+.disc svg { width: 30px; height: 30px; position: relative; z-index: 1; filter: drop-shadow(0 1px 1px rgba(0,0,0,.45)); }
+.disc.o { background: radial-gradient(circle at 50% 100%, var(--flame-hi), var(--flame) 55%, var(--flame-lo)); }
+.disc.b { background: radial-gradient(circle at 50% 100%, #67b6ee, #1b6db3 60%, #124b7e); }
+.disc.g { background: radial-gradient(circle at 50% 100%, #9ad66a, #4d9b2c 60%, #326f19); }
+
+/* tour */
+.tour { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 26px; align-items: start; }
+.tabs { display: flex; flex-wrap: wrap; gap: 3px; margin-bottom: -1px; position: relative; z-index: 1; }
+.tabs button { font: 700 21px/1 var(--display); letter-spacing: .03em; color: var(--ink-soft); padding: 8px 16px 7px; border: 1px solid var(--rule); border-bottom: 0; border-radius: 7px 7px 0 0; background: linear-gradient(#f6f9fc, #dbe4ed); cursor: pointer; text-shadow: 0 1px 0 #fff; }
+.tabs button[aria-selected="true"] { color: #fff; background: linear-gradient(var(--navy-hi), var(--navy)); border-color: #0f1419; text-shadow: 0 -1px 0 #000; }
+.tabs button:hover:not([aria-selected="true"]) { color: var(--flame-lo); }
+.tabpane { border: 1px solid #0f1419; border-radius: 0 7px 7px 7px; background: var(--code-bg); }
+.tabpane[hidden] { display: none; }
+.tabpane .note { margin: 0; padding: 10px 16px 12px; font-size: 13px; color: #aebdcb; border-top: 1px solid #28313b; background: linear-gradient(#1b232c, #151c23); border-radius: 0 0 7px 7px; }
+.tabpane .note code { font-family: var(--mono); font-size: 14px; color: #ffcf8a; }
+aside.cloud h3 { font-size: 26px; color: var(--navy); margin-bottom: 10px; }
+.cloudbox { background: linear-gradient(#f5f8fb, #e5ecf3); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 14px 16px; line-height: 1.25; text-align: center; box-shadow: inset 0 1px 3px rgba(0,0,0,.08); }
+.cloudbox a { display: inline-block; text-decoration: none; margin: 2px 5px; font-family: var(--display); font-weight: 600; }
+.cloudbox a:hover { text-decoration: underline; }
+.s1 { font-size: 15px; color: #6a7783; } .s2 { font-size: 19px; color: var(--link); } .s3 { font-size: 24px; color: var(--navy); } .s4 { font-size: 30px; color: var(--flame-lo); }
+.cloud p { font-size: 12px; color: var(--ink-soft); margin: 10px 0 0; }
+
+/* news / roadmap */
+.news { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.news li { display: grid; grid-template-columns: 78px minmax(0, 1fr); gap: 14px; padding: 12px 0; border-bottom: 1px dotted var(--rule); }
+.news li:last-child { border-bottom: 0; }
+.stamp { align-self: start; text-align: center; font-family: var(--display); font-weight: 700; font-size: 17px; letter-spacing: .06em; color: #fff; border-radius: 5px; padding: 2px 0 3px; border: 1px solid rgba(0,0,0,.3); text-shadow: 0 -1px 0 rgba(0,0,0,.4); box-shadow: inset 0 1px 0 rgba(255,255,255,.45); }
+.st-done { background: linear-gradient(#8fd163, #4d9b2c); } .st-next { background: linear-gradient(var(--flame-hi), var(--flame-lo)); } .st-later { background: linear-gradient(#a7b4c1, #77879a); }
+.news h3 { font-size: 24px; color: var(--navy); }
+.news p { margin: 2px 0 0; color: var(--ink); }
+
+/* install */
+.install { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+.install p { margin: 0 0 10px; }
+.install .window { box-shadow: 0 5px 12px rgba(0,0,0,.35); }
+
+/* footer */
+footer { margin-top: 22px; background: linear-gradient(#f4f7fa, #d5dee8); border: 1px solid var(--rule); border-radius: 10px; padding: 22px 28px 18px; box-shadow: 0 2px 6px rgba(30,50,70,.18); font-size: 13px; color: var(--ink-soft); }
+.fcols { display: grid; grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr)); gap: 20px; }
+.fcols h4 { margin: 0 0 6px; font: 700 20px/1.1 var(--display); color: var(--navy); letter-spacing: .03em; text-shadow: 0 1px 0 #fff; }
+.fcols ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.fcols p { margin: 6px 0 0; max-width: 34ch; }
+.legal { margin-top: 18px; padding-top: 12px; border-top: 1px solid #b5c2cf; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; font-size: 12px; }
+.legal em { font-family: var(--script); font-style: normal; font-size: 15px; color: var(--flame-lo); }
+
+@media (max-width: 760px) {
+  .hero { grid-template-columns: minmax(0, 1fr); padding: 52px 20px 28px; }
+  .hero h1 { font-size: 46px; }
+  .cols, .install, .tour { grid-template-columns: minmax(0, 1fr); }
+  .fcols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .panel { padding: 20px 18px 24px; }
+  nav.main a { padding: 8px 12px; font-size: 19px; }
+  .news li { grid-template-columns: 64px minmax(0, 1fr); gap: 10px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .btn, nav.main a { transition: filter .15s, transform .08s; }
+}
+</style>
+
+<div class="util"><div class="wrap">
+  <span>Early beta. Open source under the MIT license.</span>
+  <span><a class="rss" href="https://github.com/weeabo-inc/done/releases.atom"><i aria-hidden="true"></i>Subscribe to releases</a> &nbsp;|&nbsp; <a href="https://github.com/weeabo-inc/done">Source on GitHub</a></span>
+</div></div>
+
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#top" id="top" aria-label="Mokou home">
+      <svg viewBox="0 0 40 52" aria-hidden="true"><defs><linearGradient id="fl" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#c9420e"/><stop offset=".55" stop-color="#f0651a"/><stop offset="1" stop-color="#ffb43a"/></linearGradient></defs><path d="M20 2C22 14 36 20 36 34c0 10-7 16-16 16S4 44 4 34c0-7 4-11 8-15 0 6 3 8 6 9-2-9-1-18 2-26z" fill="url(#fl)" stroke="#9e3208" stroke-width="1.5" stroke-linejoin="round"/><path d="M20 26c4 5 8 8 8 13 0 5-4 8-8 8s-8-3-8-8c0-3 2-5 4-7 .2 2 1.5 3 3 3-1-3-1-6 1-9z" fill="#ffd77a" opacity=".9"/></svg>
+      <span class="word">Mokou</span>
+    </a>
+    <span class="tag">The runtime that comes with everything.</span>
+  </header>
+
+  <nav class="main" aria-label="Main">
+    <a class="on" href="#top">Home</a>
+    <a href="#features">Features</a>
+    <a href="#tour">Take the tour</a>
+    <a href="#news">Roadmap</a>
+    <a href="#get">Get Mokou</a>
+    <a href="https://github.com/weeabo-inc/done">GitHub</a>
+  </nav>
+
+  <section class="hero">
+    <div class="ribbon" aria-hidden="true">BETA</div>
+    <div>
+      <h1>Write TypeScript. <em>Ship it.</em> Install nothing else.</h1>
+      <p class="lead">Mokou is a fast, secure runtime for JavaScript and TypeScript. SQLite, S3, Markdown, tar archives and a terminal are already inside, so your project starts with code instead of a dependency list.</p>
+      <div class="cta">
+        <a class="btn" href="#get">Get Mokou<small>Early beta &middot; build from source</small></a>
+        <a class="btn alt" href="#tour">Take the tour</a>
+      </div>
+      <p class="fine">Built on V8 and Rust. Runs your existing Deno programs unchanged.</p>
+    </div>
+    <div class="shot">
+      <div class="window" role="img" aria-label="A terminal running a Mokou web server">
+        <div class="chrome"><b></b><b></b><b></b><span>server.ts &mdash; mokou</span></div>
+<pre class="code"><span class="c-c">// server.ts</span>
+<span class="c-k">using</span> db = Mokou.<span class="c-f">openSqlite</span>(<span class="c-s">"app.db"</span>);
+db.<span class="c-f">exec</span>(<span class="c-s">"CREATE TABLE IF NOT EXISTS hits (n)"</span>);
+
+Mokou.<span class="c-f">serve</span>(() <span class="c-k">=&gt;</span> {
+  db.<span class="c-f">run</span>(<span class="c-s">"INSERT INTO hits VALUES (1)"</span>);
+  <span class="c-k">const</span> n = db.<span class="c-f">query</span>(<span class="c-s">"SELECT count(*) AS n FROM hits"</span>);
+  <span class="c-k">return new</span> <span class="c-f">Response</span>(<span class="c-s">`Hello! Visit #${n[0].n}`</span>);
+});
+
+<span class="c-p">$</span> mokou run --unstable-sqlite -A server.ts
+<span class="c-p">Listening on http://localhost:8000/</span></pre>
+      </div>
+      <div class="reflect" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <div class="badges" aria-label="Highlights">
+    <span class="badge"><b>100%</b> TypeScript</span>
+    <span class="badge"><b>Secure</b> by default</span>
+    <span class="badge"><b>MIT</b> licensed</span>
+    <span class="badge">V8 + <b>Rust</b></span>
+    <span class="badge"><b>0</b> dependencies to start</span>
+  </div>
+
+  <section class="panel" id="features">
+    <h2>Why people <span style="color:var(--flame)">will</span> like Mokou</h2>
+    <div class="cols">
+      <div class="col">
+        <div class="disc b"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.2 8 11 4.6-1.8 8-6 8-11V5l-8-3zm-1 14-4-4 1.6-1.6L11 12.8l4.4-4.4L17 10l-6 6z" fill="#fff"/></svg></div>
+        <h3>Secure by default</h3>
+        <p>A program can't read your files, open a socket or run a command until you say so. Even your keychain needs its own permission.</p>
+      </div>
+      <div class="col">
+        <div class="disc o"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5zM2 12l10 5 10-5M2 17l10 5 10-5" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg></div>
+        <h3>Batteries included</h3>
+        <p>Passwords, SQLite, S3, routing, Markdown, tar, CSRF tokens, test mocks and more are part of the runtime. No install, no lockfile.</p>
+      </div>
+      <div class="col">
+        <div class="disc g"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" fill="#fff"/></svg></div>
+        <h3>Fast and native</h3>
+        <p>Common jobs run in Rust instead of JavaScript. We benchmark against Deno, Node and Bun and keep the numbers in the repository, so you can check them.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="tour">
+    <h2>Take the <span style="color:var(--flame)">tour</span></h2>
+    <div class="tour">
+      <div>
+        <div class="tabs" role="tablist" aria-label="Examples">
+          <button role="tab" id="t-s3" aria-selected="true" aria-controls="p-s3">S3</button>
+          <button role="tab" id="t-md" aria-selected="false" aria-controls="p-md" tabindex="-1">Markdown</button>
+          <button role="tab" id="t-tar" aria-selected="false" aria-controls="p-tar" tabindex="-1">Tar</button>
+          <button role="tab" id="t-pty" aria-selected="false" aria-controls="p-pty" tabindex="-1">Terminals</button>
+          <button role="tab" id="t-pw" aria-selected="false" aria-controls="p-pw" tabindex="-1">Passwords</button>
+        </div>
+        <div class="tabpane" id="p-s3" role="tabpanel" aria-labelledby="t-s3">
+<pre class="code"><span class="c-k">const</span> s3 = <span class="c-k">new</span> Mokou.<span class="c-f">S3Client</span>({ bucket: <span class="c-s">"photos"</span> });
+
+<span class="c-k">await</span> s3.<span class="c-f">write</span>(<span class="c-s">"hello.txt"</span>, <span class="c-s">"Hello from Mokou!"</span>);
+console.<span class="c-f">log</span>(<span class="c-k">await</span> s3.<span class="c-f">file</span>(<span class="c-s">"hello.txt"</span>).<span class="c-f">text</span>());
+
+<span class="c-c">// A link that works for an hour, signed on your machine.</span>
+console.<span class="c-f">log</span>(s3.<span class="c-f">presign</span>(<span class="c-s">"hello.txt"</span>, { expiresIn: <span class="c-s">3600</span> }));</pre>
+          <p class="note">Works with Amazon S3, Cloudflare R2 and MinIO. Run with <code>--unstable-s3</code>.</p>
+        </div>
+        <div class="tabpane" id="p-md" role="tabpanel" aria-labelledby="t-md" hidden>
+<pre class="code"><span class="c-k">const</span> html = Mokou.markdown.<span class="c-f">html</span>(<span class="c-s">"# Hello *world*"</span>);
+<span class="c-c">// "&lt;h1&gt;Hello &lt;em&gt;world&lt;/em&gt;&lt;/h1&gt;\n"</span>
+
+<span class="c-c">// Raw HTML in untrusted text is dropped for you.</span>
+Mokou.markdown.<span class="c-f">html</span>(<span class="c-s">"&lt;script&gt;steal()&lt;/script&gt;"</span>);
+
+<span class="c-c">// And a one-liner for plain text going into a page.</span>
+Mokou.<span class="c-f">escapeHTML</span>(<span class="c-s">`&lt;b&gt;Tom &amp; Jerry&lt;/b&gt;`</span>);</pre>
+          <p class="note">Tables, task lists and strikethrough work out of the box. Run with <code>--unstable-html</code>.</p>
+        </div>
+        <div class="tabpane" id="p-tar" role="tabpanel" aria-labelledby="t-tar" hidden>
+<pre class="code"><span class="c-k">const</span> archive = <span class="c-k">await</span> Mokou.tar.<span class="c-f">create</span>({
+  <span class="c-s">"README.md"</span>: <span class="c-s">"# Hello"</span>,
+  <span class="c-s">"data/config.json"</span>: JSON.<span class="c-f">stringify</span>({ a: <span class="c-s">1</span> }),
+}, { gzip: <span class="c-k">true</span> });
+
+<span class="c-k">await</span> Mokou.<span class="c-f">writeFile</span>(<span class="c-s">"out.tar.gz"</span>, archive);
+<span class="c-k">await</span> Mokou.tar.<span class="c-f">extract</span>(archive, <span class="c-s">"./out"</span>);</pre>
+          <p class="note">Extracting never writes outside the folder you choose. Run with <code>--unstable-tar</code>.</p>
+        </div>
+        <div class="tabpane" id="p-pty" role="tabpanel" aria-labelledby="t-pty" hidden>
+<pre class="code"><span class="c-k">const</span> pty = Mokou.<span class="c-f">spawnPty</span>(<span class="c-s">"bash"</span>, { cols: <span class="c-s">100</span>, rows: <span class="c-s">30</span> });
+
+pty.readable.<span class="c-f">pipeTo</span>(Mokou.stdout.writable);
+<span class="c-k">await</span> pty.<span class="c-f">write</span>(<span class="c-s">"ls --color\n"</span>);
+<span class="c-k">await</span> pty.<span class="c-f">write</span>(<span class="c-s">"exit\n"</span>);
+<span class="c-k">await</span> pty.status;</pre>
+          <p class="note">Run interactive programs the way a real terminal does. Linux and macOS for now. Run with <code>--unstable-pty</code>.</p>
+        </div>
+        <div class="tabpane" id="p-pw" role="tabpanel" aria-labelledby="t-pw" hidden>
+<pre class="code"><span class="c-k">const</span> hash = <span class="c-k">await</span> Mokou.password.<span class="c-f">hash</span>(<span class="c-s">"hunter2"</span>);
+
+console.<span class="c-f">log</span>(<span class="c-k">await</span> Mokou.password.<span class="c-f">verify</span>(<span class="c-s">"hunter2"</span>, hash)); <span class="c-c">// true</span>
+console.<span class="c-f">log</span>(<span class="c-k">await</span> Mokou.password.<span class="c-f">verify</span>(<span class="c-s">"letmein"</span>, hash)); <span class="c-c">// false</span></pre>
+          <p class="note">Argon2id by default, computed off the main thread. Run with <code>--unstable-password</code>.</p>
+        </div>
+      </div>
+      <aside class="cloud">
+        <h3>Already inside</h3>
+        <div class="cloudbox">
+          <a class="s4" href="#tour">SQLite</a> <a class="s3" href="#tour">S3</a> <a class="s2" href="#tour">router</a> <a class="s3" href="#tour">Markdown</a>
+          <a class="s1" href="#tour">csrf</a> <a class="s4" href="#tour">passwords</a> <a class="s2" href="#tour">tar</a> <a class="s1" href="#tour">semver</a>
+          <a class="s3" href="#tour">shell</a> <a class="s2" href="#tour">glob</a> <a class="s1" href="#tour">uuid</a> <a class="s3" href="#tour">transpile</a>
+          <a class="s2" href="#tour">mocks</a> <a class="s4" href="#tour">terminals</a> <a class="s1" href="#tour">cookies</a> <a class="s2" href="#tour">YAML</a>
+          <a class="s3" href="#tour">secrets</a> <a class="s1" href="#tour">JSON5</a> <a class="s2" href="#tour">zstd</a> <a class="s1" href="#tour">ANSI</a>
+        </div>
+        <p>Bigger means we think you'll reach for it more often.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="panel" id="news">
+    <h2>What's <span style="color:var(--flame)">new</span> and what's next</h2>
+    <ul class="news">
+      <li><span class="stamp st-done">SHIPPED</span><div><h3>Everything on the shelf</h3><p>We compared Mokou with Bun and Node and closed every gap we rated high or medium priority, from S3 and cookies to Markdown, tar, secrets and terminals.</p></div></li>
+      <li><span class="stamp st-done">SHIPPED</span><div><h3>A standard library inside the runtime</h3><p>SQLite, passwords, hashing, YAML, TOML, CSV, globbing, routing, semver, assertions and a shell, with no imports.</p></div></li>
+      <li><span class="stamp st-next">NEXT</span><div><h3>Databases and XML</h3><p>Postgres, MySQL and Redis clients, plus an XML parser, once the SQLite API settles.</p></div></li>
+      <li><span class="stamp st-later">LATER</span><div><h3>Mokou Desktop and a web framework</h3><p>Ship an app as a native window, and build sites on a first-party framework with routing and templates.</p></div></li>
+    </ul>
+  </section>
+
+  <section class="panel" id="get">
+    <h2>Get <span style="color:var(--flame)">Mokou</span></h2>
+    <div class="install">
+      <div>
+        <p>Mokou is in early beta and has no downloadable release yet. Until the first one, build it from source. You need Rust and the usual build tools.</p>
+        <p>Once releases start, <code>mokou upgrade</code> will fetch them from our own releases page. The program installs as <code>mokou</code>, with <code>deno</code> kept as an alias, so your scripts and CI steps keep working.</p>
+        <div class="cta"><a class="btn" href="https://github.com/weeabo-inc/done">Get the source<small>github.com/weeabo-inc/done</small></a></div>
+      </div>
+      <div class="window" role="img" aria-label="Commands to build Mokou from source">
+        <div class="chrome"><b></b><b></b><b></b><span>Terminal</span></div>
+<pre class="code"><span class="c-p">$</span> git clone --recurse-submodules \
+    https://github.com/weeabo-inc/done.git
+<span class="c-p">$</span> cd done
+<span class="c-p">$</span> cargo build --bin deno
+<span class="c-p">$</span> ./target/debug/deno eval \
+    <span class="c-s">'console.log("Hello from Mokou")'</span>
+<span class="c-p">Hello from Mokou</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="fcols">
+      <div>
+        <h4>Mokou</h4>
+        <p>A hard fork of Deno that keeps its good parts and adds the tools most apps need, built in.</p>
+      </div>
+      <div>
+        <h4>Explore</h4>
+        <ul><li><a href="#features">Features</a></li><li><a href="#tour">Take the tour</a></li><li><a href="#news">Roadmap</a></li><li><a href="#get">Get Mokou</a></li></ul>
+      </div>
+      <div>
+        <h4>Project</h4>
+        <ul><li><a href="https://github.com/weeabo-inc/done">Source code</a></li><li><a href="https://github.com/weeabo-inc/done/releases">Releases</a></li><li><a href="https://github.com/weeabo-inc/done/issues">Report a bug</a></li></ul>
+      </div>
+      <div>
+        <h4>Follow along</h4>
+        <ul><li><a class="rss" href="https://github.com/weeabo-inc/done/releases.atom"><i aria-hidden="true"></i>Release feed</a></li></ul>
+      </div>
+    </div>
+    <div class="legal">
+      <span>MIT licensed. Mokou is a derivative of Deno, &copy; 2018&ndash;2026 the Deno authors.</span>
+      <em>Best viewed in a browser that supports CSS3.</em>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  function select(tab, focus) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (focus) tab.focus();
+  }
+  tabs.forEach(function (t, i) {
+    t.addEventListener('click', function () { select(t, false); });
+    t.addEventListener('keydown', function (e) {
+      var j = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : -1;
+      if (j >= 0) { e.preventDefault(); select(tabs[(j + tabs.length) % tabs.length], true); }
+    });
+  });
+  var links = document.querySelectorAll('nav.main a[href^="#"]');
+  links.forEach(function (a) {
+    a.addEventListener('click', function () {
+      links.forEach(function (b) { b.classList.remove('on'); });
+      a.classList.add('on');
+    });
+  });
+})();
+</script>
+</body>
+</html>
