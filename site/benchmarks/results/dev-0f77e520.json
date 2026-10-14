@@ -1,0 +1,268 @@
+{
+  "date": "2026-10-14T02:33:16.340Z",
+  "label": "dev-0f77e520",
+  "commit": "0f77e520d2dca502d79e8940754920f264be9aab",
+  "machine": {
+    "cpu": "Intel(R) Xeon(R) Processor @ 2.10GHz",
+    "memoryGb": 16
+  },
+  "os": "linux",
+  "arch": "x86_64",
+  "cpus": 4,
+  "runtimes": [
+    {
+      "name": "mokou",
+      "version": "mokou 0.1.0 (deno 2.9.7 base, stable, release, x86_64-unknown-linux-gnu)",
+      "size": 102022168
+    },
+    {
+      "name": "deno",
+      "version": "deno 2.9.7 (stable, release, x86_64-unknown-linux-gnu)",
+      "size": 95830104
+    },
+    {
+      "name": "node",
+      "version": "v22.22.0",
+      "size": 123405064
+    },
+    {
+      "name": "bun",
+      "version": "1.4.2",
+      "size": 79500640
+    }
+  ],
+  "benchmarks": [
+    {
+      "name": "startup",
+      "unit": "ms",
+      "description": "Run a file that prints one line",
+      "results": {
+        "mokou": {
+          "value": 22.513417000000118,
+          "min": 18.95257300000003,
+          "max": 30.013135000000034
+        },
+        "deno": {
+          "value": 19.954958000000033,
+          "min": 17.810708999999406,
+          "max": 29.726032000000487
+        },
+        "node": {
+          "value": 47.18729400000029,
+          "min": 39.46984599999996,
+          "max": 66.0523290000001
+        },
+        "bun": {
+          "value": 5.655928000000131,
+          "min": 4.878357999999935,
+          "max": 14.117410000000746
+        }
+      }
+    },
+    {
+      "name": "startup.no-node",
+      "unit": "ms",
+      "description": "Run the same file with `--no-node` (Mokou only)",
+      "results": {
+        "mokou": {
+          "value": 20.859425999999985,
+          "min": 18.748767999999473,
+          "max": 26.497628999999506
+        }
+      }
+    },
+    {
+      "name": "json.parse",
+      "unit": "ms",
+      "description": "JSON.parse() 0.9 MB",
+      "results": {
+        "mokou": {
+          "value": 4.776362000000006,
+          "min": 4.156954799999994,
+          "max": 8.4378376
+        },
+        "deno": {
+          "value": 4.550712000000002,
+          "min": 3.9833600000000047,
+          "max": 7.025132799999994
+        },
+        "node": {
+          "value": 5.598884599999996,
+          "min": 4.811957600000005,
+          "max": 8.340429999999992
+        },
+        "bun": {
+          "value": 3.5525937999999995,
+          "min": 2.8722564000000035,
+          "max": 5.722272199999997
+        }
+      }
+    },
+    {
+      "name": "json.stringify",
+      "unit": "ms",
+      "description": "JSON.stringify() 0.9 MB",
+      "results": {
+        "mokou": {
+          "value": 3.0363293999999996,
+          "min": 2.380000800000005,
+          "max": 4.616336800000002
+        },
+        "deno": {
+          "value": 4.257441,
+          "min": 3.089849800000002,
+          "max": 5.7329152000000025
+        },
+        "node": {
+          "value": 4.689670799999999,
+          "min": 3.8333001999999965,
+          "max": 7.9585174
+        },
+        "bun": {
+          "value": 1.663475200000002,
+          "min": 1.0832595999999994,
+          "max": 3.3037421999999994
+        }
+      }
+    },
+    {
+      "name": "fs.read",
+      "unit": "ms",
+      "description": "Read a 1 MiB file",
+      "results": {
+        "mokou": {
+          "value": 1.2355115000000012,
+          "min": 1.0251102000000003,
+          "max": 1.8693179499999986
+        },
+        "deno": {
+          "value": 1.1862269499999996,
+          "min": 1.0642835500000019,
+          "max": 1.8115366499999994
+        },
+        "node": {
+          "value": 0.6240972999999996,
+          "min": 0.41151095000000026,
+          "max": 0.9183336999999995
+        },
+        "bun": {
+          "value": 0.519986449999999,
+          "min": 0.3734713500000012,
+          "max": 0.9500229500000004
+        }
+      }
+    },
+    {
+      "name": "fs.write",
+      "unit": "ms",
+      "description": "Write a 1 MiB file",
+      "results": {
+        "mokou": {
+          "value": 1.284580249999999,
+          "min": 1.1353846499999989,
+          "max": 1.6065234000000004
+        },
+        "deno": {
+          "value": 1.1837207000000007,
+          "min": 0.9765990500000015,
+          "max": 1.537147950000002
+        },
+        "node": {
+          "value": 1.528354999999999,
+          "min": 1.1421913000000017,
+          "max": 1.9361042499999996
+        },
+        "bun": {
+          "value": 1.6662841499999985,
+          "min": 1.409185199999999,
+          "max": 2.9072479499999986
+        }
+      }
+    },
+    {
+      "name": "sqlite",
+      "unit": "ms",
+      "description": "Insert 10k rows in a transaction, then select them",
+      "results": {
+        "mokou": {
+          "value": 19.872472999999985,
+          "min": 14.035573,
+          "max": 26.090722999999997
+        },
+        "deno": {
+          "value": 22.70392650000001,
+          "min": 14.949853999999988,
+          "max": 27.40605099999999
+        },
+        "node": {
+          "value": 14.100254499999998,
+          "min": 11.907339000000007,
+          "max": 29.090438000000034
+        },
+        "bun": {
+          "value": 12.200864499999994,
+          "min": 9.372300999999993,
+          "max": 18.47826699999999
+        }
+      }
+    },
+    {
+      "name": "fetch",
+      "unit": "ms",
+      "description": "One sequential fetch() to a local server",
+      "results": {
+        "mokou": {
+          "value": 0.12482736999999985,
+          "min": 0.0892199000000005,
+          "max": 0.19499461999999995
+        },
+        "deno": {
+          "value": 0.11111072000000036,
+          "min": 0.08951013999999986,
+          "max": 0.3194562700000006
+        },
+        "node": {
+          "value": 0.1789397299999996,
+          "min": 0.11306940000000168,
+          "max": 0.4333328000000006
+        },
+        "bun": {
+          "value": 0.08154385999999988,
+          "min": 0.07395145999999954,
+          "max": 0.09868225999999992
+        }
+      }
+    },
+    {
+      "name": "serve",
+      "unit": "req/s",
+      "description": "Hello world HTTP server under `wrk -t2 -c64`",
+      "results": {
+        "mokou": {
+          "value": 86460.84,
+          "min": 84594.59,
+          "max": 86833.5
+        },
+        "deno": {
+          "value": 88430.22,
+          "min": 88398.61,
+          "max": 89573.16
+        },
+        "node": {
+          "value": 38741.13,
+          "min": 36458.23,
+          "max": 39481.94
+        },
+        "bun": {
+          "value": 98573.93,
+          "min": 95349.62,
+          "max": 99375.7
+        }
+      }
+    }
+  ],
+  "notes": [
+    "Mokou is a local build of the release profile (fat LTO, one codegen unit) relinked with the startup function order, as the release workflow does. Its size is of the packaged binary, with unwind sections removed. Upstream Deno 2.9.7, Node 22.22.0 and Bun 1.4.2 are the official binaries.",
+    "One shared 4-vCPU virtual machine, each benchmark measured three times with the runtimes taking turns, median reported. Differences under about 15% on the millisecond benchmarks are noise here."
+  ]
+}

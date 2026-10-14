@@ -1,0 +1,143 @@
+#!/usr/bin/env -S deno run --check --allow-write=. --allow-read=. --lock=./tools/deno.lock.json
+// Copyright 2018-2026 the Deno authors. MIT license.
+import { conditions, createWorkflow, step } from "jsr:@david/gagen@0.3.1";
+
+// ROADMAP M3: "a public benchmark page tracks every release". When a release
+// is published, this downloads its Linux binary, runs the comparison suite
+// (tests/bench/compare) against upstream Deno, Node and Bun, attaches the
+// results to the release, and opens a pull request that adds them to
+// `site/benchmarks/results` and rebuilds `site/benchmarks/index.html`.
+//
+// Hosted runners are noisy and not all the same machine, so the page says to
+// read small differences as noise. Move the job to a dedicated runner when one
+// is available.
+const workflow = createWorkflow({
+  name: "bench_release",
+  on: {
+    release: {
+      types: ["published"],
+    },
+    workflow_dispatch: {
+      inputs: {
+        tag: {
+          description: "Release tag to benchmark, e.g. v0.1.0",
+          type: "string",
+          required: true,
+        },
+      },
+    },
+  },
+  permissions: {
+    contents: "write",
+    "pull-requests": "write",
+  },
+  concurrency: {
+    group: "${{ github.workflow }}",
+    cancelInProgress: false,
+  },
+  jobs: [{
+    id: "bench-release",
+    name: "benchmark the release",
+    runsOn: "ubuntu-latest",
+    if: conditions.isRepository("weeabo-inc/done"),
+    timeoutMinutes: 60,
+    steps: [
+      step({
+        name: "Clone repository",
+        uses: "actions/checkout@v6",
+        with: { ref: "main" },
+      }),
+      step({
+        name: "Install the runtimes to compare with",
+        uses: "denoland/setup-deno@v2",
+        // Upstream Deno at the version Mokou forked from. It is looked up as
+        // `deno` and skipped by the harness if it turns out to be Mokou.
+        with: { "deno-version": "2.9.7" },
+      }),
+      step({
+        uses: "actions/setup-node@v4",
+        with: { "node-version": "22" },
+      }),
+      step({
+        uses: "oven-sh/setup-bun@v2",
+      }),
+      step({
+        name: "Install wrk",
+        run: "sudo apt-get update && sudo apt-get install -y wrk",
+      }),
+      step({
+        name: "Download the release",
+        env: {
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}",
+          INPUT_TAG: "${{ inputs.tag }}",
+          EVENT_TAG: "${{ github.event.release.tag_name }}",
+        },
+        run: [
+          'TAG="${INPUT_TAG:-$EVENT_TAG}"',
+          "# Never let anything but a version reach the file and branch names.",
+          'case "$TAG" in',
+          "  v[0-9]*) ;;",
+          '  *) echo "Not a release tag: $TAG" >&2; exit 1 ;;',
+          "esac",
+          'case "$TAG" in *[!A-Za-z0-9._-]*) echo "Bad tag: $TAG" >&2; exit 1 ;; esac',
+          'echo "TAG=$TAG" >> "$GITHUB_ENV"',
+          "mkdir release",
+          'gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \\',
+          "  --pattern 'mokou-x86_64-unknown-linux-gnu.zip' --dir release",
+          "unzip -o release/mokou-x86_64-unknown-linux-gnu.zip -d release",
+          "chmod +x release/mokou",
+          "release/mokou --version",
+        ],
+      }),
+      step({
+        name: "Run the benchmarks",
+        run: [
+          'mkdir -p site/benchmarks/results "$RUNNER_TEMP/bench"',
+          "release/mokou run -A tests/bench/compare/run.ts \\",
+          '  --mokou release/mokou --label "$TAG" \\',
+          '  --json "site/benchmarks/results/$TAG.json" \\',
+          '  --markdown "$RUNNER_TEMP/bench/results.md"',
+          'cat "$RUNNER_TEMP/bench/results.md" >> "$GITHUB_STEP_SUMMARY"',
+          "release/mokou run -A tests/bench/compare/page.ts \\",
+          "  site/benchmarks/results site/benchmarks/index.html",
+        ],
+      }),
+      step({
+        name: "Attach the results to the release",
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" },
+        run:
+          'gh release upload "$TAG" "site/benchmarks/results/$TAG.json" --clobber --repo "$GITHUB_REPOSITORY"',
+      }),
+      step({
+        name: "Open a pull request with the results",
+        env: { GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}" },
+        run: [
+          'git config user.name "github-actions[bot]"',
+          'git config user.email "41898282+github-actions[bot]@users.noreply.github.com"',
+          'git switch -c "bench/$TAG"',
+          "git add site/benchmarks",
+          'git commit -m "docs(bench): add the benchmark results for $TAG"',
+          'git push origin "bench/$TAG"',
+          'gh pr create --base main --head "bench/$TAG" \\',
+          '  --title "docs(bench): benchmark results for $TAG" \\',
+          '  --body "Adds the results of tests/bench/compare for $TAG to the public benchmark page. Read small differences from earlier releases as noise: hosted runners vary."',
+        ],
+      }),
+    ],
+  }],
+});
+
+const header = "# GENERATED BY ./bench_release.ts -- DO NOT DIRECTLY EDIT";
+
+export function generate() {
+  return workflow.toYamlString({ header });
+}
+
+export const BENCH_RELEASE_YML_URL = new URL(
+  "./bench_release.generated.yml",
+  import.meta.url,
+);
+
+if (import.meta.main) {
+  workflow.writeOrLint({ filePath: BENCH_RELEASE_YML_URL, header });
+}

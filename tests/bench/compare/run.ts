@@ -18,6 +18,10 @@ interface Options {
   json?: string;
   markdown?: string;
   baseline?: string;
+  label?: string;
+  notes: string[];
+  /** How many times to repeat each benchmark; the median is reported. */
+  repeat: number;
   threshold: number;
   duration: number;
 }
@@ -32,6 +36,11 @@ function usage(): never {
   --skip <runtime>     Don't run a runtime (repeatable)
   --only <a,b>         Only run these benchmarks
   --duration <s>       Seconds of load per server benchmark (default: 5)
+  --repeat <n>         Measure each benchmark n times, taking turns between
+                       runtimes, and report the median (default: 1)
+  --label <name>       Name the run in the results, such as a release version
+  --note <text>        Add a note to the results, such as how the binary was
+                       built (repeatable)
   --json <file>        Write the results as JSON
   --markdown <file>    Write the results table as Markdown
   --baseline <file>    Fail if Mokou is slower than in this JSON result
@@ -40,7 +49,13 @@ function usage(): never {
 }
 
 function parseOptions(args: string[]): Options {
-  const options: Options = { runtimes: {}, threshold: 0.1, duration: 5 };
+  const options: Options = {
+    runtimes: {},
+    threshold: 0.1,
+    duration: 5,
+    repeat: 1,
+    notes: [],
+  };
   const skip = new Set<string>();
   for (let i = 0; i < args.length; i++) {
     const flag = args[i];
@@ -75,6 +90,15 @@ function parseOptions(args: string[]): Options {
       case "--baseline":
         options.baseline = take();
         break;
+      case "--label":
+        options.label = take();
+        break;
+      case "--note":
+        options.notes.push(take());
+        break;
+      case "--repeat":
+        options.repeat = Math.max(1, Math.floor(Number(take())));
+        break;
       case "--threshold":
         options.threshold = Number(take());
         break;
@@ -90,6 +114,8 @@ interface Runtime {
   name: string;
   path: string;
   version: string;
+  /** Size of the executable in bytes. */
+  size?: number;
   /** Arguments that run a script file. */
   run: string[];
 }
@@ -116,6 +142,38 @@ async function versionOf(path: string): Promise<string | undefined> {
   }
 }
 
+/** Size of the executable, looking it up on `PATH` when it isn't a path. */
+async function sizeOf(path: string): Promise<number | undefined> {
+  const candidates = path.includes("/")
+    ? [path]
+    : (Deno.env.get("PATH") ?? "").split(":").map((dir) => `${dir}/${path}`);
+  for (const candidate of candidates) {
+    try {
+      const info = await Deno.stat(await Deno.realPath(candidate));
+      if (info.isFile) return info.size;
+    } catch {
+      // Not there.
+    }
+  }
+  return undefined;
+}
+
+/** The CPU model and memory of this machine, for the results. */
+async function machine() {
+  let cpu: string | undefined;
+  let memoryGb: number | undefined;
+  try {
+    const info = await Deno.readTextFile("/proc/cpuinfo");
+    cpu = info.match(/^model name\s*:\s*(.+)$/m)?.[1];
+    const mem = await Deno.readTextFile("/proc/meminfo");
+    const kb = mem.match(/^MemTotal:\s+(\d+) kB/m)?.[1];
+    if (kb) memoryGb = Math.round(Number(kb) / 1024 / 1024);
+  } catch {
+    // Not Linux.
+  }
+  return { cpu, memoryGb };
+}
+
 async function findRuntimes(options: Options): Promise<Runtime[]> {
   const candidates: [string, string, string[]][] = [
     [
@@ -140,7 +198,7 @@ async function findRuntimes(options: Options): Promise<Runtime[]> {
       console.error(`Skipping ${name}: ${path} is ${version}`);
       continue;
     }
-    runtimes.push({ name, path, version, run });
+    runtimes.push({ name, path, version, run, size: await sizeOf(path) });
   }
   return runtimes;
 }
@@ -157,12 +215,36 @@ interface Benchmark {
   name: string;
   unit: "ms" | "req/s";
   description: string;
+  /** Runtimes this benchmark applies to, when not all of them. */
+  onlyFor?: string[];
   measure(runtime: Runtime, context: Context): Promise<Measurement>;
 }
 
 interface Context {
   options: Options;
   fetchUrl?: string;
+}
+
+/** The median of several measurements of the same thing. */
+function combine(measurements: Measurement[]): Measurement {
+  const good = measurements.filter((m) => m.value !== undefined);
+  if (good.length === 0) return measurements[0];
+  const values = good.map((m) => m.value!).sort((a, b) => a - b);
+  const mid = values.length >> 1;
+  const value = values.length % 2
+    ? values[mid]
+    : (values[mid - 1] + values[mid]) / 2;
+  const mins = good.map((m) => m.min).filter((v): v is number =>
+    v !== undefined
+  );
+  const maxs = good.map((m) => m.max).filter((v): v is number =>
+    v !== undefined
+  );
+  return {
+    value,
+    min: mins.length ? Math.min(...mins) : values[0],
+    max: maxs.length ? Math.max(...maxs) : values.at(-1),
+  };
 }
 
 function caseFile(name: string) {
@@ -230,6 +312,20 @@ const startup: Benchmark = {
       min: times[0],
       max: times.at(-1),
     };
+  },
+};
+
+/** Starting Mokou with Node compatibility off, for ROADMAP M3 item 3. */
+const startupNoNode: Benchmark = {
+  name: "startup.no-node",
+  unit: "ms",
+  description: "Run the same file with `--no-node` (Mokou only)",
+  onlyFor: ["mokou"],
+  measure(runtime, context) {
+    return startup.measure(
+      { ...runtime, run: [...runtime.run, "--no-node"] },
+      context,
+    );
   },
 };
 
@@ -327,6 +423,7 @@ const serve: Benchmark = {
 
 const BENCHMARKS: Benchmark[] = [
   startup,
+  startupNoNode,
   caseBenchmark("json.parse", "json.mjs", ["parse"], "JSON.parse() 0.9 MB"),
   caseBenchmark(
     "json.stringify",
@@ -348,11 +445,16 @@ const BENCHMARKS: Benchmark[] = [
 
 interface Results {
   date: string;
+  /** What the run is called, such as `v0.1.0`. */
+  label?: string;
+  /** Anything a reader needs to know about how the run was made. */
+  notes?: string[];
   commit?: string;
+  machine?: { cpu?: string; memoryGb?: number };
   os: string;
   arch: string;
   cpus: number;
-  runtimes: { name: string; version: string }[];
+  runtimes: { name: string; version: string; size?: number }[];
   benchmarks: {
     name: string;
     unit: string;
@@ -390,6 +492,11 @@ function toMarkdown(results: Results): string {
     });
     lines.push(`| ${bench.name} (${bench.unit}) | ${cells.join(" | ")} |`);
   }
+  const sizes = results.runtimes.map((r) => {
+    const mb = r.size === undefined ? "–" : `${(r.size / 1e6).toFixed(1)}`;
+    return mb;
+  });
+  lines.push(`| binary size (MB) | ${sizes.join(" | ")} |`);
   lines.push(
     "",
     "Lower is better for ms, higher for req/s. (N×) is how many times faster " +
@@ -462,11 +569,18 @@ async function main() {
 
   const results: Results = {
     date: new Date().toISOString(),
+    label: options.label,
+    notes: options.notes.length ? options.notes : undefined,
     commit: await gitCommit(),
+    machine: await machine(),
     os: Deno.build.os,
     arch: Deno.build.arch,
     cpus: navigator.hardwareConcurrency,
-    runtimes: runtimes.map(({ name, version }) => ({ name, version })),
+    runtimes: runtimes.map(({ name, version, size }) => ({
+      name,
+      version,
+      size,
+    })),
     benchmarks: [],
   };
   try {
@@ -477,9 +591,27 @@ async function main() {
         description: bench.description,
         results: {} as Record<string, Measurement>,
       };
-      for (const runtime of runtimes) {
-        console.error(`${bench.name} on ${runtime.name}...`);
-        entry.results[runtime.name] = await bench.measure(runtime, context);
+      const applicable = runtimes.filter((r) =>
+        !bench.onlyFor || bench.onlyFor.includes(r.name)
+      );
+      const taken: Record<string, Measurement[]> = {};
+      for (let round = 0; round < options.repeat; round++) {
+        // Take turns, starting from a different runtime each round, so a
+        // slow minute on the machine doesn't land on one runtime only.
+        for (let k = 0; k < applicable.length; k++) {
+          const runtime = applicable[(k + round) % applicable.length];
+          console.error(
+            `${bench.name} on ${runtime.name}...${
+              options.repeat > 1 ? ` (${round + 1}/${options.repeat})` : ""
+            }`,
+          );
+          (taken[runtime.name] ??= []).push(
+            await bench.measure(runtime, context),
+          );
+        }
+      }
+      for (const [name, measurements] of Object.entries(taken)) {
+        entry.results[name] = combine(measurements);
       }
       results.benchmarks.push(entry);
     }

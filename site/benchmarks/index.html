@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Mokou benchmarks against Deno, Node.js and Bun, for every release.">
+<title>Mokou Benchmarks</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;700&family=Open+Sans:wght@400;600;700&family=Yanone+Kaffeesatz:wght@400;600;700&display=swap">
+<style>
+:root { --sky:#cfdbe8; --paper:#fff; --ink:#2b3138; --soft:#5d6772; --link:#1b6db3; --flame:#f0651a; --flame-lo:#c9420e; --navy:#1d2630; --rule:#c3ced9;
+  --display:"Yanone Kaffeesatz","Trebuchet MS",sans-serif; --body:"Open Sans","Lucida Grande",Verdana,sans-serif; --mono:"Inconsolata",Consolas,monospace; color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin:0; padding:0 16px 32px; background:var(--sky) repeating-linear-gradient(45deg,rgba(255,255,255,.18) 0 2px,transparent 2px 6px); color:var(--ink); font:15px/1.6 var(--body); }
+a { color:var(--link); } a:hover { color:var(--flame-lo); }
+.wrap { max-width:960px; margin:0 auto; }
+header { padding-block:22px 12px; display:flex; flex-wrap:wrap; align-items:baseline; gap:6px 18px; }
+header a.brand { font-family:var(--display); font-size:44px; font-weight:700; color:var(--navy); text-decoration:none; text-shadow:0 1px 0 #fff; }
+header span { font-family:var(--display); font-size:22px; color:var(--soft); }
+.panel { margin-top:18px; background:var(--paper); border:1px solid var(--rule); border-radius:10px; box-shadow:0 2px 6px rgba(30,50,70,.18); padding:24px 28px 28px; }
+h1,h2,h3 { font-family:var(--display); color:var(--navy); line-height:1.1; margin:0; }
+h1 { font-size:54px; text-shadow:0 1px 0 #fff; } h1 em { font-style:normal; color:var(--flame); }
+h2 { font-size:34px; margin-bottom:12px; padding-bottom:6px; border-bottom:1px solid var(--rule); }
+h3 { font-size:25px; } h3 small { font:400 12px var(--body); color:var(--soft); margin-left:6px; }
+.lead { max-width:62ch; }
+.meta { color:var(--soft); font-size:13px; }
+.grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.card { min-width:0; border:1px solid var(--rule); border-radius:8px; padding:14px 16px 12px; background:linear-gradient(#fff,#f3f6fa); }
+.card p { margin:2px 0 8px; font-size:13px; color:var(--soft); }
+svg { max-width:100%; height:auto; display:block; }
+.lbl { font:600 12px var(--body); fill:var(--ink); } .val { font:700 13px var(--mono); fill:var(--ink); } .ratio { fill:var(--flame-lo); font-weight:400; }
+.trend { display:flex; align-items:center; gap:10px; margin-top:8px; font-size:12px; color:var(--soft); } .spark { width:220px; flex:none; }
+.scroll { overflow-x:auto; }
+table { border-collapse:collapse; width:100%; font-size:13px; }
+th,td { padding:5px 10px; border-bottom:1px dotted var(--rule); text-align:right; font-variant-numeric:tabular-nums; }
+th:first-child { text-align:left; } thead th { font-family:var(--display); font-size:19px; color:var(--navy); }
+th small { color:var(--soft); font-weight:400; }
+ul.versions { margin:8px 0 0; padding-left:18px; font-size:13px; } code { font-family:var(--mono); font-size:14px; background:#eef2f6; padding:1px 5px; border-radius:3px; }
+footer { margin-top:18px; font-size:12px; color:var(--soft); text-align:center; }
+@media (max-width:700px) { .grid { grid-template-columns:minmax(0,1fr); } h1 { font-size:42px; } .panel { padding:18px 16px 22px; } .trend { flex-wrap:wrap; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><a class="brand" href="../">Mokou</a><span>Benchmarks</span></header>
+<section class="panel">
+  <h1>How fast is <em>Mokou</em>?</h1>
+  <p class="lead">Every release is measured against upstream Deno, Node.js and Bun on the same machine, with the same programs. The numbers below are for <b>dev-0f77e520</b>, run on 2026-10-14 at commit <code>0f77e520d2dc</code>.</p>
+  <p class="meta">Intel(R) Xeon(R) Processor @ 2.10GHz, 16 GB RAM, 4 threads, linux x86_64</p>
+  <p class="meta">Mokou is a local build of the release profile (fat LTO, one codegen unit) relinked with the startup function order, as the release workflow does. Its size is of the packaged binary, with unwind sections removed. Upstream Deno 2.9.7, Node 22.22.0 and Bun 1.4.2 are the official binaries.</p><p class="meta">One shared 4-vCPU virtual machine, each benchmark measured three times with the runtimes taking turns, median reported. Differences under about 15% on the millisecond benchmarks are noise here.</p>
+  <ul class="versions"><li><b>Mokou</b> mokou 0.1.0 (deno 2.9.7 base, stable, release, x86_64-unknown-linux-gnu), 102.0 MB binary</li><li><b>Deno</b> deno 2.9.7 (stable, release, x86_64-unknown-linux-gnu), 95.8 MB binary</li><li><b>Node.js</b> v22.22.0, 123.4 MB binary</li><li><b>Bun</b> 1.4.2, 79.5 MB binary</li></ul>
+</section>
+<section class="panel">
+  <h2>Latest results</h2>
+  <p class="meta">The number after a bar is how many times faster Mokou is than that runtime, so below 1× means Mokou is slower.</p>
+  <div class="grid">
+  <section class="card">
+    <h3>startup <small>ms, lower is better</small></h3>
+    <p>Run a file that prints one line</p>
+    <svg viewBox="0 0 420 106" role="img" aria-label="startup by runtime"><g transform="translate(0 0)">
+      <text x="0" y="16" class="lbl">Mokou</text>
+      <rect x="70" y="3" width="114.5" height="18" rx="3" fill="#f0651a"/>
+      <text x="190.5" y="16" class="val">22.5</text>
+    </g><g transform="translate(0 26)">
+      <text x="0" y="16" class="lbl">Deno</text>
+      <rect x="70" y="3" width="101.5" height="18" rx="3" fill="#4d7da8"/>
+      <text x="177.5" y="16" class="val">20.0 <tspan class="ratio">0.89×</tspan></text>
+    </g><g transform="translate(0 52)">
+      <text x="0" y="16" class="lbl">Node.js</text>
+      <rect x="70" y="3" width="240.0" height="18" rx="3" fill="#6a9a52"/>
+      <text x="316.0" y="16" class="val">47.2 <tspan class="ratio">2.10×</tspan></text>
+    </g><g transform="translate(0 78)">
+      <text x="0" y="16" class="lbl">Bun</text>
+      <rect x="70" y="3" width="28.8" height="18" rx="3" fill="#8a7a6a"/>
+      <text x="104.8" y="16" class="val">5.66 <tspan class="ratio">0.25×</tspan></text>
+    </g></svg>
+    
+  </section>
+  <section class="card">
+    <h3>startup.no-node <small>ms, lower is better</small></h3>
+    <p>Run the same file with `--no-node` (Mokou only)</p>
+    <svg viewBox="0 0 420 28" role="img" aria-label="startup.no-node by runtime"><g transform="translate(0 0)">
+      <text x="0" y="16" class="lbl">Mokou</text>
+      <rect x="70" y="3" width="240.0" height="18" rx="3" fill="#f0651a"/>
+      <text x="316.0" y="16" class="val">20.9</text>
+    </g></svg>
+    
+  </section>
+  <section class="card">
+    <h3>json.parse <small>ms, lower is better</small></h3>
+    <p>JSON.parse() 0.9 MB</p>
+    <svg viewBox="0 0 420 106" role="img" aria-label="json.parse by runtime"><g transform="translate(0 0)">
+      <text x="0" y="16" class="lbl">Mokou</text>
+      <rect x="70" y="3" width="204.7" height="18" rx="3" fill="#f0651a"/>
+      <text x="280.7" y="16" class="val">4.78</text>
+    </g><g transform="translate(0 26)">
+      <text x="0" y="16" class="lbl">Deno</text>
+      <rect x="70" y="3" width="195.1" height="18" rx="3" fill="#4d7da8"/>
+      <text x="271.1" y="16" class="val">4.55 <tspan class="ratio">0.95×</tspan></text>
+    </g><g transform="translate(0 52)">
+      <text x="0" y="16" class="lbl">Node.js</text>
+      <rect x="70" y="3" width="240.0" height="18" rx="3" fill="#6a9a52"/>
+      <text x="316.0" y="16" class="val">5.60 <tspan class="ratio">1.17×</tspan></text>
+    </g><g transform="translate(0 78)">
+      <text x="0" y="16" class="lbl">Bun</text>
+      <rect x="70" y="3" width="152.3" height="18" rx="3" fill="#8a7a6a"/>
+      <text x="228.3" y="16" class="val">3.55 <tspan class="ratio">0.74×</tspan></text>
+    </g></svg>
+    
+  </section>
+  <section class="card">
+    <h3>json.stringify <small>ms, lower is better</small></h3>
+    <p>JSON.stringify() 0.9 MB</p>
+    <svg viewBox="0 0 420 106" role="img" aria-label="json.stringify by runtime"><g transform="translate(0 0)">
+      <text x="0" y="16" class="lbl">Mokou</text>
+      <rect x="70" y="3" width="155.4" height="18" rx="3" fill="#f0651a"/>
+      <text x="231.4" y="16" class="val">3.04</text>
+    </g><g transform="translate(0 26)">
+      <text x="0" y="16" class="lbl">Deno</text>
+      <rect x="70" y="3" width="217.9" height="18" rx="3" fill="#4d7da8"/>
+      <text x="293.9" y="16" class="val">4.26 <tspan class="ratio">1.40×</tspan></text>
+    </g><g transform="translate(0 52)">
+      <text x="0" y="16" class="lbl">Node.js</text>
+      <rect x="70" y="3" width="240.0" height="18" rx="3" fill="#6a9a52"/>
+      <text x="316.0" y="16" class="val">4.69 <tspan class="ratio">1.54×</tspan></text>
+    </g><g transform="translate(0 78)">
+      <text x="0" y="16" class="lbl">Bun</text>
+      <rect x="70" y="3" width="85.1" height="18" rx="3" fill="#8a7a6a"/>
+      <text x="161.1" y="16" class="val">1.66 <tspan class="ratio">0.55×</tspan></text>
+    </g></svg>
+    
+  </section>
+  <section class="card">
+    <h3>fs.read <small>ms, lower is better</small></h3>
+    <p>Read a 1 MiB file</p>
+    <svg viewBox="0 0 420 106" role="img" aria-label="fs.read by runtime"><g transform="translate(0 0)">
+      <text x="0" y="16" class="lbl">Mokou</text>
+      <rect x="70" y="3" width="240.0" height="18" rx="3" fill="#f0651a"/>
+      <text x="316.0" y="16" class="val">1.24</text>
+    </g><g transform="translate(0 26)">
+      <text x="0" y="16" class="lbl">Deno</text>
+      <rect x="70" y="3" width="230.4" height="18" rx="3" fill="#4d7da8"/>
+      <text x="306.4" y="16" class="val">1.19 <tspan class="ratio">0.96×</tspan></text>
+    </g><g transform="translate(0 52)">
+      <text x="0" y="16" class="lbl">Node.js</text>
+      <rect x="70" y="3" width="121.2" height="18" rx="3" fill="#6a9a52"/>
+      <text x="197.2" y="16" class="val">0.624 <tspan class="ratio">0.51×</tspan></text>
+    </g><g transform="translate(0 78)">
+      <text x="0" y="16" class="lbl">Bun</text>
+      <rect x="70" y="3" width="101.0" height="18" rx="3" fill="#8a7a6a"/>
+      <text x="177.0" y="16" class="val">0.520 <tspan class="ratio">0.42×</tspan></text>
+    </g></svg>
+    
+  </section>
+  <section class="card">
+    <h3>fs.write <small>ms, lower is better</small></h3>
+    <p>Write a 1 MiB file</p>
+    <svg viewBox="0 0 420 106" role="img" aria-label="fs.write by runtime"><g transform="translate(0 0)">
+      <text x="0" y="16" class="lbl">Mokou</text>
+      <rect x="70" y="3" width="185.0" height="18" rx="3" fill="#f0651a"/>
+      <text x="261.0" y="16" class="val">1.28</text>
+    </g><g transform="translate(0 26)">
+      <text x="0" y="16" class="lbl">Deno</text>
+      <rect x="70" y="3" width="170.5" height="18" rx="3" fill="#4d7da8"/>
+      <text x="246.5" y="16" class="val">1.18 <tspan class="ratio">0.92×</tspan></text>
+    </g><g transform="translate(0 52)">
+      <text x="0" y="16" class="lbl">Node.js</text>
+      <rect x="70" y="3" width="220.1" height="18" rx="3" fill="#6a9a52"/>
+      <text x="296.1" y="16" class="val">1.53 <tspan class="ratio">1.19×</tspan></text>
+    </g><g transform="translate(0 78)">
+      <text x="0" y="16" class="lbl">Bun</text>
+      <rect x="70" y="3" width="240.0" height="18" rx="3" fill="#8a7a6a"/>
+      <text x="316.0" y="16" class="val">1.67 <tspan class="ratio">1.30×</tspan></text>
+    </g></svg>
+    
+  </section>
+  <section class="card">
+    <h3>sqlite <small>ms, lower is better</small></h3>
+    <p>Insert 10k rows in a transaction, then select them</p>
+    <svg viewBox="0 0 420 106" role="img" aria-label="sqlite by runtime"><g transform="translate(0 0)">
+      <text x="0" y="16" class="lbl">Mokou</text>
+      <rect x="70" y="3" width="210.1" height="18" rx="3" fill="#f0651a"/>
+      <text x="286.1" y="16" class="val">19.9</text>
+    </g><g transform="translate(0 26)">
+      <text x="0" y="16" class="lbl">Deno</text>
+      <rect x="70" y="3" width="240.0" height="18" rx="3" fill="#4d7da8"/>
+      <text x="316.0" y="16" class="val">22.7 <tspan class="ratio">1.14×</tspan></text>
+    </g><g transform="translate(0 52)">
+      <text x="0" y="16" class="lbl">Node.js</text>
+      <rect x="70" y="3" width="149.1" height="18" rx="3" fill="#6a9a52"/>
+      <text x="225.1" y="16" class="val">14.1 <tspan class="ratio">0.71×</tspan></text>
+    </g><g transform="translate(0 78)">
+      <text x="0" y="16" class="lbl">Bun</text>
+      <rect x="70" y="3" width="129.0" height="18" rx="3" fill="#8a7a6a"/>
+      <text x="205.0" y="16" class="val">12.2 <tspan class="ratio">0.61×</tspan></text>
+    </g></svg>
+    
+  </section>
+  <section class="card">
+    <h3>fetch <small>ms, lower is better</small></h3>
+    <p>One sequential fetch() to a local server</p>
+    <svg viewBox="0 0 420 106" role="img" aria-label="fetch by runtime"><g transform="translate(0 0)">
+      <text x="0" y="16" class="lbl">Mokou</text>
+      <rect x="70" y="3" width="167.4" height="18" rx="3" fill="#f0651a"/>
+      <text x="243.4" y="16" class="val">0.125</text>
+    </g><g transform="translate(0 26)">
+      <text x="0" y="16" class="lbl">Deno</text>
+      <rect x="70" y="3" width="149.0" height="18" rx="3" fill="#4d7da8"/>
+      <text x="225.0" y="16" class="val">0.111 <tspan class="ratio">0.89×</tspan></text>
+    </g><g transform="translate(0 52)">
+      <text x="0" y="16" class="lbl">Node.js</text>
+      <rect x="70" y="3" width="240.0" height="18" rx="3" fill="#6a9a52"/>
+      <text x="316.0" y="16" class="val">0.179 <tspan class="ratio">1.43×</tspan></text>
+    </g><g transform="translate(0 78)">
+      <text x="0" y="16" class="lbl">Bun</text>
+      <rect x="70" y="3" width="109.4" height="18" rx="3" fill="#8a7a6a"/>
+      <text x="185.4" y="16" class="val">0.0815 <tspan class="ratio">0.65×</tspan></text>
+    </g></svg>
+    
+  </section>
+  <section class="card">
+    <h3>serve <small>requests/s, higher is better</small></h3>
+    <p>Hello world HTTP server under `wrk -t2 -c64`</p>
+    <svg viewBox="0 0 420 106" role="img" aria-label="serve by runtime"><g transform="translate(0 0)">
+      <text x="0" y="16" class="lbl">Mokou</text>
+      <rect x="70" y="3" width="210.5" height="18" rx="3" fill="#f0651a"/>
+      <text x="286.5" y="16" class="val">86,461</text>
+    </g><g transform="translate(0 26)">
+      <text x="0" y="16" class="lbl">Deno</text>
+      <rect x="70" y="3" width="215.3" height="18" rx="3" fill="#4d7da8"/>
+      <text x="291.3" y="16" class="val">88,430 <tspan class="ratio">0.98×</tspan></text>
+    </g><g transform="translate(0 52)">
+      <text x="0" y="16" class="lbl">Node.js</text>
+      <rect x="70" y="3" width="94.3" height="18" rx="3" fill="#6a9a52"/>
+      <text x="170.3" y="16" class="val">38,741 <tspan class="ratio">2.23×</tspan></text>
+    </g><g transform="translate(0 78)">
+      <text x="0" y="16" class="lbl">Bun</text>
+      <rect x="70" y="3" width="240.0" height="18" rx="3" fill="#8a7a6a"/>
+      <text x="316.0" y="16" class="val">98,574 <tspan class="ratio">0.88×</tspan></text>
+    </g></svg>
+    
+  </section></div>
+</section>
+<section class="panel">
+  <h2>Release by release</h2>
+  <p class="meta">Mokou's median for each benchmark. Releases are measured on the same kind of machine, but not the same one, so read small differences as noise.</p>
+  <div class="scroll"><table><thead><tr><th></th><th>dev-0f77e520</th></tr></thead><tbody><tr><th>startup <small>ms</small></th><td>22.5</td></tr><tr><th>startup.no-node <small>ms</small></th><td>20.9</td></tr><tr><th>json.parse <small>ms</small></th><td>4.78</td></tr><tr><th>json.stringify <small>ms</small></th><td>3.04</td></tr><tr><th>fs.read <small>ms</small></th><td>1.24</td></tr><tr><th>fs.write <small>ms</small></th><td>1.28</td></tr><tr><th>sqlite <small>ms</small></th><td>19.9</td></tr><tr><th>fetch <small>ms</small></th><td>0.125</td></tr><tr><th>serve <small>req/s</small></th><td>86,461</td></tr></tbody></table></div>
+</section>
+<section class="panel">
+  <h2>How it is measured</h2>
+  <p>Each benchmark is a small program in <code>tests/bench/compare/cases</code> that runs unchanged on every runtime and uses the fastest idiomatic API each one has: <code>Deno.openSqlite()</code> on Mokou, <code>bun:sqlite</code> on Bun, <code>node:sqlite</code> on Deno and Node. Times are the median of repeated runs; the server benchmark is requests per second under <code>wrk -t2 -c64</code>. Runtimes are the latest stable releases at the time. To repeat a run:</p>
+  <p><code>mokou run -A tests/bench/compare/run.ts --mokou ./target/release/deno --label v0.1.0 --json results.json</code></p>
+  <p class="meta">Results for every release are kept in <a href="results/">results/</a> and this page is built from them by <code>tests/bench/compare/page.ts</code>.</p>
+</section>
+<footer>Mokou is MIT licensed. Benchmarks are only as good as the programs they run; send a better one.</footer>
+</div>
+</body>
+</html>

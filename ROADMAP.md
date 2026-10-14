@@ -191,11 +191,28 @@ _Goal: numbers we publish and defend._
    25% slower than on the last `main` run, whose results are kept in the Actions
    cache (`bench-compare-<sha>`). The threshold is loose because hosted runners
    are noisy. Tighten it once the job runs on a dedicated machine.
-3. Go after the targets M1 opens up: snapshot size and startup time without
-   `ext/node`.
-4. Profile the `Deno.serve` hot path (`ext/http`, `libs/http_h1`).
+3. ✅ Go after the targets M1 opens up: snapshot size and startup time without
+   `ext/node`. Measured on a release build with the startup order: `--no-node`
+   starts 2.7% faster (0.6 ms) and runs 6.8% fewer instructions, and that is
+   already the whole win, because the Node objects left in the snapshot are
+   deserialized lazily. A second snapshot is not worth its size. Details in
+   [doc/performance.md](doc/performance.md).
+4. ✅ Profile the `Deno.serve` hot path (`ext/http`, `libs/http_h1`). About
+   22,000 instructions per request in jitless mode, 8,000 of them Rust and 1,400
+   in the HTTP/1 parser and writer; with the JIT the main thread is 96% idle at
+   94,000 requests per second, so the limit here is the load generator and the
+   kernel on four cores. Nothing to change on this evidence, see the same
+   document for how to look further.
 
-**Done when:** a public benchmark page tracks every release.
+**Also measured:** against upstream Deno 2.9.7 on the same build process, Mokou
+starts 4.3% slower (0.9 ms) and the packaged binary is 6.5% bigger. Everything
+else is within noise. A build without the startup order looks 28% slower, so
+always benchmark a release build made the way CI makes it.
+
+**Done when:** a public benchmark page tracks every release. ✅ The page is
+`site/benchmarks/index.html`, built from `site/benchmarks/results/` by
+`tests/bench/compare/page.ts`, and the `bench_release` workflow adds a release's
+results to it. The workflow has not run yet, because there is no release.
 
 ---
 
