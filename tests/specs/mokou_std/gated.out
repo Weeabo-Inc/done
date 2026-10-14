@@ -19,6 +19,7 @@ tar false
 transpile false
 secrets false
 spawnPty false
+xml false
 assertEquals false
 deepEquals false
 mock false

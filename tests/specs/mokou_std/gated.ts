@@ -20,6 +20,7 @@ const names = [
   "transpile",
   "secrets",
   "spawnPty",
+  "xml",
   "assertEquals",
   "deepEquals",
   "mock",

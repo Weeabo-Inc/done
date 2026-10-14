@@ -375,6 +375,14 @@ pub static UNSTABLE_FEATURES: &[UnstableFeatureDefinition] = &[
     id: 45,
     kind: UnstableFeatureKind::Runtime,
   },
+  UnstableFeatureDefinition {
+    name: "xml",
+    flag_name: "unstable-xml",
+    help_text: "Enable unstable `Deno.xml` API",
+    show_in_help: true,
+    id: 46,
+    kind: UnstableFeatureKind::Runtime,
+  },
 ];
 pub struct UnstableEnvVarNames {
   pub bare_node_builtins: &'static str,

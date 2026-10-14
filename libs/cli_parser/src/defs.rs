@@ -522,6 +522,11 @@ ArgDef::new("unstable-bare-node-builtins")
     .set_true()
     .hidden()
 .help("Enable unstable bare node builtins feature"),
+  ArgDef::new("unstable-xml")
+    .long("unstable-xml")
+    .set_true()
+    .hidden()
+.help("Enable unstable `Deno.xml` API"),
   ArgDef::new("unstable-broadcast-channel")
     .long("unstable-broadcast-channel")
     .set_true()

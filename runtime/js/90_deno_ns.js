@@ -416,6 +416,7 @@ const loadMokouTar = lazyScript("ext:deno_mokou/17_tar.js");
 const loadMokouTranspile = lazyScript("ext:deno_mokou/18_transpile.js");
 const loadMokouSecrets = lazyScript("ext:deno_mokou/19_secrets.js");
 const loadMokouPty = lazyScript("ext:deno_mokou/20_pty.js");
+const loadMokouXml = lazyScript("ext:deno_mokou/21_xml.js");
 
 function lazyProps(names, loader, target = { __proto__: null }) {
   const props = { __proto__: null };
@@ -485,6 +486,7 @@ denoNsUnstableById[unstableIds.html] = lazyProps(
 );
 denoNsUnstableById[unstableIds.csrf] = lazyProps(["csrf"], loadMokouCsrf);
 denoNsUnstableById[unstableIds.tar] = lazyProps(["tar"], loadMokouTar);
+denoNsUnstableById[unstableIds.xml] = lazyProps(["xml"], loadMokouXml);
 denoNsUnstableById[unstableIds.pty] = lazyProps(
   ["spawnPty", "PtyProcess"],
   loadMokouPty,

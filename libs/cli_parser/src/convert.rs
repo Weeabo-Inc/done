@@ -983,6 +983,7 @@ fn unstable_args_parse(result: &ParseResult, flags: &mut Flags) {
     ("unstable-tar", None),
     ("unstable-transpile", None),
     ("unstable-uuid", None),
+    ("unstable-xml", None),
   ];
 
   for (flag_name, setter) in unstable_features {

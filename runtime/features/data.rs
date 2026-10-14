@@ -342,4 +342,11 @@ pub static FEATURE_DESCRIPTIONS: &[UnstableFeatureDescription] = &[
     kind: UnstableFeatureKind::Runtime,
     env_var: None,
   },
+  UnstableFeatureDescription {
+    name: "xml",
+    help_text: "Enable unstable `Deno.xml` API",
+    show_in_help: true,
+    kind: UnstableFeatureKind::Runtime,
+    env_var: None,
+  },
 ];

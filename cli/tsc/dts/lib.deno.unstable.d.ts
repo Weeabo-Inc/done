@@ -7060,4 +7060,83 @@ declare namespace Deno {
     command: string | URL,
     options?: SpawnPtyOptions,
   ): PtyProcess;
+
+  /**
+   * XML, as a tree of elements and text.
+   *
+   * ```ts
+   * const feed = Deno.xml.parse(`<feed><entry id="1">Hello</entry></feed>`);
+   * feed.children[0].attributes.id; // "1"
+   * Deno.xml.stringify(feed); // `<feed><entry id="1">Hello</entry></feed>`
+   * ```
+   *
+   * Only the predefined entities (`&lt;`, `&gt;`, `&amp;`, `&apos;`,
+   * `&quot;`) and character references are expanded. Entities from a DTD
+   * are errors, so documents can't expand into huge strings. Elements nest
+   * at most 256 levels deep.
+   *
+   * @category Data
+   * @experimental Requires `--unstable-xml`.
+   */
+  export namespace xml {
+    /** An XML element.
+     *
+     * @category Data
+     * @experimental Requires `--unstable-xml`. */
+    export interface Element {
+      /** The qualified name, such as `"atom:entry"`. Namespaces are not
+       * resolved. */
+      name: string;
+      attributes: Record<string, string>;
+      /** Child elements and text, in order. CDATA sections and entity
+       * references are folded into the surrounding text. */
+      children: (Element | string)[];
+    }
+    /** Options for {@linkcode Deno.xml.parse}.
+     *
+     * @category Data
+     * @experimental Requires `--unstable-xml`. */
+    export interface ParseOptions {
+      /** Keeps whitespace-only text between elements, such as indentation.
+       * By default it is dropped when an element has child elements. */
+      keepWhitespace?: boolean;
+    }
+    /** Options for {@linkcode Deno.xml.stringify}.
+     *
+     * @category Data
+     * @experimental Requires `--unstable-xml`. */
+    export interface StringifyOptions {
+      /** A string, or a number of spaces, to indent nested elements with.
+       * Elements that mix text and elements are written inline. */
+      indent?: string | number;
+      /** Starts with `<?xml version="1.0" encoding="UTF-8"?>`. */
+      declaration?: boolean;
+    }
+    /** Parses a document and returns its root element. Throws a
+     * `SyntaxError` with the byte position for malformed XML. Comments,
+     * processing instructions and the declaration are dropped.
+     *
+     * @category Data
+     * @experimental Requires `--unstable-xml`. */
+    export function parse(text: string, options?: ParseOptions): Element;
+    /** Writes an element as XML, escaping text and attribute values. Throws
+     * a `TypeError` for names that aren't valid XML names, and for
+     * characters XML can't carry.
+     *
+     * @category Data
+     * @experimental Requires `--unstable-xml`. */
+    export function stringify(
+      element: ElementInit,
+      options?: StringifyOptions,
+    ): string;
+    /** An element to write: attributes and children are optional.
+     *
+     * @category Data
+     * @experimental Requires `--unstable-xml`. */
+    export interface ElementInit {
+      name: string;
+      attributes?: Record<string, string | number | boolean>;
+      children?: (ElementInit | string)[];
+    }
+  }
 }

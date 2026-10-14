@@ -144,6 +144,7 @@ fn run_test(test: &CollectedTest) -> TestResult {
       "tar",
       "transpile",
       "uuid",
+      "xml",
     ] {
       deno = deno.arg(format!("--unstable-{feature}"));
     }

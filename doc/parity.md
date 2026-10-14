@@ -36,7 +36,7 @@ when you update a row.
 | YAML                        | ✅ `Bun.YAML`                  | ❌                              | ✅ `Deno.yaml`              |     |
 | CSV                         | ❌                             | ❌                              | ✅ `Deno.csv`               |     |
 | JSON5 / JSONC / JSONL       | ✅ `Bun.JSON5/JSONC/JSONL`     | ❌                              | ✅ `Deno.json5/jsonc/jsonl` |     |
-| XML                         | ✅ `Bun.XML`                   | ❌                              | ❌                          | P3  |
+| XML                         | ✅ `Bun.XML`                   | ❌                              | ✅ `Deno.xml`               |     |
 | Markdown to HTML            | ✅ `Bun.markdown`              | ❌                              | ✅ `Deno.markdown`          |     |
 | HTML escaping               | ✅ `Bun.escapeHTML`            | ❌                              | ✅ `Deno.escapeHTML`        |     |
 | ANSI strip / width / colors | ✅ `stripANSI`, `stringWidth`… | ✅ `util.styleText`, `stripVT…` | ✅ `Deno.ansi`              |     |
@@ -128,6 +128,9 @@ Every P2 gap has an API now. Follow-ups noted above: import/export scanning for
 
 **P3: large surfaces**
 
-SQL clients (Postgres, MySQL) and Redis, after the SQLite API settles (M2), XML
-(`quick-xml`), and a file-system router, which belongs with the M5 web
-framework.
+`Deno.xml` shipped: it parses to a tree of elements and text and writes one
+back. It expands only the predefined entities, so a DTD can't blow a document
+up, and limits nesting to 256 levels.
+
+Still open: SQL clients (Postgres, MySQL) and Redis, after the SQLite API
+settles (M2), and a file-system router, which belongs with the M5 web framework.

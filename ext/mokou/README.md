@@ -26,6 +26,7 @@ Mokou's built-in standard library: APIs that most apps need, available on the
 | `--unstable-transpile`  | `Deno.transpile()`                                                                         | `18_transpile.js`, `transpile.rs` (deno_ast)          |
 | `--unstable-secrets`    | `Deno.secrets` (needs `--allow-sys=secrets`)                                               | `19_secrets.js`, `secrets.rs` (keyring)               |
 | `--unstable-pty`        | `Deno.spawnPty()`, `Deno.PtyProcess`                                                       | `20_pty.js`, `pty.rs` (Unix only)                     |
+| `--unstable-xml`        | `Deno.xml`                                                                                 | `21_xml.js`, `xml.rs` (quick-xml)                     |
 
 The JavaScript files are lazy-loaded scripts. `runtime/js/90_deno_ns.js` loads
 each one the first time its API is accessed, so a program that doesn't use them

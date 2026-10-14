@@ -45,4 +45,5 @@ export const unstableIds = {
   vsock: 43,
   webgpu: 44,
   workerOptions: 45,
+  xml: 46,
 };

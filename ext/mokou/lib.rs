@@ -21,6 +21,7 @@ mod semver;
 mod shell;
 mod transpile;
 mod uuid;
+mod xml;
 
 deno_core::extension!(
   deno_mokou,
@@ -65,6 +66,7 @@ deno_core::extension!(
     transpile::op_done_transpile,
     uuid::op_done_uuid_v4,
     uuid::op_done_uuid_v7,
+    xml::op_done_xml_parse,
   ],
   lazy_loaded_js = [
     "00_assert.js",
@@ -88,5 +90,6 @@ deno_core::extension!(
     "18_transpile.js",
     "19_secrets.js",
     "20_pty.js",
+    "21_xml.js",
   ],
 );
