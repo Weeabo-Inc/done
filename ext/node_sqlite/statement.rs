@@ -24,6 +24,15 @@ pub struct RunStatementResult {
   use_big_ints: bool,
 }
 
+/// The two property names of a `run()` result, kept as internalized strings
+/// in an isolate slot. Re-creating them for every call allocated a fresh
+/// external string that V8 then had to hash, look up and turn into a thin
+/// string, for each of the two properties.
+struct RunResultKeys {
+  last_insert_rowid: v8::Global<v8::Name>,
+  changes: v8::Global<v8::Name>,
+}
+
 impl<'a> ToV8<'a> for RunStatementResult {
   type Error = SqliteError;
 
@@ -31,15 +40,29 @@ impl<'a> ToV8<'a> for RunStatementResult {
     self,
     scope: &mut v8::PinScope<'a, '_>,
   ) -> Result<v8::Local<'a, v8::Value>, SqliteError> {
-    v8_static_strings! {
-      LAST_INSERT_ROW_ID = "lastInsertRowid",
-      CHANGES = "changes",
+    if scope.get_slot::<RunResultKeys>().is_none() {
+      let mut intern = |name: &str| {
+        let name = v8::String::new_from_utf8(
+          scope,
+          name.as_bytes(),
+          v8::NewStringType::Internalized,
+        )
+        .unwrap();
+        v8::Global::new(scope, v8::Local::<v8::Name>::from(name))
+      };
+      let keys = RunResultKeys {
+        last_insert_rowid: intern("lastInsertRowid"),
+        changes: intern("changes"),
+      };
+      scope.set_slot(keys);
     }
+    let keys = scope.get_slot::<RunResultKeys>().unwrap();
+    let last_insert_row_id_key = v8::Local::new(scope, &keys.last_insert_rowid);
+    let changes_key = v8::Local::new(scope, &keys.changes);
 
     let obj = v8::Object::new(scope);
 
-    let last_insert_row_id_str = LAST_INSERT_ROW_ID.v8_string(scope).unwrap();
-    let last_insert_row_id = if self.use_big_ints {
+    let last_insert_row_id: v8::Local<v8::Value> = if self.use_big_ints {
       v8::BigInt::new_from_i64(scope, self.last_insert_rowid).into()
     } else {
       v8::Number::new(scope, self.last_insert_rowid as f64).into()
@@ -49,22 +72,17 @@ impl<'a> ToV8<'a> for RunStatementResult {
     // generic [[Set]] runtime path (property-key lookup + hidden-class
     // transitions) that showed up as ~half the cost of a `run()` in profiles.
     obj
-      .create_data_property(
-        scope,
-        last_insert_row_id_str.into(),
-        last_insert_row_id,
-      )
+      .create_data_property(scope, last_insert_row_id_key, last_insert_row_id)
       .unwrap();
 
-    let changes_str = CHANGES.v8_string(scope).unwrap();
-    let changes = if self.use_big_ints {
+    let changes: v8::Local<v8::Value> = if self.use_big_ints {
       v8::BigInt::new_from_u64(scope, self.changes).into()
     } else {
       v8::Number::new(scope, self.changes as f64).into()
     };
 
     obj
-      .create_data_property(scope, changes_str.into(), changes)
+      .create_data_property(scope, changes_key, changes)
       .unwrap();
     Ok(obj.into())
   }

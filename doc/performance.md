@@ -142,6 +142,22 @@ copied its argument out of V8; it now borrows it.
 | `writeFileSync`, 1 MiB | 1.095 ms | 1.063 ms | -2.9% (noise) |
 | `readFileSync`, 1 KiB  | 5.70 us  | 5.77 us  | no change     |
 
+### `run()` on a prepared SQLite statement built its result from scratch
+
+`StatementSync#run` returns `{ lastInsertRowid, changes }`. Each call created
+two fresh external strings for the property names, which V8 then hashed, looked
+up in the string table and turned into thin strings. The names are now
+internalized once per isolate and reused. Under callgrind (`--jitless`), 20,000
+`run()` calls went from 286.5M to 225.7M instructions in total, about 3,000
+fewer per call.
+
+| Case (`node:sqlite`, 10,000 rows) | Before   | After   | Change    |
+| --------------------------------- | -------- | ------- | --------- |
+| prepared `run()` inserts          | 11.08 ms | 7.78 ms | -29.8%    |
+| `all()`                           | 5.25 ms  | 5.05 ms | no change |
+
+`Deno.openSqlite` uses the same code, so it gets the same gain.
+
 ## Reproducing
 
 ```sh
