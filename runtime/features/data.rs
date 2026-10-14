@@ -273,8 +273,22 @@ pub static FEATURE_DESCRIPTIONS: &[UnstableFeatureDescription] = &[
     env_var: None,
   },
   UnstableFeatureDescription {
+    name: "postgres",
+    help_text: "Enable unstable `Deno.postgres` API",
+    show_in_help: true,
+    kind: UnstableFeatureKind::Runtime,
+    env_var: None,
+  },
+  UnstableFeatureDescription {
     name: "pty",
     help_text: "Enable unstable `Deno.spawnPty()` API",
+    show_in_help: true,
+    kind: UnstableFeatureKind::Runtime,
+    env_var: None,
+  },
+  UnstableFeatureDescription {
+    name: "redis",
+    help_text: "Enable unstable `Deno.redis` API",
     show_in_help: true,
     kind: UnstableFeatureKind::Runtime,
     env_var: None,

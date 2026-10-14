@@ -7139,4 +7139,354 @@ declare namespace Deno {
       children?: (ElementInit | string)[];
     }
   }
+
+  /** An error reply from a Redis server.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-redis`. */
+  export class RedisError extends Error {
+    /** The first word of the message, such as `"WRONGTYPE"` or `"ERR"`. */
+    readonly code: string;
+  }
+
+  /**
+   * A Redis client. Commands are pipelined on one connection and answered in
+   * order, so many can be in flight at once. There is no automatic
+   * reconnect: after a connection error, `closed` settles and later calls
+   * reject, so create a new client.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-redis`.
+   */
+  export class RedisClient implements Disposable {
+    private constructor();
+    /** Settles when the connection has closed. */
+    readonly closed: Promise<void>;
+    /** Sends any command. Replies come back as strings, integers (or a
+     * `bigint` beyond 2^53), arrays and `null`. An error reply rejects with a
+     * {@linkcode Deno.RedisError}. */
+    // deno-lint-ignore no-explicit-any
+    send(
+      command: string,
+      ...args: (string | number | bigint | boolean | Uint8Array)[]
+    ): Promise<any>;
+    /** Like `send()`, with bulk strings as `Uint8Array` instead of text, for
+     * binary values. */
+    // deno-lint-ignore no-explicit-any
+    sendBytes(
+      command: string,
+      ...args: (string | number | bigint | boolean | Uint8Array)[]
+    ): Promise<any>;
+    /** Batches commands into one round trip. With `transaction`, they run
+     * atomically between `MULTI` and `EXEC`. */
+    pipeline(options?: { transaction?: boolean }): RedisPipeline;
+    ping(message?: string): Promise<string>;
+    get(key: string): Promise<string | null>;
+    /** `ex` and `px` set an expiry in seconds and milliseconds; `exat` and
+     * `pxat` a Unix time; `nx` and `xx` set only if the key is missing or
+     * present, in which case the result is `null` when it wasn't set. */
+    set(
+      key: string,
+      value: string | number | Uint8Array,
+      options?: {
+        ex?: number;
+        px?: number;
+        exat?: number;
+        pxat?: number;
+        keepTtl?: boolean;
+        nx?: boolean;
+        xx?: boolean;
+        get?: boolean;
+      },
+    ): Promise<"OK" | string | null>;
+    del(...keys: string[]): Promise<number>;
+    exists(...keys: string[]): Promise<boolean>;
+    expire(key: string, seconds: number): Promise<number>;
+    ttl(key: string): Promise<number>;
+    incr(key: string): Promise<number>;
+    incrBy(key: string, amount: number): Promise<number>;
+    decr(key: string): Promise<number>;
+    mget(...keys: string[]): Promise<(string | null)[]>;
+    mset(entries: Record<string, string | number>): Promise<"OK">;
+    hget(key: string, field: string): Promise<string | null>;
+    hset(key: string, fields: Record<string, string | number>): Promise<number>;
+    hgetall(key: string): Promise<Record<string, string>>;
+    hdel(key: string, ...fields: string[]): Promise<number>;
+    lpush(key: string, ...values: (string | number)[]): Promise<number>;
+    rpush(key: string, ...values: (string | number)[]): Promise<number>;
+    lpop(key: string): Promise<string | null>;
+    rpop(key: string): Promise<string | null>;
+    llen(key: string): Promise<number>;
+    lrange(key: string, start: number, stop: number): Promise<string[]>;
+    sadd(key: string, ...members: (string | number)[]): Promise<number>;
+    srem(key: string, ...members: (string | number)[]): Promise<number>;
+    smembers(key: string): Promise<string[]>;
+    sismember(key: string, member: string | number): Promise<boolean>;
+    /** Resolves to the number of subscribers that received the message. */
+    publish(channel: string, message: string): Promise<number>;
+    /** Iterates keys with `SCAN`, which doesn't block the server the way
+     * `KEYS` does. */
+    scan(
+      options?: { match?: string; count?: number; type?: string },
+    ): AsyncGenerator<string>;
+    /** Subscribes on a new connection, to channels and, with `patterns`, to
+     * patterns such as `"news.*"`. Resolves once the server confirmed every
+     * subscription. */
+    subscribe(
+      channels: string | string[],
+      options?: { patterns?: string | string[] },
+    ): Promise<RedisSubscription>;
+    close(): void;
+    [Symbol.dispose](): void;
+  }
+
+  /** The commands queued on a {@linkcode Deno.RedisClient.pipeline}.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-redis`. */
+  export interface RedisPipeline {
+    /** Adds a command. Returns the pipeline, so calls chain. */
+    send(
+      command: string,
+      ...args: (string | number | bigint | boolean | Uint8Array)[]
+    ): this;
+    /** Sends everything. Resolves to one result per command, in order. In a
+     * plain pipeline a failed command has its `RedisError` in its place; a
+     * transaction resolves to its commands' results, or `null` if a `WATCH`
+     * aborted it, and rejects if `EXEC` itself failed. */
+    // deno-lint-ignore no-explicit-any
+    exec(): Promise<any[] | null>;
+  }
+
+  /** A message from a subscription.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-redis`. */
+  export interface RedisMessage {
+    channel: string;
+    message: string;
+    /** The pattern that matched, for pattern subscriptions. */
+    pattern?: string;
+  }
+
+  /** Messages from {@linkcode Deno.RedisClient.subscribe}. Iterate it with
+   * `for await`; breaking out closes the connection.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-redis`. */
+  export interface RedisSubscription
+    extends AsyncIterable<RedisMessage>, Disposable {
+    /** Resolves to the next message, or `null` once closed. */
+    next(): Promise<RedisMessage | null>;
+    close(): void;
+  }
+
+  /** Connection settings for {@linkcode Deno.redis.connect}.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-redis`. */
+  export interface RedisConnectOptions {
+    /** Defaults to `"127.0.0.1"`. */
+    hostname?: string;
+    /** Defaults to 6379. */
+    port?: number;
+    username?: string;
+    password?: string;
+    /** The database to `SELECT`. */
+    db?: number;
+    /** Connects with TLS. A `rediss://` URL implies it. */
+    tls?: boolean;
+    /** Extra PEM certificates to trust, for TLS. */
+    caCerts?: string[];
+  }
+
+  /**
+   * Redis. Needs `--allow-net` for the server.
+   *
+   * ```ts
+   * using redis = await Deno.redis.connect("redis://localhost:6379");
+   * await redis.set("greeting", "hello", { ex: 60 });
+   * console.log(await redis.get("greeting")); // "hello"
+   * console.log(await redis.send("INCRBY", "visits", 5));
+   * ```
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-redis`.
+   */
+  export namespace redis {
+    /** Connects, from a `redis://[user:password@]host[:port][/db]` URL (or
+     * `rediss://` for TLS) or from options. Resolves once the connection is
+     * authenticated.
+     *
+     * @category Storage
+     * @experimental Requires `--unstable-redis`. */
+    export function connect(
+      target?: string | URL | RedisConnectOptions,
+      options?: RedisConnectOptions,
+    ): Promise<RedisClient>;
+  }
+
+  /** An error reported by a PostgreSQL server.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-postgres`. */
+  export class PostgresError extends Error {
+    /** The SQLSTATE code, such as `"23505"` for a unique violation or
+     * `"42P01"` for a missing table. */
+    readonly code: string;
+    readonly severity: string;
+    readonly detail?: string;
+    readonly hint?: string;
+    /** The character offset in the query that the error points at. */
+    readonly position?: string;
+    readonly schema?: string;
+    readonly table?: string;
+    readonly column?: string;
+    readonly constraint?: string;
+    readonly routine?: string;
+  }
+
+  /** A column of a result.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-postgres`. */
+  export interface PostgresField {
+    name: string;
+    /** The PostgreSQL type OID, such as 23 for `int4`. */
+    typeOid: number;
+  }
+
+  /** The result of one statement.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-postgres`. */
+  export interface PostgresResult<T = Record<string, unknown>> {
+    rows: T[];
+    fields: PostgresField[];
+    /** The command that ran, such as `"SELECT"` or `"INSERT"`. */
+    command: string;
+    /** Rows returned by `SELECT`, or affected by `INSERT`, `UPDATE` and
+     * `DELETE`. */
+    count: number;
+  }
+
+  /** The connection inside {@linkcode Deno.PostgresClient.transaction}.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-postgres`. */
+  export interface PostgresTransaction {
+    query<T = Record<string, unknown>>(
+      text: string,
+      params?: unknown[],
+    ): Promise<PostgresResult<T>>;
+    exec(text: string): Promise<PostgresResult[]>;
+    sql<T = Record<string, unknown>>(
+      strings: TemplateStringsArray,
+      ...values: unknown[]
+    ): Promise<T[]>;
+  }
+
+  /**
+   * A PostgreSQL connection. Calls run one at a time, in order, so one client
+   * is enough for most programs; open several for parallel queries.
+   *
+   * Values come back converted by column type: `int2`, `int4` and `oid` as
+   * numbers, `int8` as a number or, beyond 2^53, a `bigint`, `float4` and
+   * `float8` as numbers, `numeric` as a string (so no precision is lost),
+   * `bool` as booleans, `json` and `jsonb` parsed, `bytea` as `Uint8Array`,
+   * `date`, `timestamp` and `timestamptz` as `Date` (`timestamp` is read as
+   * UTC), arrays of those as arrays, and everything else, including `uuid`
+   * and `text`, as strings. Parameters accept strings, numbers, `bigint`,
+   * booleans, `Date`, `Uint8Array`, arrays and objects (sent as JSON).
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-postgres`.
+   */
+  export class PostgresClient implements Disposable {
+    private constructor();
+    /** Settles when the connection has closed. */
+    readonly closed: Promise<void>;
+    /** Runs one statement; `$1`, `$2`, ... refer to `params`. Values are
+     * never spliced into the SQL. */
+    query<T = Record<string, unknown>>(
+      text: string,
+      params?: unknown[],
+    ): Promise<PostgresResult<T>>;
+    /** Runs a script of statements, without parameters. */
+    exec(text: string): Promise<PostgresResult[]>;
+    /** A tagged template whose values become parameters, resolving to the
+     * rows:
+     *
+     * ```ts
+     * const users = await pg.sql`SELECT * FROM users WHERE id = ${id}`;
+     * ```
+     */
+    sql<T = Record<string, unknown>>(
+      strings: TemplateStringsArray,
+      ...values: unknown[]
+    ): Promise<T[]>;
+    /** Runs `fn` in a transaction: `COMMIT` when it returns, `ROLLBACK` when
+     * it throws. Other calls on the client wait for it to finish, so use the
+     * `tx` argument inside, never the client itself. */
+    transaction<T>(fn: (tx: PostgresTransaction) => Promise<T>): Promise<T>;
+    /** Calls `handler` for each `NOTIFY` on `channel`. Resolves to a
+     * function that stops listening. */
+    listen(
+      channel: string,
+      handler: (payload: string, channel: string) => void,
+    ): Promise<() => void>;
+    close(): void;
+    [Symbol.dispose](): void;
+  }
+
+  /** Connection settings for {@linkcode Deno.postgres.connect}.
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-postgres`. */
+  export interface PostgresConnectOptions {
+    /** A host, or the directory of a Unix socket when it starts with `/`.
+     * Defaults to `"127.0.0.1"`. */
+    hostname?: string;
+    /** Defaults to 5432. */
+    port?: number;
+    username?: string;
+    password?: string;
+    /** Defaults to the username. */
+    database?: string;
+    /** `"prefer"` (the default) uses TLS when the server offers it, and
+     * `"require"` (or `true`) fails without it. Certificates are verified,
+     * so a private CA needs `caCerts`. `false` never uses TLS. */
+    ssl?: boolean | "prefer" | "require";
+    /** Extra PEM certificates to trust, for TLS. */
+    caCerts?: string[];
+    applicationName?: string;
+  }
+
+  /**
+   * PostgreSQL. Needs `--allow-net` for the server, or `--allow-read` and
+   * `--allow-write` for a Unix socket.
+   *
+   * ```ts
+   * using pg = await Deno.postgres.connect(
+   *   "postgres://app:secret@localhost:5432/app",
+   * );
+   * await pg.sql`INSERT INTO visits (at) VALUES (${new Date()})`;
+   * console.log(await pg.sql`SELECT count(*)::int AS n FROM visits`);
+   * ```
+   *
+   * @category Storage
+   * @experimental Requires `--unstable-postgres`.
+   */
+  export namespace postgres {
+    /** Connects and logs in, from a
+     * `postgres://user:password@host:port/database?sslmode=require` URL or
+     * from options. Supports SCRAM-SHA-256, MD5 and cleartext passwords.
+     *
+     * @category Storage
+     * @experimental Requires `--unstable-postgres`. */
+    export function connect(
+      target: string | URL | PostgresConnectOptions,
+      options?: PostgresConnectOptions,
+    ): Promise<PostgresClient>;
+  }
 }

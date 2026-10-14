@@ -20,8 +20,8 @@ when you update a row.
 | ------------------------- | ------------------- | ---------------- | ------------------------------------- | --- |
 | SQLite                    | ✅ `bun:sqlite`     | ✅ `node:sqlite` | ✅ `Deno.openSqlite()`                |     |
 | Key-value store           | ❌                  | ❌               | ✅ `Deno.openKv()`                    |     |
-| Postgres / MySQL client   | ✅ `Bun.sql`        | ❌               | ❌                                    | P3  |
-| Redis client              | ✅ `Bun.redis`      | ❌               | ❌                                    | P3  |
+| Postgres / MySQL client   | ✅ `Bun.sql`        | ❌               | 🟡 `Deno.postgres`, no MySQL          |     |
+| Redis client              | ✅ `Bun.redis`      | ❌               | ✅ `Deno.redis`                       |     |
 | S3 client                 | ✅ `Bun.s3`         | ❌               | ✅ `Deno.S3Client`                    |     |
 | OS keychain secrets       | ✅ `Bun.secrets`    | ❌               | ✅ `Deno.secrets`                     |     |
 | Archives (tar)            | ✅ `Bun.Archive`    | ❌               | ✅ `Deno.tar`                         |     |
@@ -132,5 +132,14 @@ Every P2 gap has an API now. Follow-ups noted above: import/export scanning for
 back. It expands only the predefined entities, so a DTD can't blow a document
 up, and limits nesting to 256 levels.
 
-Still open: SQL clients (Postgres, MySQL) and Redis, after the SQLite API
-settles (M2), and a file-system router, which belongs with the M5 web framework.
+`Deno.redis` is a Redis client with pipelining, transactions, `SCAN` and
+pub/sub, over TCP or TLS. `Deno.postgres` is a PostgreSQL client with
+SCRAM-SHA-256, MD5 and cleartext logins, TLS, parameterized queries and tagged
+templates, transactions and `LISTEN`/`NOTIFY`, with results converted by column
+type. Both were tested against real servers (Redis 7.0, PostgreSQL 16, including
+a Unix socket and a TLS connection); the Postgres tests against a real server
+run when `MOKOU_TEST_POSTGRES` holds a superuser URL, and the Redis ones when
+`redis-server` is installed.
+
+Still open: a MySQL client, a connection pool for Postgres, and a file-system
+router, which belongs with the M5 web framework.

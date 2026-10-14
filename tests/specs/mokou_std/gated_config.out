@@ -20,6 +20,8 @@ transpile false
 secrets false
 spawnPty false
 xml false
+redis false
+postgres false
 assertEquals true
 deepEquals true
 mock true

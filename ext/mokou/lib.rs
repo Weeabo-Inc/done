@@ -91,5 +91,7 @@ deno_core::extension!(
     "19_secrets.js",
     "20_pty.js",
     "21_xml.js",
+    "22_redis.js",
+    "23_postgres.js",
   ],
 );

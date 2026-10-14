@@ -21,6 +21,8 @@ const names = [
   "secrets",
   "spawnPty",
   "xml",
+  "redis",
+  "postgres",
   "assertEquals",
   "deepEquals",
   "mock",
